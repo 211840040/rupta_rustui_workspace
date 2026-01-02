@@ -1,0 +1,28 @@
+[FuncId(0) - "promoted::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: &i32;
+    scope 1 {
+        debug a => _1;
+    }
+
+    bb0: {
+        _1 = const main::promoted[0];
+        return;
+    }
+}
+
+const main::promoted[0]: &i32 = {
+    let mut _0: &i32;
+    let mut _1: i32;
+
+    bb0: {
+        _1 = const 2_i32;
+        _0 = &_1;
+        return;
+    }
+}
+

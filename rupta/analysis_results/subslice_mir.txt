@@ -1,0 +1,1068 @@
+[FuncId(0) - "subslice::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: i32;
+    let mut _5: std::boxed::Box<[&i32]>;
+    let mut _6: usize;
+    let mut _7: usize;
+    let mut _8: *mut u8;
+    let mut _9: std::boxed::Box<[&i32; 3]>;
+    let mut _10: &i32;
+    let _11: &i32;
+    let _12: &i32;
+    let mut _15: (&&i32, &[&i32]);
+    let mut _16: std::option::Option<(&&i32, &[&i32])>;
+    let _17: &[&i32];
+    let mut _18: &std::vec::Vec<&i32>;
+    let _21: usize;
+    let mut _22: usize;
+    let mut _23: bool;
+    let mut _24: *const [&i32; 3];
+    scope 1 {
+        debug a => _1;
+        let _2: i32;
+        scope 2 {
+            debug b => _2;
+            let _3: i32;
+            scope 3 {
+                debug c => _3;
+                let _4: std::vec::Vec<&i32>;
+                let mut _25: *const ();
+                let mut _26: usize;
+                let mut _27: usize;
+                let mut _28: usize;
+                let mut _29: usize;
+                let mut _30: bool;
+                let mut _31: *const ();
+                let mut _32: usize;
+                let mut _33: usize;
+                let mut _34: bool;
+                let mut _35: bool;
+                let mut _36: bool;
+                let mut _37: bool;
+                scope 4 {
+                    debug v => _4;
+                    let _13: &&i32;
+                    let _14: &[&i32];
+                    scope 5 {
+                        debug first => _13;
+                        debug left => _14;
+                        let _19: &i32;
+                        scope 6 {
+                            debug _first_elem => _19;
+                            let _20: &i32;
+                            scope 7 {
+                                debug _next => _20;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const 1_i32;
+        _2 = const 2_i32;
+        _3 = const 3_i32;
+        _6 = SizeOf([&i32; 3]);
+        _7 = AlignOf([&i32; 3]);
+        _8 = alloc::alloc::exchange_malloc(move _6, move _7) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _9 = ShallowInitBox(move _8, [&i32; 3]);
+        _10 = &_1;
+        _11 = &_2;
+        _12 = &_3;
+        _24 = copy ((_9.0: std::ptr::Unique<[&i32; 3]>).0: std::ptr::NonNull<[&i32; 3]>) as *const [&i32; 3] (Transmute);
+        _25 = copy _24 as *const () (PtrToPtr);
+        _26 = copy _25 as usize (Transmute);
+        _27 = AlignOf([&i32; 3]);
+        _28 = Sub(copy _27, const 1_usize);
+        _29 = BitAnd(copy _26, copy _28);
+        _30 = Eq(copy _29, const 0_usize);
+        assert(copy _30, "misaligned pointer dereference: address must be a multiple of {} but is {}", copy _27, copy _26) -> [success: bb10, unwind unreachable];
+    }
+
+    bb2: {
+        _18 = &_4;
+        _17 = <std::vec::Vec<&i32> as std::ops::Index<std::ops::RangeFull>>::index(move _18, const std::ops::RangeFull) -> [return: bb3, unwind: bb8];
+    }
+
+    bb3: {
+        _16 = split_first(copy _17) -> [return: bb4, unwind: bb8];
+    }
+
+    bb4: {
+        _15 = std::option::Option::<(&&i32, &[&i32])>::unwrap(move _16) -> [return: bb5, unwind: bb8];
+    }
+
+    bb5: {
+        _13 = copy (_15.0: &&i32);
+        _14 = copy (_15.1: &[&i32]);
+        _19 = copy (*_13);
+        _21 = const 0_usize;
+        _22 = PtrMetadata(copy _14);
+        _23 = Lt(copy _21, copy _22);
+        assert(move _23, "index out of bounds: the length is {} but the index is {}", move _22, copy _21) -> [success: bb6, unwind: bb8];
+    }
+
+    bb6: {
+        _20 = copy (*_14)[_21];
+        drop(_4) -> [return: bb7, unwind continue];
+    }
+
+    bb7: {
+        return;
+    }
+
+    bb8 (cleanup): {
+        drop(_4) -> [return: bb9, unwind terminate(cleanup)];
+    }
+
+    bb9 (cleanup): {
+        resume;
+    }
+
+    bb10: {
+        _31 = copy _24 as *const () (PtrToPtr);
+        _32 = copy _31 as usize (Transmute);
+        _33 = SizeOf([&i32; 3]);
+        _34 = Ne(copy _33, const 0_usize);
+        _35 = Eq(copy _32, const 0_usize);
+        _36 = BitAnd(copy _35, copy _34);
+        _37 = Not(copy _36);
+        assert(copy _37, "null pointer dereference occurred") -> [success: bb11, unwind unreachable];
+    }
+
+    bb11: {
+        (*_24) = [move _10, copy _11, copy _12];
+        _5 = move _9 as std::boxed::Box<[&i32]> (PointerCoercion(Unsize, Implicit));
+        _4 = std::slice::<impl [&i32]>::into_vec::<std::alloc::Global>(move _5) -> [return: bb2, unwind continue];
+    }
+}
+
+[FuncId(2) - "alloc::vec::{impl#13}::index<&'{erased} i32, std::ops::RangeFull, std::alloc::Global>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <std::vec::Vec<T, A> as std::ops::Index<I>>::index(_1: &std::vec::Vec<T, A>, _2: I) -> &<I as std::slice::SliceIndex<[T]>>::Output {
+    debug self => _1;
+    debug index => _2;
+    let mut _0: &<I as std::slice::SliceIndex<[T]>>::Output;
+    let _3: &[T];
+    scope 1 (inlined <std::vec::Vec<T, A> as std::ops::Deref>::deref) {
+        debug self => _1;
+        scope 2 (inlined std::vec::Vec::<T, A>::as_slice) {
+            debug self => _1;
+            let mut _4: *const T;
+            let mut _5: usize;
+            scope 3 (inlined std::vec::Vec::<T, A>::as_ptr) {
+                debug self => _1;
+                scope 4 (inlined alloc::raw_vec::RawVec::<T, A>::ptr) {
+                    scope 5 (inlined alloc::raw_vec::RawVecInner::<A>::ptr::<T>) {
+                        scope 6 (inlined alloc::raw_vec::RawVecInner::<A>::non_null::<T>) {
+                            let mut _6: std::ptr::NonNull<u8>;
+                            scope 7 (inlined std::ptr::Unique::<u8>::cast::<T>) {
+                                scope 8 (inlined std::ptr::NonNull::<u8>::cast::<T>) {
+                                    scope 9 (inlined std::ptr::NonNull::<u8>::as_ptr) {
+                                    }
+                                }
+                            }
+                            scope 10 (inlined std::ptr::Unique::<T>::as_non_null_ptr) {
+                            }
+                        }
+                        scope 11 (inlined std::ptr::NonNull::<T>::as_ptr) {
+                        }
+                    }
+                }
+            }
+            scope 12 (inlined std::slice::from_raw_parts::<'_, T>) {
+                debug data => _4;
+                debug len => _5;
+                let _7: ();
+                let mut _8: *mut ();
+                let mut _9: usize;
+                let mut _10: usize;
+                let _11: *const [T];
+                scope 13 (inlined core::ub_checks::check_language_ub) {
+                    let mut _12: bool;
+                    scope 14 (inlined core::ub_checks::check_language_ub::runtime) {
+                    }
+                }
+                scope 15 (inlined std::mem::size_of::<T>) {
+                }
+                scope 16 (inlined std::mem::align_of::<T>) {
+                }
+                scope 17 (inlined std::ptr::slice_from_raw_parts::<T>) {
+                    debug data => _4;
+                    debug len => _5;
+                    scope 18 (inlined std::ptr::from_raw_parts::<[T], T>) {
+                        debug data_pointer => _4;
+                    }
+                }
+            }
+        }
+    }
+    scope 19 (inlined #[track_caller] core::slice::index::<impl std::ops::Index<I> for [T]>::index) {
+        debug self => _11;
+        debug index => _2;
+    }
+
+    bb0: {
+        StorageLive(_6);
+        StorageLive(_4);
+        _6 = copy (((((*_1).0: alloc::raw_vec::RawVec<T, A>).0: alloc::raw_vec::RawVecInner<A>).0: std::ptr::Unique<u8>).0: std::ptr::NonNull<u8>);
+        _4 = copy _6 as *const T (Transmute);
+        StorageLive(_5);
+        _5 = copy ((*_1).1: usize);
+        StorageLive(_12);
+        _12 = UbChecks();
+        switchInt(copy _12) -> [0: bb3, otherwise: bb1];
+    }
+
+    bb1: {
+        StorageLive(_8);
+        _8 = copy _6 as *mut () (Transmute);
+        StorageLive(_9);
+        _9 = SizeOf(T);
+        StorageLive(_10);
+        _10 = AlignOf(T);
+        _7 = std::slice::from_raw_parts::precondition_check(move _8, move _9, move _10, copy _5) -> [return: bb2, unwind unreachable];
+    }
+
+    bb2: {
+        StorageDead(_10);
+        StorageDead(_9);
+        StorageDead(_8);
+        goto -> bb3;
+    }
+
+    bb3: {
+        StorageLive(_11);
+        _11 = *const [T] from (copy _4, copy _5);
+        _3 = &(*_11);
+        StorageDead(_11);
+        StorageDead(_12);
+        StorageDead(_5);
+        StorageDead(_4);
+        StorageDead(_6);
+        _0 = <I as std::slice::SliceIndex<[T]>>::index(move _2, move _3) -> [return: bb4, unwind continue];
+    }
+
+    bb4: {
+        return;
+    }
+}
+
+[FuncId(3) - "subslice::split_first"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn split_first(_1: &[&i32]) -> std::option::Option<(&&i32, &[&i32])> {
+    debug v => _1;
+    let mut _0: std::option::Option<(&&i32, &[&i32])>;
+    let mut _2: usize;
+    let mut _3: bool;
+    let mut _6: (&&i32, &[&i32]);
+    scope 1 {
+        debug first => _4;
+        debug tail => _5;
+        let _4: &&i32;
+        let _5: &[&i32];
+    }
+
+    bb0: {
+        _2 = Len((*_1));
+        _3 = Ge(move _2, const 1_usize);
+        switchInt(move _3) -> [0: bb2, otherwise: bb1];
+    }
+
+    bb1: {
+        _4 = &(*_1)[0 of 1];
+        _5 = &(*_1)[1:];
+        _6 = (copy _4, copy _5);
+        _0 = std::option::Option::<(&&i32, &[&i32])>::Some(move _6);
+        goto -> bb3;
+    }
+
+    bb2: {
+        _0 = std::option::Option::<(&&i32, &[&i32])>::None;
+        goto -> bb3;
+    }
+
+    bb3: {
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn split_first(_1: &[&i32]) -> std::option::Option<(&&i32, &[&i32])> {
+    debug v => _1;
+    let mut _0: std::option::Option<(&&i32, &[&i32])>;
+    let mut _2: usize;
+    let mut _3: usize;
+    let mut _4: bool;
+    let mut _7: (&&i32, &[&i32]);
+    let mut _8: &&i32;
+    let mut _9: &[&i32];
+    scope 1 {
+        debug first => _5;
+        debug tail => _6;
+        let _5: &&i32;
+        let _6: &[&i32];
+    }
+
+    bb0: {
+        _2 = Len((*_1));
+        _3 = const 1_usize;
+        _4 = Ge(move _2, move _3);
+        switchInt(move _4) -> [0: bb2, otherwise: bb1];
+    }
+
+    bb1: {
+        StorageLive(_5);
+        _5 = &(*_1)[0 of 1];
+        StorageLive(_6);
+        _6 = &(*_1)[1:];
+        StorageLive(_7);
+        StorageLive(_8);
+        _8 = &(*_5);
+        StorageLive(_9);
+        _9 = &(*_6);
+        _7 = (move _8, move _9);
+        StorageDead(_9);
+        StorageDead(_8);
+        _0 = std::option::Option::<(&&i32, &[&i32])>::Some(move _7);
+        StorageDead(_7);
+        StorageDead(_6);
+        StorageDead(_5);
+        goto -> bb3;
+    }
+
+    bb2: {
+        _0 = std::option::Option::<(&&i32, &[&i32])>::None;
+        goto -> bb3;
+    }
+
+    bb3: {
+        return;
+    }
+}
+
+[FuncId(4) - "core::option::{impl#0}::unwrap<(&'{erased} &'{erased} i32, &'{erased} [&'{erased} i32])>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::option::Option::<T>::unwrap(_1: std::option::Option<T>) -> T {
+    debug self => _1;
+    let mut _0: T;
+    let mut _2: isize;
+    let mut _3: !;
+    scope 1 {
+        debug val => _0;
+    }
+
+    bb0: {
+        _2 = discriminant(_1);
+        switchInt(move _2) -> [0: bb2, 1: bb3, otherwise: bb1];
+    }
+
+    bb1: {
+        unreachable;
+    }
+
+    bb2: {
+        _3 = std::option::unwrap_failed() -> unwind continue;
+    }
+
+    bb3: {
+        _0 = move ((_1 as Some).0: T);
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn std::option::Option::<T>::unwrap(_1: std::option::Option<T>) -> T {
+    debug self => _1;
+    let mut _0: T;
+    let mut _2: isize;
+    let _3: T;
+    let mut _4: !;
+    scope 1 {
+        debug val => _3;
+    }
+
+    bb0: {
+        _2 = discriminant(_1);
+        switchInt(move _2) -> [0: bb2, 1: bb3, otherwise: bb1];
+    }
+
+    bb1: {
+        unreachable;
+    }
+
+    bb2: {
+        StorageLive(_4);
+        ConstEvalCounter;
+        _4 = std::option::unwrap_failed() -> bb4;
+    }
+
+    bb3: {
+        StorageLive(_3);
+        _3 = move ((_1 as Some).0: T);
+        _0 = move _3;
+        StorageDead(_3);
+        return;
+    }
+
+    bb4 (cleanup): {
+        resume;
+    }
+}
+
+[FuncId(5) - "alloc::slice::{impl#0}::into_vec<&'{erased} i32, std::alloc::Global>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::slice::<impl [T]>::into_vec(_1: std::boxed::Box<[T], A>) -> std::vec::Vec<T, A> {
+    debug self => _1;
+    let mut _0: std::vec::Vec<T, A>;
+    let _2: usize;
+    let mut _3: *mut T;
+    let mut _4: *const [T];
+    scope 1 {
+        debug len => _2;
+        scope 2 {
+            debug b => _5;
+            debug alloc => _6;
+            scope 11 (inlined std::vec::Vec::<T, A>::from_raw_parts_in) {
+                debug ptr => _3;
+                debug length => _2;
+                debug capacity => _2;
+                debug alloc => _6;
+                let mut _7: alloc::raw_vec::RawVec<T, A>;
+                scope 12 (inlined alloc::raw_vec::RawVec::<T, A>::from_raw_parts_in) {
+                    debug ptr => _3;
+                    debug capacity => _2;
+                    debug alloc => _6;
+                    let _8: *mut u8;
+                    let mut _10: alloc::raw_vec::RawVecInner<A>;
+                    let mut _11: core::num::niche_types::UsizeNoHighBit;
+                    scope 13 {
+                        debug ptr => _8;
+                        let _9: core::num::niche_types::UsizeNoHighBit;
+                        scope 14 {
+                            debug capacity => _9;
+                            scope 18 (inlined alloc::raw_vec::RawVecInner::<A>::from_raw_parts_in) {
+                                debug ptr => _8;
+                                debug cap => _11;
+                                debug alloc => _6;
+                                let mut _12: std::ptr::Unique<u8>;
+                                scope 19 (inlined std::ptr::Unique::<u8>::new_unchecked) {
+                                    debug ptr => _8;
+                                    let mut _13: std::ptr::NonNull<u8>;
+                                    scope 20 (inlined std::ptr::NonNull::<u8>::new_unchecked) {
+                                        debug ptr => _8;
+                                        let _14: ();
+                                        let mut _15: *mut ();
+                                        let mut _16: *const u8;
+                                        scope 21 (inlined core::ub_checks::check_language_ub) {
+                                            let mut _17: bool;
+                                            scope 22 (inlined core::ub_checks::check_language_ub::runtime) {
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        scope 16 (inlined alloc::raw_vec::new_cap::<T>) {
+                            debug cap => _2;
+                            scope 17 (inlined core::num::niche_types::UsizeNoHighBit::new_unchecked) {
+                                debug val => _2;
+                            }
+                        }
+                    }
+                    scope 15 (inlined std::ptr::mut_ptr::<impl *mut T>::cast::<u8>) {
+                        debug self => _3;
+                    }
+                }
+            }
+        }
+        scope 3 (inlined std::boxed::Box::<[T], A>::into_raw_with_allocator) {
+            debug b => _1;
+            scope 4 {
+                let _5: *mut [T];
+                scope 5 {
+                    let _6: A;
+                    scope 6 {
+                    }
+                    scope 9 (inlined <std::mem::ManuallyDrop<std::boxed::Box<[T], A>> as std::ops::Deref>::deref) {
+                    }
+                    scope 10 (inlined std::ptr::read::<A>) {
+                    }
+                }
+                scope 8 (inlined <std::mem::ManuallyDrop<std::boxed::Box<[T], A>> as std::ops::DerefMut>::deref_mut) {
+                }
+            }
+            scope 7 (inlined std::mem::ManuallyDrop::<std::boxed::Box<[T], A>>::new) {
+            }
+        }
+    }
+
+    bb0: {
+        _4 = copy ((_1.0: std::ptr::Unique<[T]>).0: std::ptr::NonNull<[T]>) as *const [T] (Transmute);
+        _2 = PtrMetadata(copy _4);
+        _5 = &raw mut (*_4);
+        _6 = copy (_1.1: A);
+        StorageLive(_3);
+        _3 = copy _5 as *mut T (PtrToPtr);
+        StorageLive(_7);
+        StorageLive(_8);
+        _8 = copy _5 as *mut u8 (PtrToPtr);
+        StorageLive(_9);
+        switchInt(const <T as std::mem::SizedTypeProperties>::IS_ZST) -> [0: bb3, otherwise: bb2];
+    }
+
+    bb1: {
+        StorageLive(_10);
+        StorageLive(_11);
+        _11 = copy _9;
+        StorageLive(_12);
+        StorageLive(_13);
+        StorageLive(_16);
+        StorageLive(_17);
+        _17 = UbChecks();
+        switchInt(copy _17) -> [0: bb6, otherwise: bb4];
+    }
+
+    bb2: {
+        _9 = const core::num::niche_types::UsizeNoHighBit(0_usize);
+        goto -> bb1;
+    }
+
+    bb3: {
+        _9 = core::num::niche_types::UsizeNoHighBit(copy _2);
+        goto -> bb1;
+    }
+
+    bb4: {
+        StorageLive(_15);
+        _15 = copy _5 as *mut () (PtrToPtr);
+        _14 = std::ptr::NonNull::<T>::new_unchecked::precondition_check(move _15) -> [return: bb5, unwind unreachable];
+    }
+
+    bb5: {
+        StorageDead(_15);
+        goto -> bb6;
+    }
+
+    bb6: {
+        _16 = copy _5 as *const u8 (PtrToPtr);
+        _13 = std::ptr::NonNull::<u8> { pointer: copy _16 };
+        StorageDead(_17);
+        StorageDead(_16);
+        _12 = std::ptr::Unique::<u8> { pointer: move _13, _marker: const std::marker::PhantomData::<u8> };
+        StorageDead(_13);
+        _10 = alloc::raw_vec::RawVecInner::<A> { ptr: move _12, cap: copy _11, alloc: copy _6 };
+        StorageDead(_12);
+        StorageDead(_11);
+        _7 = alloc::raw_vec::RawVec::<T, A> { inner: move _10, _marker: const ZeroSized: std::marker::PhantomData<T> };
+        StorageDead(_10);
+        StorageDead(_9);
+        StorageDead(_8);
+        _0 = std::vec::Vec::<T, A> { buf: move _7, len: copy _2 };
+        StorageDead(_7);
+        StorageDead(_3);
+        return;
+    }
+}
+
+[FuncId(1) - "alloc::alloc::exchange_malloc"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn alloc::alloc::exchange_malloc(_1: usize, _2: usize) -> *mut u8 {
+    debug size => _1;
+    debug align => _2;
+    let mut _0: *mut u8;
+    let _3: std::alloc::Layout;
+    let mut _4: std::result::Result<std::ptr::NonNull<[u8]>, std::alloc::AllocError>;
+    let mut _5: isize;
+    let mut _7: !;
+    scope 1 {
+        debug layout => _3;
+        let _6: std::ptr::NonNull<[u8]>;
+        scope 2 {
+            debug ptr => _6;
+            scope 5 (inlined std::ptr::NonNull::<[u8]>::as_mut_ptr) {
+                debug self => _6;
+                scope 6 (inlined std::ptr::NonNull::<[u8]>::as_non_null_ptr) {
+                    scope 7 (inlined std::ptr::NonNull::<[u8]>::cast::<u8>) {
+                        let mut _11: *mut [u8];
+                        scope 8 (inlined std::ptr::NonNull::<[u8]>::as_ptr) {
+                        }
+                    }
+                }
+                scope 9 (inlined std::ptr::NonNull::<u8>::as_ptr) {
+                }
+            }
+        }
+        scope 4 (inlined <std::alloc::Global as std::alloc::Allocator>::allocate) {
+            debug self => const alloc::alloc::exchange_malloc::promoted[0];
+            debug layout => _3;
+        }
+    }
+    scope 3 (inlined std::alloc::Layout::from_size_align_unchecked) {
+        debug size => _1;
+        debug align => _2;
+        let mut _8: bool;
+        let _9: ();
+        let mut _10: std::ptr::Alignment;
+    }
+
+    bb0: {
+        StorageLive(_8);
+        _8 = UbChecks();
+        switchInt(move _8) -> [0: bb5, otherwise: bb4];
+    }
+
+    bb1: {
+        unreachable;
+    }
+
+    bb2: {
+        _7 = std::alloc::handle_alloc_error(move _3) -> unwind continue;
+    }
+
+    bb3: {
+        _6 = copy ((_4 as Ok).0: std::ptr::NonNull<[u8]>);
+        StorageLive(_11);
+        _11 = copy _6 as *mut [u8] (Transmute);
+        _0 = copy _11 as *mut u8 (PtrToPtr);
+        StorageDead(_11);
+        StorageDead(_4);
+        return;
+    }
+
+    bb4: {
+        _9 = std::alloc::Layout::from_size_align_unchecked::precondition_check(copy _1, copy _2) -> [return: bb5, unwind unreachable];
+    }
+
+    bb5: {
+        StorageDead(_8);
+        StorageLive(_10);
+        _10 = copy _2 as std::ptr::Alignment (Transmute);
+        _3 = std::alloc::Layout { size: copy _1, align: move _10 };
+        StorageDead(_10);
+        StorageLive(_4);
+        _4 = std::alloc::Global::alloc_impl(const alloc::alloc::exchange_malloc::promoted[0], copy _3, const false) -> [return: bb6, unwind continue];
+    }
+
+    bb6: {
+        _5 = discriminant(_4);
+        switchInt(move _5) -> [0: bb3, 1: bb2, otherwise: bb1];
+    }
+}
+
+const alloc::alloc::exchange_malloc::promoted[0]: &std::alloc::Global = {
+    let mut _0: &std::alloc::Global;
+    let mut _1: std::alloc::Global;
+
+    bb0: {
+        _1 = std::alloc::Global;
+        _0 = &_1;
+        return;
+    }
+}
+
+[FuncId(6) - "core::slice::raw::from_raw_parts::precondition_check"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::slice::from_raw_parts::precondition_check(_1: *mut (), _2: usize, _3: usize, _4: usize) -> () {
+    debug data => _1;
+    debug size => _2;
+    debug align => _3;
+    debug len => _4;
+    let mut _0: ();
+    let mut _5: bool;
+    let mut _6: *const ();
+    let mut _7: bool;
+    let _8: !;
+    scope 1 (inlined core::ub_checks::maybe_is_aligned_and_not_null) {
+        debug ptr => _6;
+        debug align => _3;
+        debug is_zst => const false;
+        scope 2 (inlined core::ub_checks::maybe_is_aligned_and_not_null::runtime) {
+            debug ptr => _6;
+            debug align => _3;
+            debug is_zst => const false;
+            let mut _9: bool;
+            scope 3 (inlined std::ptr::const_ptr::<impl *const ()>::is_aligned_to) {
+                debug self => _6;
+                debug align => _3;
+                let _10: !;
+                let mut _11: std::fmt::Arguments<'_>;
+                let mut _12: usize;
+                let mut _13: usize;
+                let mut _14: usize;
+                scope 4 (inlined core::num::<impl usize>::is_power_of_two) {
+                    debug self => _3;
+                    let mut _15: u32;
+                    scope 5 (inlined core::num::<impl usize>::count_ones) {
+                        debug self => _3;
+                    }
+                }
+                scope 6 (inlined std::ptr::const_ptr::<impl *const ()>::addr) {
+                    debug self => _6;
+                    scope 7 (inlined std::ptr::const_ptr::<impl *const ()>::cast::<()>) {
+                        debug self => _6;
+                    }
+                }
+                scope 8 (inlined core::fmt::rt::<impl std::fmt::Arguments<'_>>::new_const::<1>) {
+                    debug pieces => const std::ptr::const_ptr::<impl *const ()>::is_aligned_to::promoted[0];
+                    let mut _16: &[&str];
+                    let mut _17: &[core::fmt::rt::Argument<'_>];
+                }
+            }
+            scope 9 (inlined std::ptr::const_ptr::<impl *const ()>::is_null) {
+                debug self => _6;
+                scope 10 {
+                    scope 11 (inlined std::ptr::const_ptr::<impl *const T>::is_null::runtime) {
+                        scope 12 (inlined std::ptr::const_ptr::<impl *const u8>::addr) {
+                            scope 13 (inlined std::ptr::const_ptr::<impl *const u8>::cast::<()>) {
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    scope 14 (inlined core::ub_checks::is_valid_allocation_size) {
+        debug size => _2;
+        debug len => _4;
+        let _18: usize;
+        let mut _19: bool;
+        let mut _20: usize;
+        scope 15 {
+            debug max_len => _18;
+        }
+    }
+
+    bb0: {
+        StorageLive(_5);
+        StorageLive(_6);
+        _6 = copy _1 as *const () (PtrToPtr);
+        StorageLive(_13);
+        StorageLive(_15);
+        _15 = std::intrinsics::ctpop::<usize>(copy _3) -> [return: bb10, unwind unreachable];
+    }
+
+    bb1: {
+        StorageDead(_6);
+        StorageLive(_7);
+        StorageLive(_19);
+        StorageLive(_18);
+        _19 = Eq(copy _2, const 0_usize);
+        switchInt(copy _2) -> [0: bb11, otherwise: bb12];
+    }
+
+    bb2: {
+        StorageDead(_7);
+        StorageDead(_5);
+        return;
+    }
+
+    bb3: {
+        goto -> bb5;
+    }
+
+    bb4: {
+        StorageDead(_6);
+        goto -> bb5;
+    }
+
+    bb5: {
+        _8 = core::panicking::panic_nounwind(const "unsafe precondition(s) violated: slice::from_raw_parts requires the pointer to be aligned and non-null, and the total size of the slice not to exceed `isize::MAX`\n\nThis indicates a bug in the program. This Undefined Behavior check is optional, and cannot be relied on for safety.") -> unwind unreachable;
+    }
+
+    bb6: {
+        StorageDead(_12);
+        StorageLive(_9);
+        _9 = Eq(copy _13, const 0_usize);
+        _5 = Not(move _9);
+        StorageDead(_9);
+        StorageDead(_13);
+        switchInt(move _5) -> [0: bb4, otherwise: bb1];
+    }
+
+    bb7: {
+        StorageDead(_12);
+        StorageDead(_13);
+        goto -> bb4;
+    }
+
+    bb8: {
+        StorageDead(_15);
+        StorageLive(_12);
+        _13 = copy _1 as usize (Transmute);
+        StorageLive(_14);
+        _14 = Sub(copy _3, const 1_usize);
+        _12 = BitAnd(copy _13, move _14);
+        StorageDead(_14);
+        switchInt(move _12) -> [0: bb6, otherwise: bb7];
+    }
+
+    bb9: {
+        StorageDead(_15);
+        StorageLive(_11);
+        StorageLive(_16);
+        _16 = const std::ptr::const_ptr::<impl *const ()>::is_aligned_to::promoted[0] as &[&str] (PointerCoercion(Unsize, Implicit));
+        StorageLive(_17);
+        _17 = const core::fmt::rt::<impl std::fmt::Arguments<'_>>::new_const::<1>::promoted[0] as &[core::fmt::rt::Argument<'_>] (PointerCoercion(Unsize, Implicit));
+        _11 = std::fmt::Arguments::<'_> { pieces: move _16, fmt: const std::option::Option::<&[core::fmt::rt::Placeholder]>::None, args: move _17 };
+        StorageDead(_17);
+        StorageDead(_16);
+        _10 = std::rt::panic_fmt(move _11) -> unwind terminate(abi);
+    }
+
+    bb10: {
+        switchInt(move _15) -> [1: bb8, otherwise: bb9];
+    }
+
+    bb11: {
+        _18 = const usize::MAX;
+        goto -> bb14;
+    }
+
+    bb12: {
+        assert(!copy _19, "attempt to divide `{}` by zero", const 9223372036854775807_usize) -> [success: bb13, unwind terminate(abi)];
+    }
+
+    bb13: {
+        _18 = Div(const 9223372036854775807_usize, copy _2);
+        goto -> bb14;
+    }
+
+    bb14: {
+        StorageLive(_20);
+        _20 = copy _18;
+        _7 = Le(copy _4, move _20);
+        StorageDead(_20);
+        StorageDead(_18);
+        StorageDead(_19);
+        switchInt(move _7) -> [0: bb3, otherwise: bb2];
+    }
+}
+
+alloc1 (size: 16, align: 8) {
+    00 00 00 00 00 00 00 00 __ __ __ __ __ __ __ __ │ ........░░░░░░░░
+}
+
+// MIR FOR CTFE
+fn std::slice::from_raw_parts::precondition_check(_1: *mut (), _2: usize, _3: usize, _4: usize) -> () {
+    debug data => _1;
+    debug size => _2;
+    debug align => _3;
+    debug len => _4;
+    let mut _0: ();
+    let mut _5: bool;
+    let mut _6: *const ();
+    let mut _7: *mut ();
+    let mut _8: usize;
+    let mut _9: bool;
+    let mut _10: usize;
+    let mut _11: usize;
+    let mut _12: !;
+    let _13: !;
+
+    bb0: {
+        StorageLive(_5);
+        StorageLive(_6);
+        StorageLive(_7);
+        _7 = copy _1;
+        _6 = move _7 as *const () (PtrToPtr);
+        StorageDead(_7);
+        StorageLive(_8);
+        _8 = copy _3;
+        ConstEvalCounter;
+        _5 = core::ub_checks::maybe_is_aligned_and_not_null(move _6, move _8, const false) -> [return: bb1, unwind terminate(abi)];
+    }
+
+    bb1: {
+        switchInt(move _5) -> [0: bb6, otherwise: bb2];
+    }
+
+    bb2: {
+        StorageDead(_8);
+        StorageDead(_6);
+        StorageLive(_9);
+        StorageLive(_10);
+        _10 = copy _2;
+        StorageLive(_11);
+        _11 = copy _4;
+        ConstEvalCounter;
+        _9 = core::ub_checks::is_valid_allocation_size(move _10, move _11) -> [return: bb3, unwind terminate(abi)];
+    }
+
+    bb3: {
+        switchInt(move _9) -> [0: bb5, otherwise: bb4];
+    }
+
+    bb4: {
+        StorageDead(_11);
+        StorageDead(_10);
+        _0 = const ();
+        StorageDead(_9);
+        StorageDead(_5);
+        return;
+    }
+
+    bb5: {
+        StorageDead(_11);
+        StorageDead(_10);
+        goto -> bb7;
+    }
+
+    bb6: {
+        StorageDead(_8);
+        StorageDead(_6);
+        goto -> bb7;
+    }
+
+    bb7: {
+        StorageLive(_13);
+        ConstEvalCounter;
+        _13 = core::panicking::panic_nounwind(const "unsafe precondition(s) violated: slice::from_raw_parts requires the pointer to be aligned and non-null, and the total size of the slice not to exceed `isize::MAX`\n\nThis indicates a bug in the program. This Undefined Behavior check is optional, and cannot be relied on for safety.") -> unwind unreachable;
+    }
+}
+
+[FuncId(7) - "core::slice::index::{impl#9}::index<&'{erased} i32>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <std::ops::RangeFull as std::slice::SliceIndex<[T]>>::index(_1: std::ops::RangeFull, _2: &[T]) -> &[T] {
+    debug slice => _2;
+    let mut _0: &[T];
+
+    bb0: {
+        _0 = copy _2;
+        return;
+    }
+}
+
+[FuncId(8) - "core::option::unwrap_failed"]
+Mir is unavailable
+
+[FuncId(9) - "core::ptr::non_null::{impl#3}::new_unchecked::precondition_check"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::ptr::NonNull::<T>::new_unchecked::precondition_check(_1: *mut ()) -> () {
+    debug ptr => _1;
+    let mut _0: ();
+    let _2: !;
+    scope 1 (inlined std::ptr::mut_ptr::<impl *mut ()>::is_null) {
+        debug self => _1;
+        scope 2 (inlined std::ptr::mut_ptr::<impl *mut ()>::cast_const) {
+        }
+        scope 3 (inlined std::ptr::const_ptr::<impl *const ()>::is_null) {
+            scope 4 {
+                scope 5 (inlined std::ptr::const_ptr::<impl *const T>::is_null::runtime) {
+                    let mut _3: usize;
+                    scope 6 (inlined std::ptr::const_ptr::<impl *const u8>::addr) {
+                        scope 7 (inlined std::ptr::const_ptr::<impl *const u8>::cast::<()>) {
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bb0: {
+        StorageLive(_3);
+        _3 = copy _1 as usize (Transmute);
+        switchInt(move _3) -> [0: bb1, otherwise: bb2];
+    }
+
+    bb1: {
+        StorageDead(_3);
+        _2 = core::panicking::panic_nounwind(const "unsafe precondition(s) violated: NonNull::new_unchecked requires that the pointer is non-null\n\nThis indicates a bug in the program. This Undefined Behavior check is optional, and cannot be relied on for safety.") -> unwind unreachable;
+    }
+
+    bb2: {
+        StorageDead(_3);
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn std::ptr::NonNull::<T>::new_unchecked::precondition_check(_1: *mut ()) -> () {
+    debug ptr => _1;
+    let mut _0: ();
+    let mut _2: bool;
+    let mut _3: *mut ();
+    let mut _4: !;
+    let _5: !;
+
+    bb0: {
+        StorageLive(_2);
+        StorageLive(_3);
+        _3 = copy _1;
+        ConstEvalCounter;
+        _2 = std::ptr::mut_ptr::<impl *mut ()>::is_null(move _3) -> [return: bb1, unwind terminate(abi)];
+    }
+
+    bb1: {
+        switchInt(move _2) -> [0: bb3, otherwise: bb2];
+    }
+
+    bb2: {
+        StorageDead(_3);
+        StorageLive(_5);
+        ConstEvalCounter;
+        _5 = core::panicking::panic_nounwind(const "unsafe precondition(s) violated: NonNull::new_unchecked requires that the pointer is non-null\n\nThis indicates a bug in the program. This Undefined Behavior check is optional, and cannot be relied on for safety.") -> unwind unreachable;
+    }
+
+    bb3: {
+        StorageDead(_3);
+        _0 = const ();
+        StorageDead(_2);
+        return;
+    }
+}
+
+[FuncId(10) - "core::intrinsics::ctpop<usize>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::intrinsics::ctpop(_1: T) -> u32 {
+    debug x => _1;
+    let mut _0: u32;
+
+    bb0: {
+        unreachable;
+    }
+}
+
+// MIR FOR CTFE
+fn std::intrinsics::ctpop(_1: T) -> u32 {
+    debug x => _1;
+    let mut _0: u32;
+
+    bb0: {
+        unreachable;
+    }
+}
+
+[FuncId(11) - "core::panicking::panic_nounwind"]
+Mir is unavailable
+
+[FuncId(12) - "core::panicking::panic_fmt"]
+Mir is unavailable
+

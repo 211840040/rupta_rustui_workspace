@@ -1,0 +1,51 @@
+[FuncId(0) - "union_nest::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: u32;
+    let mut _5: (&u32, &u32);
+    let _6: &u32;
+    let _7: &u32;
+    let _9: &u32;
+    scope 1 {
+        debug a => _1;
+        let _2: u32;
+        scope 2 {
+            debug b => _2;
+            let _3: u32;
+            scope 3 {
+                debug c => _3;
+                let _4: U<'_>;
+                scope 4 {
+                    debug u => _4;
+                    let mut _8: V<'_, '_>;
+                    scope 5 {
+                        debug v => _8;
+                        let _10: &u32;
+                        scope 6 {
+                            debug _a => _10;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const 2_u32;
+        _2 = const 3_u32;
+        _3 = const 4_u32;
+        _6 = &_1;
+        _7 = &_2;
+        _5 = (copy _6, copy _7);
+        _4 = U::<'_> { f1: move _5 };
+        _8 = V::<'_, '_> { f1: copy _4 };
+        _9 = &_3;
+        ((_8.1: U<'_>).0: &u32) = copy _9;
+        _10 = copy (_8.0: &u32);
+        return;
+    }
+}
+

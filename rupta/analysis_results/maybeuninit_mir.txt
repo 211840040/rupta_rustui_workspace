@@ -1,0 +1,141 @@
+[FuncId(0) - "maybeuninit::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: i32;
+    let mut _5: *const &i32;
+    let _6: &&i32;
+    let mut _7: *const std::mem::MaybeUninit<&i32>;
+    let mut _9: *const std::mem::MaybeUninit<&i32>;
+    let _10: &std::mem::MaybeUninit<&i32>;
+    scope 1 {
+        debug a1 => _1;
+        let _2: i32;
+        scope 2 {
+            debug a2 => _2;
+            let _3: &i32;
+            scope 3 {
+                debug b1 => _3;
+                let _4: &i32;
+                scope 4 {
+                    debug b2 => _4;
+                    scope 5 {
+                        debug c1 => _5;
+                        scope 6 {
+                            debug m1 => _7;
+                            let _8: std::mem::MaybeUninit<&i32>;
+                            scope 7 {
+                                debug c2 => _8;
+                                scope 8 {
+                                    debug m2 => _9;
+                                    let _11: &i32;
+                                    scope 9 {
+                                        debug _d1 => _11;
+                                        let _12: &i32;
+                                        scope 10 {
+                                            debug _d2 => _12;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const 2_i32;
+        _2 = const 3_i32;
+        _3 = &_1;
+        _4 = &_2;
+        _6 = &_3;
+        _5 = &raw const (*_6);
+        _7 = copy _5 as *const std::mem::MaybeUninit<&i32> (PtrToPtr);
+        _8 = std::mem::MaybeUninit::<&i32>::new(copy _4) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _10 = &_8;
+        _9 = &raw const (*_10);
+        _11 = cast(copy _7) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _12 = cast(copy _9) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        return;
+    }
+}
+
+[FuncId(1) - "core::mem::maybe_uninit::{impl#2}::new<&'{erased} i32>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::mem::MaybeUninit::<T>::new(_1: T) -> std::mem::MaybeUninit<T> {
+    debug val => _1;
+    let mut _0: std::mem::MaybeUninit<T>;
+    let mut _2: std::mem::ManuallyDrop<T>;
+    scope 1 (inlined std::mem::ManuallyDrop::<T>::new) {
+    }
+
+    bb0: {
+        StorageLive(_2);
+        _2 = std::mem::ManuallyDrop::<T> { value: copy _1 };
+        _0 = std::mem::MaybeUninit::<T> { uninit: move _2 };
+        StorageDead(_2);
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn std::mem::MaybeUninit::<T>::new(_1: T) -> std::mem::MaybeUninit<T> {
+    debug val => _1;
+    let mut _0: std::mem::MaybeUninit<T>;
+    let mut _2: std::mem::ManuallyDrop<T>;
+    let mut _3: T;
+
+    bb0: {
+        StorageLive(_2);
+        StorageLive(_3);
+        _3 = move _1;
+        ConstEvalCounter;
+        _2 = std::mem::ManuallyDrop::<T>::new(move _3) -> [return: bb1, unwind: bb2];
+    }
+
+    bb1: {
+        StorageDead(_3);
+        _0 = std::mem::MaybeUninit::<T> { uninit: move _2 };
+        StorageDead(_2);
+        return;
+    }
+
+    bb2 (cleanup): {
+        resume;
+    }
+}
+
+[FuncId(2) - "maybeuninit::cast"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn cast(_1: *const std::mem::MaybeUninit<&i32>) -> &i32 {
+    debug m => _1;
+    let mut _0: &i32;
+    let mut _2: *const &i32;
+    scope 1 {
+        debug ret => _2;
+    }
+
+    bb0: {
+        _2 = copy _1 as *const &i32 (PtrToPtr);
+        _0 = deref_copy (*_2);
+        return;
+    }
+}
+

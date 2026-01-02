@@ -1,0 +1,6 @@
+digraph {
+    0 [ label = "union::main" ]
+    1 [ label = "union::union_set<>" ]
+    0 -> 1 [ label = "bb1[2]" ]
+    0 -> 1 [ label = "bb0[10]" ]
+}

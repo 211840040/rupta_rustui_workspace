@@ -1,0 +1,15 @@
+FuncId(0) - "box_array::main"
+	FuncId(0)::local_11 (1) ==> { FuncId(1)::heap_bb0[2].cast#1 }
+	FuncId(0)::local_17 (1) ==> { FuncId(1)::heap_bb0[2].cast#1 }
+	FuncId(0)::local_10 (1) ==> { FuncId(1)::heap_bb0[2].cast#0 }
+	FuncId(0)::local_8.0.0.0 (1) ==> { FuncId(1)::heap_bb0[2].cast#0 }
+	FuncId(0)::local_1.0.0.0 (1) ==> { FuncId(1)::heap_bb0[2].cast#0 }
+	FuncId(0)::local_7.0.0.0 (1) ==> { FuncId(1)::heap_bb0[2].cast#2 }
+FuncId(1) - "alloc::boxed::{impl#0}::new<[i32; 1_usize]>"
+	FuncId(1)::local_4 (1) ==> { FuncId(1)::heap_bb0[2] }
+	FuncId(1)::local_5 (1) ==> { FuncId(1)::heap_bb0[2].cast#0 }
+	FuncId(1)::ret.0.0.0 (1) ==> { FuncId(1)::heap_bb0[2].cast#0 }
+FuncId(2) - "box_array::len"
+	FuncId(2)::local_3 (1) ==> { FuncId(1)::heap_bb0[2].cast#2 }
+	FuncId(2)::local_2 (1) ==> { FuncId(1)::heap_bb0[2].cast#2 }
+	FuncId(2)::param_1.0.0.0 (1) ==> { FuncId(1)::heap_bb0[2].cast#2 }

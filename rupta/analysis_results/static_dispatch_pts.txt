@@ -1,0 +1,8 @@
+FuncId(1) - "static_dispatch::draw_shape<Circle>"
+	FuncId(1)::local_3 (1) ==> { FuncId(1)::param_1 }
+FuncId(2) - "static_dispatch::draw_shape<Rectangle>"
+	FuncId(2)::local_3 (1) ==> { FuncId(2)::param_1 }
+FuncId(3) - "static_dispatch::{impl#0}::draw"
+	FuncId(3)::param_1 (1) ==> { FuncId(1)::param_1 }
+FuncId(4) - "static_dispatch::{impl#1}::draw"
+	FuncId(4)::param_1 (1) ==> { FuncId(2)::param_1 }

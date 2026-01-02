@@ -1,0 +1,6 @@
+FuncId(0) - "cast_option::main"
+	FuncId(0)::local_5 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_3.0.as_variant#1.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_12 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_4.as_variant#1.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_7 (1) ==> { FuncId(0)::local_3 }

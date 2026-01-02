@@ -1,0 +1,11 @@
+error: expected `:`
+  --> tests/compile/parse_error/ctor_super_no_expr.rs:21:25
+   |
+21 |             Self { super, name }
+   |                         ^
+
+error[E0601]: `main` function not found in crate `$CRATE`
+  --> tests/compile/parse_error/ctor_super_no_expr.rs:25:2
+   |
+25 | }
+   |  ^ consider adding a `main` function to `$DIR/tests/compile/parse_error/ctor_super_no_expr.rs`

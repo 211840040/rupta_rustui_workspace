@@ -1,0 +1,42 @@
+FuncId(1) - "cs_call_test::for_cs1"
+	FuncId(1)::local_8.0.0.0 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(1)::local_5 (1) ==> { FuncId(1)::local_1 }
+	FuncId(1)::local_14 (1) ==> { FuncId(1)::local_2 }
+	FuncId(1)::local_9 (1) ==> { FuncId(1)::local_2 }
+	FuncId(1)::local_7.0.0.0 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(1)::local_6 (1) ==> { FuncId(1)::local_1 }
+	FuncId(1)::local_10 (1) ==> { FuncId(1)::local_2 }
+	FuncId(1)::local_15 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(1)::local_16 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(1)::local_4.0.0.0 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(1)::local_13 (1) ==> { FuncId(1)::local_1 }
+	FuncId(1)::local_3.0.0.0 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+FuncId(2) - "cs_call_test::for_cs2"
+	FuncId(2)::local_3.0.0.0 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(2)::local_14 (1) ==> { FuncId(2)::local_2 }
+	FuncId(2)::local_15 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(2)::local_10 (1) ==> { FuncId(2)::local_2 }
+	FuncId(2)::local_7.0.0.0 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(2)::local_8.0.0.0 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(2)::local_5 (1) ==> { FuncId(2)::local_1 }
+	FuncId(2)::local_9 (1) ==> { FuncId(2)::local_2 }
+	FuncId(2)::local_16 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(2)::local_13 (1) ==> { FuncId(2)::local_1 }
+	FuncId(2)::local_4.0.0.0 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(2)::local_6 (1) ==> { FuncId(2)::local_1 }
+FuncId(3) - "alloc::boxed::{impl#0}::new<&'{erased} dyn [Binder { value: Trait(Shape), bound_vars: [] }] + '{erased}>"
+	FuncId(3)::ret.0.0.0 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(3)::local_5 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(3)::local_4 (1) ==> { FuncId(3)::heap_bb0[2] }
+	FuncId(3)::param_1 (4) ==> { FuncId(2)::local_2 FuncId(1)::local_2 FuncId(1)::local_1 FuncId(2)::local_1 }
+	FuncId(3)::heap_bb0[2].cast#0 (4) ==> { FuncId(2)::local_1 FuncId(1)::local_2 FuncId(2)::local_2 FuncId(1)::local_1 }
+FuncId(4) - "cs_call_test::id"
+	FuncId(4)::ret.0.0.0 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(4)::param_1.0.0.0 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+FuncId(5) - "cs_call_test::id2"
+	FuncId(5)::ret.0.0.0 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(5)::param_1.0.0.0 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+FuncId(7) - "cs_call_test::{impl#0}::draw"
+	FuncId(7)::param_1 (2) ==> { FuncId(1)::local_1 FuncId(2)::local_1 }
+FuncId(8) - "cs_call_test::{impl#1}::draw"
+	FuncId(8)::param_1 (2) ==> { FuncId(1)::local_2 FuncId(2)::local_2 }

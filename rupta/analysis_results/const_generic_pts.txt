@@ -1,0 +1,17 @@
+FuncId(0) - "const_generic::main"
+	FuncId(0)::local_1.1 (1) ==> { FuncId(1)::local_1 }
+	FuncId(0)::local_2 (1) ==> { FuncId(1)::local_1 }
+FuncId(1) - "const_generic::main::promoted[0]"
+	FuncId(1)::ret (1) ==> { FuncId(1)::local_1 }
+FuncId(2) - "const_generic::new_foo<3>"
+	FuncId(2)::param_2 (2) ==> { FuncId(4)::local_1 FuncId(1)::local_1 }
+	FuncId(2)::ret.1 (2) ==> { FuncId(4)::local_1 FuncId(1)::local_1 }
+FuncId(3) - "const_generic::const_arith"
+	FuncId(3)::local_2.1 (1) ==> { FuncId(3)::local_1 }
+	FuncId(3)::local_3 (1) ==> { FuncId(3)::local_1 }
+FuncId(4) - "const_generic::const_global"
+	FuncId(4)::local_2.1 (1) ==> { FuncId(4)::local_1 }
+	FuncId(4)::local_3 (1) ==> { FuncId(4)::local_1 }
+FuncId(5) - "const_generic::new_foo<8>"
+	FuncId(5)::ret.1 (1) ==> { FuncId(3)::local_1 }
+	FuncId(5)::param_2 (1) ==> { FuncId(3)::local_1 }

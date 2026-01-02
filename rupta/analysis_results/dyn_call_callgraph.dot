@@ -1,0 +1,7 @@
+digraph {
+    0 [ label = "dyn_call::main" ]
+    1 [ label = "dyn_call::{impl#0}::draw" ]
+    2 [ label = "dyn_call::{impl#1}::draw" ]
+    0 -> 1 [ label = "bb0[2]" ]
+    0 -> 2 [ label = "bb1[2]" ]
+}

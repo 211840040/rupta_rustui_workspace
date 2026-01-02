@@ -1,0 +1,11 @@
+digraph {
+    0 [ label = "closure_generic::generic_closure_call<Bar<'{erased}>, Foo<'{erased}>>" ]
+    1 [ label = "closure_generic::generic_closure_call::{closure#0}<Bar<'{erased}>, Foo<'{erased}>, i8, Binder { value: extern \"RustCall\" fn((&'^0 Bar<'{erased}>,)) -> i32, bound_vars: [Region(BrAnon)] }, (&'{erased} &'{erased} Foo<'{erased}>,)>" ]
+    2 [ label = "closure_generic::{impl#0}::get<>" ]
+    3 [ label = "closure_generic::main" ]
+    4 [ label = "closure_generic::{impl#1}::get<>" ]
+    0 -> 1 [ label = "bb0[4]" ]
+    1 -> 2 [ label = "bb0[2]" ]
+    3 -> 0 [ label = "bb0[8]" ]
+    1 -> 4 [ label = "bb1[1]" ]
+}

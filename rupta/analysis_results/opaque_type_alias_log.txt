@@ -1,0 +1,51 @@
+error: unconstrained opaque type
+  --> tests/unit_tests/opaque_type_alias.rs:11:23
+   |
+11 |     pub type Seq<T> = impl IntoIterator<Item = T>;
+   |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `Seq` must be used in combination with a concrete type within the same crate
+
+error[E0308]: mismatched types
+  --> tests/unit_tests/opaque_type_alias.rs:14:9
+   |
+11 |     pub type Seq<T> = impl IntoIterator<Item = T>;
+   |                       --------------------------- the expected opaque type
+12 |
+13 |     pub fn produce_singleton<T>(t: T) -> Seq<T> {
+   |                                          ------ expected `m::Seq<T>` because of return type
+14 |         vec![t]
+   |         ^^^^^^^ expected opaque type, found `Vec<T>`
+   |
+   = note: expected opaque type `m::Seq<T>`
+                   found struct `std::vec::Vec<T>`
+note: this item must have a `#[define_opaque(m::Seq)]` attribute to be able to define hidden types
+  --> tests/unit_tests/opaque_type_alias.rs:13:12
+   |
+13 |     pub fn produce_singleton<T>(t: T) -> Seq<T> {
+   |            ^^^^^^^^^^^^^^^^^
+   = note: this error originates in the macro `vec` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0308]: mismatched types
+  --> tests/unit_tests/opaque_type_alias.rs:19:9
+   |
+11 |     pub type Seq<T> = impl IntoIterator<Item = T>;
+   |                       --------------------------- the expected opaque type
+...
+18 |     pub fn produce_doubleton<T>(t: T, u: T) -> Seq<T> {
+   |                                                ------ expected `m::Seq<T>` because of return type
+19 |         vec![t, u]
+   |         ^^^^^^^^^^ expected opaque type, found `Vec<T>`
+   |
+   = note: expected opaque type `m::Seq<T>`
+                   found struct `std::vec::Vec<T>`
+note: this item must have a `#[define_opaque(m::Seq)]` attribute to be able to define hidden types
+  --> tests/unit_tests/opaque_type_alias.rs:18:12
+   |
+18 |     pub fn produce_doubleton<T>(t: T, u: T) -> Seq<T> {
+   |            ^^^^^^^^^^^^^^^^^
+   = note: this error originates in the macro `vec` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: aborting due to 3 previous errors
+
+For more information about this error, try `rustc --explain E0308`.

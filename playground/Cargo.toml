@@ -1,0 +1,15 @@
+[package]
+name = "playground"
+version = "0.1.0"
+edition = "2021"
+
+# 依赖rustdsl的crates
+[dependencies]
+classes = { path = "../rustdsl/classes" }
+classes_macros = { path = "../rustdsl/classes_macros" }
+
+# 每个bin可以单独编译和分析
+[[bin]]
+name = "example1"
+path = "src/bin/example1.rs"
+

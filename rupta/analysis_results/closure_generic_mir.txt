@@ -1,0 +1,141 @@
+[FuncId(0) - "closure_generic::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: i32;
+    let _4: &i32;
+    let _6: &i32;
+    let _7: i32;
+    let _8: &Foo<'_>;
+    let _9: &Bar<'_>;
+    scope 1 {
+        debug x => _1;
+        let _2: i32;
+        scope 2 {
+            debug y => _2;
+            let _3: Foo<'_>;
+            scope 3 {
+                debug foo => _3;
+                let _5: Bar<'_>;
+                scope 4 {
+                    debug bar => _5;
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const 1_i32;
+        _2 = const 2_i32;
+        _4 = &_1;
+        _3 = Foo::<'_> { f: copy _4 };
+        _6 = &_2;
+        _5 = Bar::<'_> { b: copy _6 };
+        _8 = &_3;
+        _9 = &_5;
+        _7 = generic_closure_call::<Bar<'_>, Foo<'_>>(copy _8, copy _9) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(1) - "closure_generic::generic_closure_call<Bar<'{erased}>, Foo<'{erased}>>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn generic_closure_call(_1: &impl Getter, _2: &T) -> i32 {
+    debug g => _1;
+    debug t => _2;
+    let mut _0: i32;
+    let _3: {closure@tests/unit_tests/closure_generic.rs:30:13: 30:20};
+    let mut _4: &&impl Getter;
+    let mut _5: &{closure@tests/unit_tests/closure_generic.rs:30:13: 30:20};
+    let mut _6: (&T,);
+    scope 1 {
+        debug f => _3;
+    }
+
+    bb0: {
+        _4 = &_1;
+        _3 = {closure@tests/unit_tests/closure_generic.rs:30:13: 30:20} { g: move _4 };
+        _5 = &_3;
+        _6 = (copy _2,);
+        _0 = <{closure@tests/unit_tests/closure_generic.rs:30:13: 30:20} as std::ops::Fn<(&T,)>>::call(move _5, move _6) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(2) - "closure_generic::generic_closure_call::{closure#0}<Bar<'{erased}>, Foo<'{erased}>, i8, Binder { value: extern \"RustCall\" fn((&'^0 Bar<'{erased}>,)) -> i32, bound_vars: [Region(BrAnon)] }, (&'{erased} &'{erased} Foo<'{erased}>,)>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn generic_closure_call::{closure#0}(_1: &{closure@tests/unit_tests/closure_generic.rs:30:13: 30:20}, _2: &T) -> i32 {
+    debug x => _2;
+    debug g => (*((*_1).0: &&impl Getter));
+    let mut _0: i32;
+    let mut _3: i32;
+    let mut _4: &i32;
+    let mut _5: i32;
+    let mut _6: &i32;
+    let mut _7: (i32, bool);
+    let mut _8: &&impl Getter;
+    let mut _9: &impl Getter;
+
+    bb0: {
+        _8 = deref_copy ((*_1).0: &&impl Getter);
+        _9 = deref_copy (*_8);
+        _4 = <impl Getter as Getter>::get(copy _9) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _3 = copy (*_4);
+        _6 = <T as Getter>::get(copy _2) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _5 = copy (*_6);
+        _7 = AddWithOverflow(copy _3, copy _5);
+        assert(!move (_7.1: bool), "attempt to compute `{} + {}`, which would overflow", move _3, move _5) -> [success: bb3, unwind continue];
+    }
+
+    bb3: {
+        _0 = move (_7.0: i32);
+        return;
+    }
+}
+
+[FuncId(3) - "closure_generic::{impl#0}::get<>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/closure_generic.rs:20:1: 20:28>::get(_1: &Foo<'_>) -> &i32 {
+    debug self => _1;
+    let mut _0: &i32;
+
+    bb0: {
+        _0 = deref_copy ((*_1).0: &i32);
+        return;
+    }
+}
+
+[FuncId(4) - "closure_generic::{impl#1}::get<>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/closure_generic.rs:24:1: 24:28>::get(_1: &Bar<'_>) -> &i32 {
+    debug self => _1;
+    let mut _0: &i32;
+
+    bb0: {
+        _0 = deref_copy ((*_1).0: &i32);
+        return;
+    }
+}
+

@@ -1,0 +1,18 @@
+FuncId(0) - "alloc::main"
+	FuncId(0)::local_2.0 (1) ==> { FuncId(2)::heap_bb2[0].cast#0 }
+	FuncId(0)::local_1 (1) ==> { FuncId(1)::heap_bb2[0] }
+FuncId(1) - "alloc::std_alloc"
+	FuncId(1)::ret (1) ==> { FuncId(1)::heap_bb2[0] }
+FuncId(2) - "alloc::global_alloc"
+	FuncId(2)::ret.0 (1) ==> { FuncId(2)::heap_bb2[0].cast#0 }
+	FuncId(2)::local_2.as_variant#0.0.0 (1) ==> { FuncId(2)::heap_bb2[0].cast#0 }
+	FuncId(2)::local_3 (1) ==> { FuncId(2)::local_1 }
+	FuncId(2)::aux_7 (1) ==> { FuncId(2)::heap_bb2[0].cast#0 }
+FuncId(4) - "core::result::{impl#0}::unwrap<std::alloc::Layout, std::alloc::LayoutError>"
+	FuncId(4)::local_6 (1) ==> { FuncId(4)::local_3 }
+	FuncId(4)::local_5 (1) ==> { FuncId(4)::local_3 }
+FuncId(7) - "core::result::{impl#0}::expect<std::ptr::NonNull<[u8]>, std::alloc::AllocError>"
+	FuncId(7)::local_7 (1) ==> { FuncId(7)::local_4 }
+	FuncId(7)::local_6 (1) ==> { FuncId(7)::local_4 }
+	FuncId(7)::ret.0 (1) ==> { FuncId(2)::heap_bb2[0].cast#0 }
+	FuncId(7)::param_1.as_variant#0.0.0 (1) ==> { FuncId(2)::heap_bb2[0].cast#0 }

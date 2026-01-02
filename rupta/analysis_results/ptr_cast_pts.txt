@@ -1,0 +1,25 @@
+FuncId(1) - "ptr_cast::foo"
+	FuncId(1)::local_2.as_variant#0.0.0 (1) ==> { FuncId(1)::heap_bb2[0].cast#0 }
+	FuncId(1)::local_7.0 (1) ==> { FuncId(1)::heap_bb2[0].cast#0 }
+	FuncId(1)::local_8.0 (1) ==> { FuncId(1)::heap_bb2[0].cast#1 }
+	FuncId(1)::local_3 (1) ==> { FuncId(1)::local_1 }
+	FuncId(1)::aux_9 (1) ==> { FuncId(1)::heap_bb2[0].cast#0 }
+FuncId(2) - "ptr_cast::bar"
+	FuncId(2)::local_8.0 (1) ==> { FuncId(2)::heap_bb2[0].cast#2 }
+	FuncId(2)::aux_9 (1) ==> { FuncId(2)::heap_bb2[0].cast#0 }
+	FuncId(2)::local_7.0 (1) ==> { FuncId(2)::heap_bb2[0].cast#0 }
+	FuncId(2)::local_3 (1) ==> { FuncId(2)::local_1 }
+	FuncId(2)::local_2.as_variant#0.0.0 (1) ==> { FuncId(2)::heap_bb2[0].cast#0 }
+FuncId(4) - "core::result::{impl#0}::unwrap<std::alloc::Layout, std::alloc::LayoutError>"
+	FuncId(4)::local_6 (1) ==> { FuncId(4)::local_3 }
+	FuncId(4)::local_5 (1) ==> { FuncId(4)::local_3 }
+FuncId(6) - "core::ptr::non_null::{impl#3}::cast<[u8], std::string::String>"
+	FuncId(6)::local_3 (1) ==> { FuncId(1)::heap_bb2[0].cast#0 }
+	FuncId(6)::ret.0 (1) ==> { FuncId(1)::heap_bb2[0].cast#1 }
+	FuncId(6)::local_2 (1) ==> { FuncId(1)::heap_bb2[0].cast#1 }
+	FuncId(6)::param_1.0 (1) ==> { FuncId(1)::heap_bb2[0].cast#0 }
+FuncId(7) - "core::ptr::non_null::{impl#3}::cast<[u8], u32>"
+	FuncId(7)::local_3 (1) ==> { FuncId(2)::heap_bb2[0].cast#0 }
+	FuncId(7)::param_1.0 (1) ==> { FuncId(2)::heap_bb2[0].cast#0 }
+	FuncId(7)::local_2 (1) ==> { FuncId(2)::heap_bb2[0].cast#2 }
+	FuncId(7)::ret.0 (1) ==> { FuncId(2)::heap_bb2[0].cast#2 }

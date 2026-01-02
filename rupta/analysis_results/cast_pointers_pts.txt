@@ -1,0 +1,17 @@
+FuncId(1) - "cast_pointers::const_to_mut"
+	FuncId(1)::local_3 (1) ==> { FuncId(1)::local_1 }
+FuncId(2) - "cast_pointers::mut_to_const"
+	FuncId(2)::local_3 (1) ==> { FuncId(2)::local_1 }
+FuncId(3) - "cast_pointers::tuple_to_array"
+	FuncId(3)::local_5 (1) ==> { FuncId(3)::local_1 }
+	FuncId(3)::local_10 (1) ==> { FuncId(3)::local_3 }
+	FuncId(3)::local_8 (1) ==> { FuncId(3)::local_4 }
+	FuncId(3)::local_4.1 (1) ==> { FuncId(3)::local_2 }
+	FuncId(3)::local_4.0 (1) ==> { FuncId(3)::local_1 }
+	FuncId(3)::local_6 (1) ==> { FuncId(3)::local_2 }
+FuncId(4) - "cast_pointers::array_to_tuple"
+	FuncId(4)::local_6 (1) ==> { FuncId(4)::local_2 }
+	FuncId(4)::local_8 (1) ==> { FuncId(4)::local_4 }
+	FuncId(4)::local_10 (1) ==> { FuncId(4)::local_3 }
+	FuncId(4)::local_5 (1) ==> { FuncId(4)::local_1 }
+	FuncId(4)::local_4.index (2) ==> { FuncId(4)::local_2 FuncId(4)::local_1 }

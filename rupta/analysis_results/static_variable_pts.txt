@@ -1,0 +1,36 @@
+FuncId(0) - "static_variable::main"
+	FuncId(0)::aux_66 (1) ==> { static_variable::STATIC_FNPTR }
+	FuncId(0)::local_36 (1) ==> { static_variable::STATIC_PTR.cast#0 }
+	FuncId(0)::local_4 (1) ==> { FuncId(1)::local_1 }
+	FuncId(0)::local_23 (1) ==> { static_variable::STATIC_PTR.cast#0 }
+	FuncId(0)::aux_67 (1) ==> { static_variable::STATIC_PTR }
+	FuncId(0)::local_29 (1) ==> { static_variable::STATIC_PTR.cast#0 }
+	FuncId(0)::local_57 (1) ==> { static_variable::STATIC_VAL.cast#0 }
+	FuncId(0)::local_5 (1) ==> { static_variable::STATIC_PTR }
+	FuncId(0)::aux_64 (1) ==> { static_variable::STATIC_VAL }
+	FuncId(0)::local_50 (1) ==> { static_variable::STATIC_VAL.cast#0 }
+	FuncId(0)::local_11 (1) ==> { static_variable::STATIC_FNPTR.cast#0 }
+	FuncId(0)::local_8 (1) ==> { FuncId(5) }
+	FuncId(0)::aux_68 (1) ==> { static_variable::STATIC_VAL }
+	FuncId(0)::local_7 (1) ==> { static_variable::STATIC_PTR }
+	FuncId(0)::aux_65 (1) ==> { static_variable::STATIC_PTR }
+	FuncId(0)::local_3 (1) ==> { static_variable::STATIC_VAL }
+	FuncId(0)::local_43 (1) ==> { static_variable::STATIC_FNPTR.cast#0 }
+	FuncId(0)::local_1 (1) ==> { static_variable::STATIC_VAL }
+	FuncId(0)::local_9 (1) ==> { static_variable::STATIC_FNPTR }
+	FuncId(0)::local_6 (2) ==> { FuncId(1)::local_1 FuncId(3)::local_1 }
+	FuncId(0)::local_17 (1) ==> { static_variable::STATIC_PTR.cast#0 }
+FuncId(1) - "static_variable::main::promoted[0]"
+	FuncId(1)::ret (1) ==> { FuncId(1)::local_1 }
+FuncId(2) - "static_variable::STATIC_PTR"
+	FuncId(2)::local_3 (1) ==> { FuncId(3)::local_1 }
+	FuncId(2)::local_1 (1) ==> { FuncId(3)::local_1 }
+	FuncId(2)::ret (1) ==> { FuncId(3)::local_1 }
+FuncId(3) - "static_variable::STATIC_PTR::promoted[0]"
+	FuncId(3)::ret (1) ==> { FuncId(3)::local_1 }
+FuncId(4) - "static_variable::STATIC_FNPTR"
+	FuncId(4)::ret (1) ==> { FuncId(5) }
+FuncId(5) - "static_variable::times2"
+	FuncId(5)::local_5 (1) ==> { static_variable::STATIC_VAL.cast#0 }
+	FuncId(5)::local_3 (1) ==> { static_variable::STATIC_VAL }
+	FuncId(5)::aux_12 (1) ==> { static_variable::STATIC_VAL }

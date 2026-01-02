@@ -1,0 +1,9 @@
+digraph {
+    0 [ label = "alloc::boxed::{impl#0}::new<[i32; 1_usize]>" ]
+    1 [ label = "alloc::alloc::exchange_malloc" ]
+    2 [ label = "custom_alloc::main" ]
+    3 [ label = "custom_alloc::len" ]
+    0 -> 1 [ label = "bb0[2]" ]
+    2 -> 0 [ label = "bb0[3]" ]
+    2 -> 3 [ label = "bb8[4]" ]
+}

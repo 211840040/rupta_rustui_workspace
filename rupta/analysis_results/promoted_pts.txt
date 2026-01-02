@@ -1,0 +1,4 @@
+FuncId(0) - "promoted::main"
+	FuncId(0)::local_1 (1) ==> { FuncId(1)::local_1 }
+FuncId(1) - "promoted::main::promoted[0]"
+	FuncId(1)::ret (1) ==> { FuncId(1)::local_1 }

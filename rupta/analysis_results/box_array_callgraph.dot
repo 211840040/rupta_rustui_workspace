@@ -1,0 +1,9 @@
+digraph {
+    0 [ label = "box_array::main" ]
+    1 [ label = "alloc::boxed::{impl#0}::new<[i32; 1_usize]>" ]
+    2 [ label = "alloc::alloc::exchange_malloc" ]
+    3 [ label = "box_array::len" ]
+    0 -> 1 [ label = "bb0[3]" ]
+    1 -> 2 [ label = "bb0[2]" ]
+    0 -> 3 [ label = "bb8[4]" ]
+}

@@ -1,0 +1,2760 @@
+error[E0204]: the trait `std::marker::Copy` cannot be implemented for this type
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:4:1
+   |
+4  | /  ::classes::classes! {
+5  | |      class A {
+6  | |          pub fn new() -> Self { Self {} }
+7  | |          pub fn f(&self) { println!("A::f"); }
+8  | |      }
+9  | |      #[with(A, A/M2)]
+   | | _______________-
+10 | ||     mixin M1 on A {
+   | ||____________- in this macro invocationa
+...  |
+25 | |  }
+   | |  ^ this field does not implement `std::marker::Copy`
+   | |__|
+   |
+   |
+   = note: this error originates in the derive macro `Copy` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0204]: the trait `std::marker::Copy` cannot be implemented for this type
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:4:1
+   |
+4  | /  ::classes::classes! {
+5  | |      class A {
+6  | |          pub fn new() -> Self { Self {} }
+7  | |          pub fn f(&self) { println!("A::f"); }
+...  |
+13 | |      #[with(A, A/M1)]
+   | | _______________-
+14 | ||     mixin M2 on A {
+   | ||____________- in this macro invocation
+...  |
+25 | |  }
+   | |  ^ this field does not implement `std::marker::Copy`
+   | |__|
+   |
+   |
+   = note: this error originates in the derive macro `Copy` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0204]: the trait `std::marker::Copy` cannot be implemented for this type
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:4:1
+   |
+4  | / ::classes::classes! {
+5  | |     class A {
+6  | |         pub fn new() -> Self { Self {} }
+7  | |         pub fn f(&self) { println!("A::f"); }
+...  |
+25 | | }
+   | | ^ this field does not implement `std::marker::Copy`
+   | |_|
+   |
+
+error[E0119]: conflicting implementations of trait `MixinWith<_M1::M1>` for type `_A::A`
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |        #[with(A, A/M2)]
+   |  _____________-  ^
+   | | _______________|
+10 | ||     mixin M1 on A {
+   | ||            ^
+   | ||____________|
+   |  |____________first implementation here
+   |               conflicting implementation for `_A::A`
+   |
+   = note: this error originates in the macro `::classes::_def_mixin_instance` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0119]: conflicting implementations of trait `MixinWith<_M2::M2>` for type `_A::A`
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |        #[with(A, A/M1)]
+   |  _____________-  ^
+   | | _______________|
+14 | ||     mixin M2 on A {
+   | ||            ^
+   | ||____________|
+   |  |____________first implementation here
+   |               conflicting implementation for `_A::A`
+   |
+   = note: this error originates in the macro `::classes::_def_mixin_instance` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |            ^
+   | |            |
+   | |____________cannot infer type
+   |              cannot call a method on a raw pointer with an unknown pointee type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |            ^
+   | |            |
+   | |____________cannot infer type
+   |              cannot call a method on a raw pointer with an unknown pointee type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_mixin_instance` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no associated item named `_from_inner` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: there is an associated function `from_inner` with a similar name
+  --> $WORKSPACE/classes/src/macros/mod.rs
+   |
+   -                 $super::_from_inner($crate::ptr::RcDyn::into_super(self.clone()._into_inner()))
+   +                 $super::from_inner($crate::ptr::RcDyn::into_super(self.clone()._into_inner()))
+   |
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no associated item named `_from_inner` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: there is an associated function `from_inner` with a similar name
+  --> $WORKSPACE/classes/src/macros/mod.rs
+   |
+   -                 $super::_from_inner($crate::ptr::RcDyn::into_super(self._into_inner()))
+   +                 $super::from_inner($crate::ptr::RcDyn::into_super(self._into_inner()))
+   |
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no associated item named `_from_inner` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: there is an associated function `from_inner` with a similar name
+  --> $WORKSPACE/classes/src/macros/mod.rs
+   |
+   -                 $super::_from_inner($crate::ptr::WeakDyn::into_super(self.clone()._into_inner()))
+   +                 $super::from_inner($crate::ptr::WeakDyn::into_super(self.clone()._into_inner()))
+   |
+
+error[E0599]: no associated item named `_from_inner` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:9:15
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________^
+10 | |     mixin M1 on A {
+   | |____________^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: there is an associated function `from_inner` with a similar name
+  --> $WORKSPACE/classes/src/macros/mod.rs
+   |
+   -                 $super::_from_inner($crate::ptr::WeakDyn::into_super(self._into_inner()))
+   +                 $super::from_inner($crate::ptr::WeakDyn::into_super(self._into_inner()))
+   |
+
+error[E0599]: no associated item named `_delegate_ctor` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:4:1
+   |
+4  |    ::classes::classes! {
+   |  __^
+5  | |      class A {
+6  | |          pub fn new() -> Self { Self {} }
+7  | |          pub fn f(&self) { println!("A::f"); }
+8  | |      }
+9  | |      #[with(A, A/M2)]
+   | | _______________-
+10 | ||     mixin M1 on A {
+   | ||____________- in this macro invocation
+...  |
+25 | |  }
+   | |__^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:11:39
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________-
+10 | |     mixin M1 on A {
+   | |____________- in this macro invocation
+11 |           pub override fn A::f(&self) { super.f(); println!("M1::f"); }
+   |                                         ^^^^^ cannot infer type
+   |
+   = note: this error originates in the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:10:11
+   |
+10 |     mixin M1 on A {
+   |           ^^ cannot infer type
+   |
+   = note: this error originates in the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no associated item named `DEFAULT` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:10:11
+   |
+10 |     mixin M1 on A {
+   |           ^^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no function or associated item named `init_mixin_header` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:4:1
+   |
+4  |    ::classes::classes! {
+   |  __^
+5  | |      class A {
+6  | |          pub fn new() -> Self { Self {} }
+7  | |          pub fn f(&self) { println!("A::f"); }
+8  | |      }
+9  | |      #[with(A, A/M2)]
+   | | _______________-
+10 | ||     mixin M1 on A {
+   | ||____________- in this macro invocation
+...  |
+25 | |  }
+   | |__^ function or associated item not found in `_`
+   |
+   = note: this error originates in the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no function or associated item named `init` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:10:11
+   |
+10 |     mixin M1 on A {
+   |           ^^ function or associated item not found in `_`
+   |
+   = note: this error originates in the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:11:37
+   |
+9  |       #[with(A, A/M2)]
+   |  _______________-
+10 | |     mixin M1 on A {
+   | |____________- in this macro invocation
+11 |           pub override fn A::f(&self) { super.f(); println!("M1::f"); }
+   |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot infer type
+   |
+   = note: this error originates in the macro `M1` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |            ^
+   | |            |
+   | |____________cannot infer type
+   |              cannot call a method on a raw pointer with an unknown pointee type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |            ^
+   | |            |
+   | |____________cannot infer type
+   |              cannot call a method on a raw pointer with an unknown pointee type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_mixin_instance` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no associated item named `_from_inner` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: there is an associated function `from_inner` with a similar name
+  --> $WORKSPACE/classes/src/macros/mod.rs
+   |
+   -                 $super::_from_inner($crate::ptr::RcDyn::into_super(self.clone()._into_inner()))
+   +                 $super::from_inner($crate::ptr::RcDyn::into_super(self.clone()._into_inner()))
+   |
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no associated item named `_from_inner` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: there is an associated function `from_inner` with a similar name
+  --> $WORKSPACE/classes/src/macros/mod.rs
+   |
+   -                 $super::_from_inner($crate::ptr::RcDyn::into_super(self._into_inner()))
+   +                 $super::from_inner($crate::ptr::RcDyn::into_super(self._into_inner()))
+   |
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no associated item named `_from_inner` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: there is an associated function `from_inner` with a similar name
+  --> $WORKSPACE/classes/src/macros/mod.rs
+   |
+   -                 $super::_from_inner($crate::ptr::WeakDyn::into_super(self.clone()._into_inner()))
+   +                 $super::from_inner($crate::ptr::WeakDyn::into_super(self.clone()._into_inner()))
+   |
+
+error[E0599]: no associated item named `_from_inner` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:13:15
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________^
+14 | |     mixin M2 on A {
+   | |____________^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` which comes from the expansion of the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: there is an associated function `from_inner` with a similar name
+  --> $WORKSPACE/classes/src/macros/mod.rs
+   |
+   -                 $super::_from_inner($crate::ptr::WeakDyn::into_super(self._into_inner()))
+   +                 $super::from_inner($crate::ptr::WeakDyn::into_super(self._into_inner()))
+   |
+
+error[E0599]: no associated item named `_delegate_ctor` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:4:1
+   |
+4  |    ::classes::classes! {
+   |  __^
+5  | |      class A {
+6  | |          pub fn new() -> Self { Self {} }
+7  | |          pub fn f(&self) { println!("A::f"); }
+...  |
+13 | |      #[with(A, A/M1)]
+   | | _______________-
+14 | ||     mixin M2 on A {
+   | ||____________- in this macro invocation
+...  |
+25 | |  }
+   | |__^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:15:39
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________-
+14 | |     mixin M2 on A {
+   | |____________- in this macro invocation
+15 |           pub override fn A::f(&self) { super.f(); println!("M2::f"); }
+   |                                         ^^^^^ cannot infer type
+   |
+   = note: this error originates in the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:14:11
+   |
+14 |     mixin M2 on A {
+   |           ^^ cannot infer type
+   |
+   = note: this error originates in the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no associated item named `DEFAULT` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:14:11
+   |
+14 |     mixin M2 on A {
+   |           ^^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no function or associated item named `init_mixin_header` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:4:1
+   |
+4  |    ::classes::classes! {
+   |  __^
+5  | |      class A {
+6  | |          pub fn new() -> Self { Self {} }
+7  | |          pub fn f(&self) { println!("A::f"); }
+...  |
+13 | |      #[with(A, A/M1)]
+   | | _______________-
+14 | ||     mixin M2 on A {
+   | ||____________- in this macro invocation
+...  |
+25 | |  }
+   | |__^ function or associated item not found in `_`
+   |
+   = note: this error originates in the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no function or associated item named `init` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:14:11
+   |
+14 |     mixin M2 on A {
+   |           ^^ function or associated item not found in `_`
+   |
+   = note: this error originates in the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:15:37
+   |
+13 |       #[with(A, A/M1)]
+   |  _______________-
+14 | |     mixin M2 on A {
+   | |____________- in this macro invocation
+15 |           pub override fn A::f(&self) { super.f(); println!("M2::f"); }
+   |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot infer type
+   |
+   = note: this error originates in the macro `M2` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^
+   |           |
+   |           cannot infer type
+   |           cannot call a method on a raw pointer with an unknown pointee type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^
+   |           |
+   |           cannot infer type
+   |           cannot call a method on a raw pointer with an unknown pointee type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:11
+   |
+17 |     class B extends A with M1, M2 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:21
+   |
+17 |     class B extends A with M1, M2 {
+   |                     ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:21
+   |
+17 |     class B extends A with M1, M2 {
+   |                     ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no associated item named `_from_inner` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:21
+   |
+17 |     class B extends A with M1, M2 {
+   |                     ^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: there is an associated function `from_inner` with a similar name
+  --> $WORKSPACE/classes/src/macros/mod.rs
+   |
+   -                 $super::_from_inner($crate::ptr::RcDyn::into_super(self.clone()._into_inner()))
+   +                 $super::from_inner($crate::ptr::RcDyn::into_super(self.clone()._into_inner()))
+   |
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:21
+   |
+17 |     class B extends A with M1, M2 {
+   |                     ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no associated item named `_from_inner` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:21
+   |
+17 |     class B extends A with M1, M2 {
+   |                     ^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: there is an associated function `from_inner` with a similar name
+  --> $WORKSPACE/classes/src/macros/mod.rs
+   |
+   -                 $super::_from_inner($crate::ptr::RcDyn::into_super(self._into_inner()))
+   +                 $super::from_inner($crate::ptr::RcDyn::into_super(self._into_inner()))
+   |
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:21
+   |
+17 |     class B extends A with M1, M2 {
+   |                     ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:21
+   |
+17 |     class B extends A with M1, M2 {
+   |                     ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no associated item named `_from_inner` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:21
+   |
+17 |     class B extends A with M1, M2 {
+   |                     ^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: there is an associated function `from_inner` with a similar name
+  --> $WORKSPACE/classes/src/macros/mod.rs
+   |
+   -                 $super::_from_inner($crate::ptr::WeakDyn::into_super(self.clone()._into_inner()))
+   +                 $super::from_inner($crate::ptr::WeakDyn::into_super(self.clone()._into_inner()))
+   |
+
+error[E0599]: no associated item named `_from_inner` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:21
+   |
+17 |     class B extends A with M1, M2 {
+   |                     ^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: there is an associated function `from_inner` with a similar name
+  --> $WORKSPACE/classes/src/macros/mod.rs
+   |
+   -                 $super::_from_inner($crate::ptr::WeakDyn::into_super(self._into_inner()))
+   +                 $super::from_inner($crate::ptr::WeakDyn::into_super(self._into_inner()))
+   |
+
+error[E0599]: no associated item named `_delegate_ctor` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:18:53
+   |
+4  | / ::classes::classes! {
+5  | |     class A {
+6  | |         pub fn new() -> Self { Self {} }
+7  | |         pub fn f(&self) { println!("A::f"); }
+...  |
+17 | |     class B extends A with M1, M2 {
+18 | |         pub fn new() -> Self { Self { super: Super::new(), .. } }
+   | |                                                    -^^^ associated item not found in `_`
+   | |____________________________________________________|
+   |
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:19:39
+   |
+19 |         pub override fn A::f(&self) { super.f(); println!("B::f"); }
+   |                                       ^^^^^ cannot infer type
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:21
+   |
+17 |     class B extends A with M1, M2 {
+   |                     ^ cannot infer type
+
+error[E0599]: no associated item named `DEFAULT` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:21
+   |
+17 |     class B extends A with M1, M2 {
+   |                     ^ associated item not found in `_`
+
+error[E0599]: no function or associated item named `init_mixin_header` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:21
+   |
+17 |     class B extends A with M1, M2 {
+   |                     ^ function or associated item not found in `_`
+
+error[E0599]: no function or associated item named `init` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:17:21
+   |
+17 |     class B extends A with M1, M2 {
+   |                     ^ function or associated item not found in `_`
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:19:37
+   |
+19 |         pub override fn A::f(&self) { super.f(); println!("B::f"); }
+   |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot infer type
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^
+   |           |
+   |           cannot infer type
+   |           cannot call a method on a raw pointer with an unknown pointee type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^
+   |           |
+   |           cannot infer type
+   |           cannot call a method on a raw pointer with an unknown pointee type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:11
+   |
+21 |     class C extends A with M2, M1 {
+   |           ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:21
+   |
+21 |     class C extends A with M2, M1 {
+   |                     ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:21
+   |
+21 |     class C extends A with M2, M1 {
+   |                     ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no associated item named `_from_inner` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:21
+   |
+21 |     class C extends A with M2, M1 {
+   |                     ^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: there is an associated function `from_inner` with a similar name
+  --> $WORKSPACE/classes/src/macros/mod.rs
+   |
+   -                 $super::_from_inner($crate::ptr::RcDyn::into_super(self.clone()._into_inner()))
+   +                 $super::from_inner($crate::ptr::RcDyn::into_super(self.clone()._into_inner()))
+   |
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:21
+   |
+21 |     class C extends A with M2, M1 {
+   |                     ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no associated item named `_from_inner` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:21
+   |
+21 |     class C extends A with M2, M1 {
+   |                     ^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: there is an associated function `from_inner` with a similar name
+  --> $WORKSPACE/classes/src/macros/mod.rs
+   |
+   -                 $super::_from_inner($crate::ptr::RcDyn::into_super(self._into_inner()))
+   +                 $super::from_inner($crate::ptr::RcDyn::into_super(self._into_inner()))
+   |
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:21
+   |
+21 |     class C extends A with M2, M1 {
+   |                     ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:21
+   |
+21 |     class C extends A with M2, M1 {
+   |                     ^ cannot infer type
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no associated item named `_from_inner` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:21
+   |
+21 |     class C extends A with M2, M1 {
+   |                     ^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: there is an associated function `from_inner` with a similar name
+  --> $WORKSPACE/classes/src/macros/mod.rs
+   |
+   -                 $super::_from_inner($crate::ptr::WeakDyn::into_super(self.clone()._into_inner()))
+   +                 $super::from_inner($crate::ptr::WeakDyn::into_super(self.clone()._into_inner()))
+   |
+
+error[E0599]: no associated item named `_from_inner` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:21
+   |
+21 |     class C extends A with M2, M1 {
+   |                     ^ associated item not found in `_`
+   |
+   = note: this error originates in the macro `::classes::_def_class_extends` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: there is an associated function `from_inner` with a similar name
+  --> $WORKSPACE/classes/src/macros/mod.rs
+   |
+   -                 $super::_from_inner($crate::ptr::WeakDyn::into_super(self._into_inner()))
+   +                 $super::from_inner($crate::ptr::WeakDyn::into_super(self._into_inner()))
+   |
+
+error[E0599]: no associated item named `_delegate_ctor` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:22:53
+   |
+4  | / ::classes::classes! {
+5  | |     class A {
+6  | |         pub fn new() -> Self { Self {} }
+7  | |         pub fn f(&self) { println!("A::f"); }
+...  |
+21 | |     class C extends A with M2, M1 {
+22 | |         pub fn new() -> Self { Self { super: Super::new(), .. } }
+   | |                                                    -^^^ associated item not found in `_`
+   | |____________________________________________________|
+   |
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:23:39
+   |
+23 |         pub override fn A::f(&self) { super.f(); println!("C::f"); }
+   |                                       ^^^^^ cannot infer type
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:21
+   |
+21 |     class C extends A with M2, M1 {
+   |                     ^ cannot infer type
+
+error[E0599]: no associated item named `DEFAULT` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:21
+   |
+21 |     class C extends A with M2, M1 {
+   |                     ^ associated item not found in `_`
+
+error[E0599]: no function or associated item named `init_mixin_header` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:21
+   |
+21 |     class C extends A with M2, M1 {
+   |                     ^ function or associated item not found in `_`
+
+error[E0599]: no function or associated item named `init` found for type `_` in the current scope
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:21:21
+   |
+21 |     class C extends A with M2, M1 {
+   |                     ^ function or associated item not found in `_`
+
+error[E0282]: type annotations needed
+  --> tests/fixme/correctness/mixin_mutual_withs.rs:23:37
+   |
+23 |         pub override fn A::f(&self) { super.f(); println!("C::f"); }
+   |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot infer type

@@ -1,0 +1,246 @@
+[FuncId(0) - "cast_box::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let mut _1: u32;
+    let _3: &u32;
+    let mut _5: *const A<'_>;
+    let _6: &A<'_>;
+    let mut _8: *const A<'_>;
+    scope 1 {
+        debug x => _1;
+        let _2: A<'_>;
+        scope 2 {
+            debug a => _2;
+            let _4: std::boxed::Box<A<'_>>;
+            scope 3 {
+                debug b => _4;
+                let mut _15: *const ();
+                let mut _16: usize;
+                let mut _17: usize;
+                let mut _18: usize;
+                let mut _19: usize;
+                let mut _20: bool;
+                let mut _21: *const ();
+                let mut _22: usize;
+                let mut _23: bool;
+                let mut _24: bool;
+                let mut _25: bool;
+                scope 4 {
+                    debug p1 => _5;
+                    let _7: A<'_>;
+                    let mut _9: *const ();
+                    let mut _10: usize;
+                    let mut _11: usize;
+                    let mut _12: usize;
+                    let mut _13: usize;
+                    let mut _14: bool;
+                    let mut _26: *const ();
+                    let mut _27: usize;
+                    let mut _28: usize;
+                    let mut _29: bool;
+                    let mut _30: bool;
+                    let mut _31: bool;
+                    let mut _32: bool;
+                    scope 5 {
+                        debug a => _7;
+                    }
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const 2_u32;
+        _3 = &_1;
+        _2 = A::<'_> { a: copy _3 };
+        _4 = std::boxed::Box::<A<'_>>::new(copy _2) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _8 = copy ((_4.0: std::ptr::Unique<A<'_>>).0: std::ptr::NonNull<A<'_>>) as *const A<'_> (Transmute);
+        _15 = copy _8 as *const () (PtrToPtr);
+        _16 = copy _15 as usize (Transmute);
+        _17 = AlignOf(A<'_>);
+        _18 = Sub(copy _17, const 1_usize);
+        _19 = BitAnd(copy _16, copy _18);
+        _20 = Eq(copy _19, const 0_usize);
+        assert(copy _20, "misaligned pointer dereference: address must be a multiple of {} but is {}", copy _17, copy _16) -> [success: bb4, unwind unreachable];
+    }
+
+    bb2: {
+        return;
+    }
+
+    bb3: {
+        _26 = copy _5 as *const () (PtrToPtr);
+        _27 = copy _26 as usize (Transmute);
+        _28 = SizeOf(A<'_>);
+        _29 = Ne(copy _28, const 0_usize);
+        _30 = Eq(copy _27, const 0_usize);
+        _31 = BitAnd(copy _30, copy _29);
+        _32 = Not(copy _31);
+        assert(copy _32, "null pointer dereference occurred") -> [success: bb6, unwind unreachable];
+    }
+
+    bb4: {
+        _21 = copy _8 as *const () (PtrToPtr);
+        _22 = copy _21 as usize (Transmute);
+        _23 = Eq(copy _22, const 0_usize);
+        _24 = BitAnd(copy _23, const true);
+        _25 = Not(copy _24);
+        assert(copy _25, "null pointer dereference occurred") -> [success: bb5, unwind unreachable];
+    }
+
+    bb5: {
+        _6 = &(*_8);
+        _5 = &raw const (*_6);
+        _9 = copy _5 as *const () (PtrToPtr);
+        _10 = copy _9 as usize (Transmute);
+        _11 = AlignOf(A<'_>);
+        _12 = Sub(copy _11, const 1_usize);
+        _13 = BitAnd(copy _10, copy _12);
+        _14 = Eq(copy _13, const 0_usize);
+        assert(copy _14, "misaligned pointer dereference: address must be a multiple of {} but is {}", copy _11, copy _10) -> [success: bb3, unwind unreachable];
+    }
+
+    bb6: {
+        _7 = copy (*_5);
+        drop(_4) -> [return: bb2, unwind continue];
+    }
+}
+
+[FuncId(1) - "alloc::boxed::{impl#0}::new<A<'{erased}>>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::boxed::Box::<T>::new(_1: T) -> std::boxed::Box<T> {
+    debug x => _1;
+    let mut _0: std::boxed::Box<T>;
+    let mut _2: usize;
+    let mut _3: usize;
+    let mut _4: *mut u8;
+    let mut _5: *const T;
+
+    bb0: {
+        _2 = SizeOf(T);
+        _3 = AlignOf(T);
+        _4 = alloc::alloc::exchange_malloc(move _2, move _3) -> [return: bb1, unwind: bb2];
+    }
+
+    bb1: {
+        _0 = ShallowInitBox(move _4, T);
+        _5 = copy ((_0.0: std::ptr::Unique<T>).0: std::ptr::NonNull<T>) as *const T (Transmute);
+        (*_5) = move _1;
+        return;
+    }
+
+    bb2 (cleanup): {
+        drop(_1) -> [return: bb3, unwind terminate(cleanup)];
+    }
+
+    bb3 (cleanup): {
+        resume;
+    }
+}
+
+[FuncId(2) - "alloc::alloc::exchange_malloc"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn alloc::alloc::exchange_malloc(_1: usize, _2: usize) -> *mut u8 {
+    debug size => _1;
+    debug align => _2;
+    let mut _0: *mut u8;
+    let _3: std::alloc::Layout;
+    let mut _4: std::result::Result<std::ptr::NonNull<[u8]>, std::alloc::AllocError>;
+    let mut _5: isize;
+    let mut _7: !;
+    scope 1 {
+        debug layout => _3;
+        let _6: std::ptr::NonNull<[u8]>;
+        scope 2 {
+            debug ptr => _6;
+            scope 5 (inlined std::ptr::NonNull::<[u8]>::as_mut_ptr) {
+                debug self => _6;
+                scope 6 (inlined std::ptr::NonNull::<[u8]>::as_non_null_ptr) {
+                    scope 7 (inlined std::ptr::NonNull::<[u8]>::cast::<u8>) {
+                        let mut _11: *mut [u8];
+                        scope 8 (inlined std::ptr::NonNull::<[u8]>::as_ptr) {
+                        }
+                    }
+                }
+                scope 9 (inlined std::ptr::NonNull::<u8>::as_ptr) {
+                }
+            }
+        }
+        scope 4 (inlined <std::alloc::Global as std::alloc::Allocator>::allocate) {
+            debug self => const alloc::alloc::exchange_malloc::promoted[0];
+            debug layout => _3;
+        }
+    }
+    scope 3 (inlined std::alloc::Layout::from_size_align_unchecked) {
+        debug size => _1;
+        debug align => _2;
+        let mut _8: bool;
+        let _9: ();
+        let mut _10: std::ptr::Alignment;
+    }
+
+    bb0: {
+        StorageLive(_8);
+        _8 = UbChecks();
+        switchInt(move _8) -> [0: bb5, otherwise: bb4];
+    }
+
+    bb1: {
+        unreachable;
+    }
+
+    bb2: {
+        _7 = std::alloc::handle_alloc_error(move _3) -> unwind continue;
+    }
+
+    bb3: {
+        _6 = copy ((_4 as Ok).0: std::ptr::NonNull<[u8]>);
+        StorageLive(_11);
+        _11 = copy _6 as *mut [u8] (Transmute);
+        _0 = copy _11 as *mut u8 (PtrToPtr);
+        StorageDead(_11);
+        StorageDead(_4);
+        return;
+    }
+
+    bb4: {
+        _9 = std::alloc::Layout::from_size_align_unchecked::precondition_check(copy _1, copy _2) -> [return: bb5, unwind unreachable];
+    }
+
+    bb5: {
+        StorageDead(_8);
+        StorageLive(_10);
+        _10 = copy _2 as std::ptr::Alignment (Transmute);
+        _3 = std::alloc::Layout { size: copy _1, align: move _10 };
+        StorageDead(_10);
+        StorageLive(_4);
+        _4 = std::alloc::Global::alloc_impl(const alloc::alloc::exchange_malloc::promoted[0], copy _3, const false) -> [return: bb6, unwind continue];
+    }
+
+    bb6: {
+        _5 = discriminant(_4);
+        switchInt(move _5) -> [0: bb3, 1: bb2, otherwise: bb1];
+    }
+}
+
+const alloc::alloc::exchange_malloc::promoted[0]: &std::alloc::Global = {
+    let mut _0: &std::alloc::Global;
+    let mut _1: std::alloc::Global;
+
+    bb0: {
+        _1 = std::alloc::Global;
+        _0 = &_1;
+        return;
+    }
+}
+

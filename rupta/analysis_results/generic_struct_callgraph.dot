@@ -1,0 +1,11 @@
+digraph {
+    0 [ label = "generic_struct::main" ]
+    1 [ label = "generic_struct::{impl#1}::get_ab<i32, f64>" ]
+    2 [ label = "generic_struct::{impl#0}::get_f<i32>" ]
+    3 [ label = "generic_struct::bar_fields<i32, f64>" ]
+    4 [ label = "generic_struct::foo_field<i32>" ]
+    0 -> 1 [ label = "bb2[1]" ]
+    0 -> 2 [ label = "bb0[8]" ]
+    0 -> 3 [ label = "bb3[2]" ]
+    0 -> 4 [ label = "bb1[0]" ]
+}

@@ -1,0 +1,16 @@
+digraph {
+    0 [ label = "obj_sens::{impl#0}::id2" ]
+    1 [ label = "obj_sens::{impl#0}::id" ]
+    2 [ label = "obj_sens::baz" ]
+    3 [ label = "obj_sens::{impl#0}::id3" ]
+    4 [ label = "obj_sens::bar" ]
+    5 [ label = "obj_sens::main" ]
+    0 -> 1 [ label = "bb0[0]" ]
+    2 -> 3 [ label = "bb0[4]" ]
+    4 -> 1 [ label = "bb1[2]" ]
+    5 -> 2 [ label = "bb1[0]" ]
+    3 -> 0 [ label = "bb0[0]" ]
+    2 -> 3 [ label = "bb1[2]" ]
+    4 -> 1 [ label = "bb0[4]" ]
+    5 -> 4 [ label = "bb0[0]" ]
+}

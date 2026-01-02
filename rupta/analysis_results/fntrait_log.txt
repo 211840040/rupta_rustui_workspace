@@ -1,0 +1,38 @@
+warning: variable does not need to be mutable
+  --> tests/unit_tests/fntrait.rs:61:19
+   |
+61 | fn fnonce_call<F>(mut f: F, x: &u32)
+   |                   ----^
+   |                   |
+   |                   help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` on by default
+
+Pointer analysis completed.
+Analysis time: 7ms 471us 918ns
+##########################################################
+Call Graph Statistics: 
+#Reachable functions (CS): 44
+#Reachable functions (CI): 31
+#Reachable unmonomorphized functions (CI): 17
+#Call graph edges (CS): 43
+#Call graph edges (CI): 41
+#Statically resolved calls: 38
+#Dynamically resolved calls: 3, #call graph edges: 3
+	#Dynamic dispatch calls: 0, #call graph edges: 0
+	#Fnptr calls: 3, #call graph edges: 3
+	#Dynamic Fn* trait calls: 0, #call graph edges: 0
+----------------------------------------------------------
+CS Points-to Statistics: 
+#Pointers: 118
+#Points-to relations: 118
+#Avg points-to size: 1
+CI Points-to Statistics: 
+#Pointers: 98
+#Points-to relations: 101
+#Avg points-to size: 1.030612244897959
+##########################################################
+Used Memory Before Analysis: 88 MB
+Max Memory in Analysis: 89 MB
+warning: 1 warning emitted
+

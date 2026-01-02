@@ -1,0 +1,463 @@
+[FuncId(0) - "maybeuninit_assume_init::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: A;
+    let mut _5: &dyn T;
+    let _6: &A;
+    let _7: ();
+    let _8: &dyn T;
+    let _10: &B;
+    let mut _12: &dyn T;
+    let _13: ();
+    let _14: &dyn T;
+    let _15: &A;
+    let _16: ();
+    let _17: &dyn T;
+    let _19: &&dyn T;
+    let _20: ();
+    let _21: &dyn T;
+    let mut _22: std::mem::MaybeUninit<&dyn T>;
+    let _24: &&dyn T;
+    let _25: ();
+    let _26: &dyn T;
+    let mut _27: std::mem::MaybeUninit<&dyn T>;
+    let _28: &C;
+    let _29: ();
+    let _30: &dyn T;
+    let mut _31: std::mem::MaybeUninit<&dyn T>;
+    let _32: ();
+    let _33: &dyn T;
+    let mut _34: std::mem::MaybeUninit<&dyn T>;
+    let mut _35: &std::mem::MaybeUninit<&dyn T>;
+    let mut _36: &std::mem::MaybeUninit<&dyn T>;
+    scope 1 {
+        debug a => const A {{  }};
+        let _2: B;
+        scope 2 {
+            debug b => const B {{  }};
+            let _3: C;
+            scope 3 {
+                debug c => const C {{  }};
+                let _4: std::mem::MaybeUninit<&dyn T>;
+                scope 4 {
+                    debug m1 => _4;
+                    let mut _9: &dyn T;
+                    scope 5 {
+                        debug t1 => _9;
+                        let _11: std::mem::MaybeUninit<&dyn T>;
+                        scope 6 {
+                            debug m2 => _11;
+                            let _18: &std::mem::MaybeUninit<&dyn T>;
+                            scope 7 {
+                                debug m3 => _18;
+                                let _23: E<'_>;
+                                scope 8 {
+                                    debug e => _23;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _6 = &_1;
+        _5 = copy _6 as &dyn T (PointerCoercion(Unsize, Implicit));
+        _4 = std::mem::MaybeUninit::<&dyn T>::new(move _5) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _8 = std::mem::MaybeUninit::<&dyn T>::assume_init(copy _4) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _7 = <dyn T as T>::foo(copy _8) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        _10 = &_2;
+        _9 = copy _10 as &dyn T (PointerCoercion(Unsize, Implicit));
+        _12 = copy _9;
+        _11 = move _12 as std::mem::MaybeUninit<&dyn T> (Transmute);
+        _14 = std::mem::MaybeUninit::<&dyn T>::assume_init(copy _11) -> [return: bb4, unwind continue];
+    }
+
+    bb4: {
+        _13 = <dyn T as T>::foo(copy _14) -> [return: bb5, unwind continue];
+    }
+
+    bb5: {
+        _15 = &_1;
+        _9 = copy _15 as &dyn T (PointerCoercion(Unsize, Implicit));
+        _17 = std::mem::MaybeUninit::<&dyn T>::assume_init(copy _11) -> [return: bb6, unwind continue];
+    }
+
+    bb6: {
+        _16 = <dyn T as T>::foo(copy _17) -> [return: bb7, unwind continue];
+    }
+
+    bb7: {
+        _19 = &_9;
+        _18 = copy _19 as &std::mem::MaybeUninit<&dyn T> (Transmute);
+        _22 = copy (*_18);
+        _21 = std::mem::MaybeUninit::<&dyn T>::assume_init(move _22) -> [return: bb8, unwind continue];
+    }
+
+    bb8: {
+        _20 = <dyn T as T>::foo(copy _21) -> [return: bb9, unwind continue];
+    }
+
+    bb9: {
+        _24 = &_9;
+        _23 = copy _24 as E<'_> (Transmute);
+        _35 = deref_copy (_23.0: &std::mem::MaybeUninit<&dyn T>);
+        _27 = copy (*_35);
+        _26 = std::mem::MaybeUninit::<&dyn T>::assume_init(move _27) -> [return: bb10, unwind continue];
+    }
+
+    bb10: {
+        _25 = <dyn T as T>::foo(copy _26) -> [return: bb11, unwind continue];
+    }
+
+    bb11: {
+        _28 = &_3;
+        _9 = copy _28 as &dyn T (PointerCoercion(Unsize, Implicit));
+        _31 = copy (*_18);
+        _30 = std::mem::MaybeUninit::<&dyn T>::assume_init(move _31) -> [return: bb12, unwind continue];
+    }
+
+    bb12: {
+        _29 = <dyn T as T>::foo(copy _30) -> [return: bb13, unwind continue];
+    }
+
+    bb13: {
+        _36 = deref_copy (_23.0: &std::mem::MaybeUninit<&dyn T>);
+        _34 = copy (*_36);
+        _33 = std::mem::MaybeUninit::<&dyn T>::assume_init(move _34) -> [return: bb14, unwind continue];
+    }
+
+    bb14: {
+        _32 = <dyn T as T>::foo(copy _33) -> [return: bb15, unwind continue];
+    }
+
+    bb15: {
+        return;
+    }
+}
+
+[FuncId(1) - "core::mem::maybe_uninit::{impl#2}::new<&'{erased} dyn [Binder { value: Trait(T), bound_vars: [] }] + '{erased}>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::mem::MaybeUninit::<T>::new(_1: T) -> std::mem::MaybeUninit<T> {
+    debug val => _1;
+    let mut _0: std::mem::MaybeUninit<T>;
+    let mut _2: std::mem::ManuallyDrop<T>;
+    scope 1 (inlined std::mem::ManuallyDrop::<T>::new) {
+    }
+
+    bb0: {
+        StorageLive(_2);
+        _2 = std::mem::ManuallyDrop::<T> { value: copy _1 };
+        _0 = std::mem::MaybeUninit::<T> { uninit: move _2 };
+        StorageDead(_2);
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn std::mem::MaybeUninit::<T>::new(_1: T) -> std::mem::MaybeUninit<T> {
+    debug val => _1;
+    let mut _0: std::mem::MaybeUninit<T>;
+    let mut _2: std::mem::ManuallyDrop<T>;
+    let mut _3: T;
+
+    bb0: {
+        StorageLive(_2);
+        StorageLive(_3);
+        _3 = move _1;
+        ConstEvalCounter;
+        _2 = std::mem::ManuallyDrop::<T>::new(move _3) -> [return: bb1, unwind: bb2];
+    }
+
+    bb1: {
+        StorageDead(_3);
+        _0 = std::mem::MaybeUninit::<T> { uninit: move _2 };
+        StorageDead(_2);
+        return;
+    }
+
+    bb2 (cleanup): {
+        resume;
+    }
+}
+
+[FuncId(2) - "core::mem::maybe_uninit::{impl#2}::assume_init<&'{erased} dyn [Binder { value: Trait(T), bound_vars: [] }] + '{erased}>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::mem::MaybeUninit::<T>::assume_init(_1: std::mem::MaybeUninit<T>) -> T {
+    debug self => _1;
+    let mut _0: T;
+    let _2: ();
+    let mut _3: std::mem::ManuallyDrop<T>;
+    scope 1 (inlined std::mem::ManuallyDrop::<T>::into_inner) {
+        debug slot => _3;
+    }
+
+    bb0: {
+        _2 = std::intrinsics::assert_inhabited::<T>() -> [return: bb1, unwind unreachable];
+    }
+
+    bb1: {
+        StorageLive(_3);
+        _3 = move (_1.1: std::mem::ManuallyDrop<T>);
+        _0 = move (_3.0: T);
+        StorageDead(_3);
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn std::mem::MaybeUninit::<T>::assume_init(_1: std::mem::MaybeUninit<T>) -> T {
+    debug self => _1;
+    let mut _0: T;
+    let _2: ();
+    let mut _3: std::mem::ManuallyDrop<T>;
+
+    bb0: {
+        StorageLive(_2);
+        ConstEvalCounter;
+        _2 = std::intrinsics::assert_inhabited::<T>() -> [return: bb1, unwind unreachable];
+    }
+
+    bb1: {
+        StorageDead(_2);
+        StorageLive(_3);
+        _3 = move (_1.1: std::mem::ManuallyDrop<T>);
+        ConstEvalCounter;
+        _0 = std::mem::ManuallyDrop::<T>::into_inner(move _3) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        StorageDead(_3);
+        return;
+    }
+}
+
+[FuncId(3) - "core::intrinsics::assert_inhabited<&'{erased} dyn [Binder { value: Trait(T), bound_vars: [] }] + '{erased}>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::intrinsics::assert_inhabited() -> () {
+    let mut _0: ();
+
+    bb0: {
+        unreachable;
+    }
+}
+
+// MIR FOR CTFE
+fn std::intrinsics::assert_inhabited() -> () {
+    let mut _0: ();
+
+    bb0: {
+        unreachable;
+    }
+}
+
+[FuncId(4) - "maybeuninit_assume_init::{impl#1}::foo"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/maybeuninit_assume_init.rs:22:1: 22:13>::foo(_1: &B) -> () {
+    debug self => _1;
+    let mut _0: ();
+    let _2: ();
+    let mut _3: std::fmt::Arguments<'_>;
+    let _4: &[&str; 1];
+
+    bb0: {
+        _4 = const <B as T>::foo::promoted[0];
+        _3 = core::fmt::rt::<impl std::fmt::Arguments<'_>>::new_const::<1>(copy _4) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _2 = std::io::_print(move _3) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+const <impl at tests/unit_tests/maybeuninit_assume_init.rs:22:1: 22:13>::foo::promoted[0]: &[&str; 1] = {
+    let mut _0: &[&str; 1];
+    let mut _1: [&str; 1];
+
+    bb0: {
+        _1 = [const "B::foo()\n"];
+        _0 = &_1;
+        return;
+    }
+}
+
+[FuncId(5) - "maybeuninit_assume_init::{impl#0}::foo"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/maybeuninit_assume_init.rs:18:1: 18:13>::foo(_1: &A) -> () {
+    debug self => _1;
+    let mut _0: ();
+    let _2: ();
+    let mut _3: std::fmt::Arguments<'_>;
+    let _4: &[&str; 1];
+
+    bb0: {
+        _4 = const <A as T>::foo::promoted[0];
+        _3 = core::fmt::rt::<impl std::fmt::Arguments<'_>>::new_const::<1>(copy _4) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _2 = std::io::_print(move _3) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+const <impl at tests/unit_tests/maybeuninit_assume_init.rs:18:1: 18:13>::foo::promoted[0]: &[&str; 1] = {
+    let mut _0: &[&str; 1];
+    let mut _1: [&str; 1];
+
+    bb0: {
+        _1 = [const "A::foo()\n"];
+        _0 = &_1;
+        return;
+    }
+}
+
+[FuncId(6) - "maybeuninit_assume_init::{impl#2}::foo"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/maybeuninit_assume_init.rs:26:1: 26:13>::foo(_1: &C) -> () {
+    debug self => _1;
+    let mut _0: ();
+    let _2: ();
+    let mut _3: std::fmt::Arguments<'_>;
+    let _4: &[&str; 1];
+
+    bb0: {
+        _4 = const <C as T>::foo::promoted[0];
+        _3 = core::fmt::rt::<impl std::fmt::Arguments<'_>>::new_const::<1>(copy _4) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _2 = std::io::_print(move _3) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+const <impl at tests/unit_tests/maybeuninit_assume_init.rs:26:1: 26:13>::foo::promoted[0]: &[&str; 1] = {
+    let mut _0: &[&str; 1];
+    let mut _1: [&str; 1];
+
+    bb0: {
+        _1 = [const "C::foo()\n"];
+        _0 = &_1;
+        return;
+    }
+}
+
+[FuncId(8) - "core::fmt::rt::{impl#2}::new_const<1>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn core::fmt::rt::<impl std::fmt::Arguments<'a>>::new_const(_1: &[&str; N]) -> std::fmt::Arguments<'_> {
+    debug pieces => _1;
+    let mut _0: std::fmt::Arguments<'_>;
+    let mut _2: &[&str];
+    let mut _3: &[core::fmt::rt::Argument<'_>];
+
+    bb0: {
+        StorageLive(_2);
+        _2 = copy _1 as &[&str] (PointerCoercion(Unsize, Implicit));
+        StorageLive(_3);
+        _3 = const core::fmt::rt::<impl std::fmt::Arguments<'_>>::new_const::<N>::promoted[0] as &[core::fmt::rt::Argument<'_>] (PointerCoercion(Unsize, Implicit));
+        _0 = std::fmt::Arguments::<'_> { pieces: move _2, fmt: const std::option::Option::<&[core::fmt::rt::Placeholder]>::None, args: move _3 };
+        StorageDead(_3);
+        StorageDead(_2);
+        return;
+    }
+}
+
+alloc13 (size: 16, align: 8) {
+    00 00 00 00 00 00 00 00 __ __ __ __ __ __ __ __ │ ........░░░░░░░░
+}
+
+const core::fmt::rt::<impl std::fmt::Arguments<'a>>::new_const::promoted[0]: &[core::fmt::rt::Argument<'_>; 0] = {
+    let mut _0: &[core::fmt::rt::Argument<'_>; 0];
+    let mut _1: [core::fmt::rt::Argument<'_>; 0];
+
+    bb0: {
+        _1 = [];
+        _0 = &_1;
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn core::fmt::rt::<impl std::fmt::Arguments<'a>>::new_const(_1: &[&str; N]) -> std::fmt::Arguments<'_> {
+    debug pieces => _1;
+    let mut _0: std::fmt::Arguments<'_>;
+    let _2: ();
+    let mut _3: &[&str];
+    let mut _4: &[&str; N];
+    let mut _5: std::option::Option<&[core::fmt::rt::Placeholder]>;
+    let mut _6: &[core::fmt::rt::Argument<'_>];
+    let mut _7: &[core::fmt::rt::Argument<'_>; 0];
+    let _8: &[core::fmt::rt::Argument<'_>; 0];
+    let _9: [core::fmt::rt::Argument<'_>; 0];
+    let mut _10: &[core::fmt::rt::Argument<'_>; 0];
+
+    bb0: {
+        StorageLive(_2);
+        _2 = const core::fmt::rt::<impl std::fmt::Arguments<'_>>::new_const::<N>::{constant#1};
+        StorageDead(_2);
+        StorageLive(_3);
+        StorageLive(_4);
+        _4 = &(*_1);
+        _3 = move _4 as &[&str] (PointerCoercion(Unsize, Implicit));
+        StorageDead(_4);
+        StorageLive(_5);
+        _5 = std::option::Option::<&[core::fmt::rt::Placeholder]>::None;
+        StorageLive(_6);
+        StorageLive(_7);
+        StorageLive(_8);
+        _10 = const core::fmt::rt::<impl std::fmt::Arguments<'_>>::new_const::<N>::promoted[0];
+        _8 = &(*_10);
+        _7 = &(*_8);
+        _6 = move _7 as &[core::fmt::rt::Argument<'_>] (PointerCoercion(Unsize, Implicit));
+        StorageDead(_7);
+        _0 = std::fmt::Arguments::<'_> { pieces: move _3, fmt: move _5, args: move _6 };
+        StorageDead(_8);
+        StorageDead(_6);
+        StorageDead(_5);
+        StorageDead(_3);
+        return;
+    }
+}
+
+[FuncId(9) - "std::io::stdio::_print"]
+Mir is unavailable
+

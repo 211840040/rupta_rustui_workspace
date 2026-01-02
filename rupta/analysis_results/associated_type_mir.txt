@@ -1,0 +1,100 @@
+[FuncId(0) - "associated_type::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: A;
+    let _4: ();
+    let mut _5: &B;
+    let _6: &i32;
+    let _7: &A;
+    let _8: ();
+    let mut _9: &B;
+    let _10: &i32;
+    let _11: &A;
+    scope 1 {
+        debug a => const A;
+        let _2: B;
+        scope 2 {
+            debug b => const B;
+            let _3: i32;
+            scope 3 {
+                debug x => _3;
+            }
+        }
+    }
+
+    bb0: {
+        _3 = const 2_i32;
+        _5 = &_2;
+        _6 = &_3;
+        _7 = &_1;
+        _4 = <B as Bar>::bar(move _5, copy _6, copy _7) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _9 = &_2;
+        _10 = &_3;
+        _11 = &_1;
+        _8 = <B as Bar>::baz(move _9, copy _10, copy _11) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+[FuncId(1) - "associated_type::Bar::bar<B>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn Bar::bar(_1: &Self, _2: &<Self as Bar>::N, _3: &<Self as Bar>::M) -> () {
+    debug self => _1;
+    debug _n => _2;
+    debug m => _3;
+    let mut _0: ();
+    let _4: ();
+
+    bb0: {
+        _4 = <<Self as Bar>::M as Foo>::foo(copy _3) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(2) - "associated_type::{impl#1}::baz"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/associated_type.rs:31:1: 31:15>::baz(_1: &B, _2: &i32, _3: &A) -> () {
+    debug self => _1;
+    debug _n => _2;
+    debug m => _3;
+    let mut _0: ();
+    let _4: ();
+
+    bb0: {
+        _4 = <A as Foo>::foo(copy _3) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(3) - "associated_type::Foo::foo<A>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn Foo::foo(_1: &Self) -> () {
+    debug self => _1;
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+

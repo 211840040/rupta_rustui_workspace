@@ -1,0 +1,8 @@
+digraph {
+    0 [ label = "closure_param::foo<Closure(DefId(0:6 ~ closure_param[3e8b]::main::{closure#0}), [i8, Binder { value: extern \"RustCall\" fn((&'^0 i32, &'^1 i32)) -> i32, bound_vars: [Region(BrAnon), Region(BrAnon)] }, ()])>" ]
+    1 [ label = "closure_param::main::{closure#0}<i8, Binder { value: extern \"RustCall\" fn((&'^0 i32, &'^1 i32)) -> i32, bound_vars: [Region(BrAnon), Region(BrAnon)] }, ()>" ]
+    2 [ label = "closure_param::main" ]
+    0 -> 1 [ label = "bb0[1]" ]
+    2 -> 0 [ label = "bb1[2]" ]
+    2 -> 1 [ label = "bb0[6]" ]
+}

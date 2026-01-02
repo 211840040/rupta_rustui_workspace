@@ -1,0 +1,482 @@
+[FuncId(0) - "dyn_fn_trait::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: ();
+    let _2: ();
+    let _3: ();
+    let _4: ();
+    let _5: ();
+
+    bb0: {
+        _1 = dyn_fn_item() -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _2 = dyn_fn_ptr() -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _3 = dyn_closure() -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        _4 = dyn_dyn_fn() -> [return: bb4, unwind continue];
+    }
+
+    bb4: {
+        _5 = dyn_foo() -> [return: bb5, unwind continue];
+    }
+
+    bb5: {
+        return;
+    }
+}
+
+[FuncId(1) - "dyn_fn_trait::dyn_fn_item"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn dyn_fn_item() -> () {
+    let mut _0: ();
+    let _1: &u32;
+    let _2: ();
+    let mut _3: &dyn for<'a> std::ops::Fn(&'a u32) -> u32;
+    let _4: &for<'a> fn(&'a u32) -> u32 {times2};
+    let _5: ();
+    let mut _6: &mut dyn for<'a> std::ops::FnMut(&'a u32) -> u32;
+    let mut _7: &mut for<'a> fn(&'a u32) -> u32 {times2};
+    let mut _8: for<'a> fn(&'a u32) -> u32 {times2};
+    scope 1 {
+        debug x => _1;
+    }
+
+    bb0: {
+        _1 = const dyn_fn_item::promoted[1];
+        _4 = const dyn_fn_item::promoted[0];
+        _3 = copy _4 as &dyn for<'a> std::ops::Fn(&'a u32) -> u32 (PointerCoercion(Unsize, Implicit));
+        _2 = dyn_fn_call(move _3, copy _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _7 = &mut _8;
+        _6 = copy _7 as &mut dyn for<'a> std::ops::FnMut(&'a u32) -> u32 (PointerCoercion(Unsize, Implicit));
+        _5 = dyn_fnmut_call(move _6, copy _1) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+const dyn_fn_item::promoted[0]: &for<'a> fn(&'a u32) -> u32 {times2} = {
+    let mut _0: &for<'a> fn(&'a u32) -> u32 {times2};
+    let mut _1: for<'a> fn(&'a u32) -> u32 {times2};
+
+    bb0: {
+        _1 = times2;
+        _0 = &_1;
+        return;
+    }
+}
+
+const dyn_fn_item::promoted[1]: &u32 = {
+    let mut _0: &u32;
+    let mut _1: u32;
+
+    bb0: {
+        _1 = const 1_u32;
+        _0 = &_1;
+        return;
+    }
+}
+
+[FuncId(2) - "dyn_fn_trait::dyn_fn_ptr"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn dyn_fn_ptr() -> () {
+    let mut _0: ();
+    let _1: &u32;
+    let _3: ();
+    let mut _4: &dyn for<'a> std::ops::Fn(&'a u32) -> u32;
+    let _5: &for<'a> fn(&'a u32) -> u32;
+    let _6: ();
+    let mut _7: &mut dyn for<'a> std::ops::FnMut(&'a u32) -> u32;
+    let mut _8: &mut for<'a> fn(&'a u32) -> u32;
+    scope 1 {
+        debug x => _1;
+        let mut _2: for<'a> fn(&'a u32) -> u32;
+        scope 2 {
+            debug fp => _2;
+        }
+    }
+
+    bb0: {
+        _1 = const dyn_fn_ptr::promoted[0];
+        _2 = times2 as for<'a> fn(&'a u32) -> u32 (PointerCoercion(ReifyFnPointer, Implicit));
+        _5 = &_2;
+        _4 = copy _5 as &dyn for<'a> std::ops::Fn(&'a u32) -> u32 (PointerCoercion(Unsize, Implicit));
+        _3 = dyn_fn_call(move _4, copy _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _8 = &mut _2;
+        _7 = copy _8 as &mut dyn for<'a> std::ops::FnMut(&'a u32) -> u32 (PointerCoercion(Unsize, Implicit));
+        _6 = dyn_fnmut_call(move _7, copy _1) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+const dyn_fn_ptr::promoted[0]: &u32 = {
+    let mut _0: &u32;
+    let mut _1: u32;
+
+    bb0: {
+        _1 = const 2_u32;
+        _0 = &_1;
+        return;
+    }
+}
+
+[FuncId(3) - "dyn_fn_trait::dyn_closure"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn dyn_closure() -> () {
+    let mut _0: ();
+    let mut _1: {closure@tests/unit_tests/dyn_fn_trait.rs:68:17: 68:26};
+    let _3: ();
+    let mut _4: &dyn for<'a> std::ops::Fn(&'a u32) -> u32;
+    let _5: &{closure@tests/unit_tests/dyn_fn_trait.rs:68:17: 68:26};
+    let _6: ();
+    let mut _7: &mut dyn for<'a> std::ops::FnMut(&'a u32) -> u32;
+    let mut _8: &mut {closure@tests/unit_tests/dyn_fn_trait.rs:68:17: 68:26};
+    scope 1 {
+        debug c => const ZeroSized: {closure@tests/unit_tests/dyn_fn_trait.rs:68:17: 68:26};
+        let _2: &u32;
+        scope 2 {
+            debug x => _2;
+        }
+    }
+
+    bb0: {
+        _2 = const dyn_closure::promoted[0];
+        _5 = &_1;
+        _4 = copy _5 as &dyn for<'a> std::ops::Fn(&'a u32) -> u32 (PointerCoercion(Unsize, Implicit));
+        _3 = dyn_fn_call(move _4, copy _2) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _8 = &mut _1;
+        _7 = copy _8 as &mut dyn for<'a> std::ops::FnMut(&'a u32) -> u32 (PointerCoercion(Unsize, Implicit));
+        _6 = dyn_fnmut_call(move _7, copy _2) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+const dyn_closure::promoted[0]: &u32 = {
+    let mut _0: &u32;
+    let mut _1: u32;
+
+    bb0: {
+        _1 = const 3_u32;
+        _0 = &_1;
+        return;
+    }
+}
+
+[FuncId(4) - "dyn_fn_trait::dyn_dyn_fn"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn dyn_dyn_fn() -> () {
+    let mut _0: ();
+    let _1: &u32;
+    let _3: &for<'a> fn(&'a u32) -> u32 {times2};
+    let _5: &&dyn for<'a> std::ops::Fn(&'a u32) -> u32;
+    let _6: ();
+    let mut _7: &dyn for<'a> std::ops::Fn(&'a u32) -> u32;
+    let _8: &&dyn for<'a> std::ops::Fn(&'a u32) -> u32;
+    let _9: ();
+    let mut _10: &mut dyn for<'a> std::ops::FnMut(&'a u32) -> u32;
+    let mut _11: &mut &dyn for<'a> std::ops::Fn(&'a u32) -> u32;
+    scope 1 {
+        debug x => _1;
+        let _2: &dyn for<'a> std::ops::Fn(&'a u32) -> u32;
+        scope 2 {
+            debug f => _2;
+            let mut _4: &dyn for<'a> std::ops::Fn(&'a u32) -> u32;
+            scope 3 {
+                debug f2 => _4;
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const dyn_dyn_fn::promoted[1];
+        _3 = const dyn_dyn_fn::promoted[0];
+        _2 = copy _3 as &dyn for<'a> std::ops::Fn(&'a u32) -> u32 (PointerCoercion(Unsize, Implicit));
+        _5 = &_2;
+        _4 = copy _5 as &dyn for<'a> std::ops::Fn(&'a u32) -> u32 (PointerCoercion(Unsize, Implicit));
+        _8 = &_4;
+        _7 = copy _8 as &dyn for<'a> std::ops::Fn(&'a u32) -> u32 (PointerCoercion(Unsize, Implicit));
+        _6 = dyn_fn_call(move _7, copy _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _11 = &mut _4;
+        _10 = copy _11 as &mut dyn for<'a> std::ops::FnMut(&'a u32) -> u32 (PointerCoercion(Unsize, Implicit));
+        _9 = dyn_fnmut_call(move _10, copy _1) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+const dyn_dyn_fn::promoted[0]: &for<'a> fn(&'a u32) -> u32 {times2} = {
+    let mut _0: &for<'a> fn(&'a u32) -> u32 {times2};
+    let mut _1: for<'a> fn(&'a u32) -> u32 {times2};
+
+    bb0: {
+        _1 = times2;
+        _0 = &_1;
+        return;
+    }
+}
+
+const dyn_dyn_fn::promoted[1]: &u32 = {
+    let mut _0: &u32;
+    let mut _1: u32;
+
+    bb0: {
+        _1 = const 4_u32;
+        _0 = &_1;
+        return;
+    }
+}
+
+[FuncId(5) - "dyn_fn_trait::dyn_foo"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn dyn_foo() -> () {
+    let mut _0: ();
+    let _1: &u32;
+    let _3: ();
+    let mut _4: &mut dyn for<'a> std::ops::FnMut(&'a u32) -> u32;
+    let mut _5: &mut Foo;
+    scope 1 {
+        debug x => _1;
+        let mut _2: Foo;
+        scope 2 {
+            debug foo => _2;
+        }
+    }
+
+    bb0: {
+        _1 = const dyn_foo::promoted[0];
+        _2 = Foo { a: const 3_u32 };
+        _5 = &mut _2;
+        _4 = copy _5 as &mut dyn for<'a> std::ops::FnMut(&'a u32) -> u32 (PointerCoercion(Unsize, Implicit));
+        _3 = dyn_fnmut_call(move _4, copy _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+const dyn_foo::promoted[0]: &u32 = {
+    let mut _0: &u32;
+    let mut _1: u32;
+
+    bb0: {
+        _1 = const 5_u32;
+        _0 = &_1;
+        return;
+    }
+}
+
+[FuncId(8) - "dyn_fn_trait::dyn_fn_call"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn dyn_fn_call(_1: &dyn for<'a> std::ops::Fn(&'a u32) -> u32, _2: &u32) -> () {
+    debug f => _1;
+    debug x => _2;
+    let mut _0: ();
+    let _3: u32;
+    let mut _4: (&u32,);
+
+    bb0: {
+        _4 = (copy _2,);
+        _3 = <dyn for<'a> std::ops::Fn(&'a u32) -> u32 as std::ops::Fn<(&u32,)>>::call(copy _1, move _4) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(9) - "dyn_fn_trait::dyn_fnmut_call"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn dyn_fnmut_call(_1: &mut dyn for<'a> std::ops::FnMut(&'a u32) -> u32, _2: &u32) -> () {
+    debug f => _1;
+    debug x => _2;
+    let mut _0: ();
+    let _3: u32;
+    let mut _4: (&u32,);
+
+    bb0: {
+        _4 = (copy _2,);
+        _3 = <dyn for<'a> std::ops::FnMut(&'a u32) -> u32 as std::ops::FnMut<(&u32,)>>::call_mut(copy _1, move _4) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(11) - "dyn_fn_trait::times2"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn times2(_1: &u32) -> u32 {
+    debug x => _1;
+    let mut _0: u32;
+    let mut _2: u32;
+    let mut _3: (u32, bool);
+
+    bb0: {
+        _2 = copy (*_1);
+        _3 = MulWithOverflow(const 2_u32, copy _2);
+        assert(!move (_3.1: bool), "attempt to compute `{} * {}`, which would overflow", const 2_u32, move _2) -> [success: bb1, unwind continue];
+    }
+
+    bb1: {
+        _0 = move (_3.0: u32);
+        return;
+    }
+}
+
+[FuncId(16) - "dyn_fn_trait::dyn_closure::{closure#0}<i8, Binder { value: extern \"RustCall\" fn((&'^0 u32,)) -> u32, bound_vars: [Region(BrAnon)] }, ()>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn dyn_closure::{closure#0}(_1: &{closure@tests/unit_tests/dyn_fn_trait.rs:68:17: 68:26}, _2: &u32) -> u32 {
+    debug x => _2;
+    let mut _0: u32;
+    let mut _3: u32;
+    let mut _4: (u32, bool);
+
+    bb0: {
+        _3 = copy (*_2);
+        _4 = MulWithOverflow(copy _3, const 2_u32);
+        assert(!move (_4.1: bool), "attempt to compute `{} * {}`, which would overflow", move _3, const 2_u32) -> [success: bb1, unwind continue];
+    }
+
+    bb1: {
+        _0 = move (_4.0: u32);
+        return;
+    }
+}
+
+[FuncId(17) - "core::ops::function::impls::{impl#0}::call<(&'{erased} u32,), dyn [Binder { value: Trait(std::ops::Fn<(&u32,)>), bound_vars: [Region(BrAnon)] }, Binder { value: Projection(ExistentialProjection { def_id: DefId(2:3925 ~ core[ce1f]::ops::function::FnOnce::Output), args: [(&'^0 u32,)], term: Term::Ty(u32), use_existential_projection_new_instead: () }), bound_vars: [Region(BrAnon)] }] + '{erased}>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::ops::function::impls::<impl std::ops::Fn<A> for &F>::call(_1: &&F, _2: A) -> <F as std::ops::FnOnce<A>>::Output {
+    debug self => _1;
+    debug args => _2;
+    let mut _0: <F as std::ops::FnOnce<A>>::Output;
+    let mut _3: &F;
+
+    bb0: {
+        _3 = copy (*_1);
+        _0 = <F as std::ops::Fn<A>>::call(move _3, move _2) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(18) - "core::ops::function::impls::{impl#1}::call_mut<(&'{erased} u32,), dyn [Binder { value: Trait(std::ops::Fn<(&u32,)>), bound_vars: [Region(BrAnon)] }, Binder { value: Projection(ExistentialProjection { def_id: DefId(2:3925 ~ core[ce1f]::ops::function::FnOnce::Output), args: [(&'^0 u32,)], term: Term::Ty(u32), use_existential_projection_new_instead: () }), bound_vars: [Region(BrAnon)] }] + '{erased}>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::ops::function::impls::<impl std::ops::FnMut<A> for &F>::call_mut(_1: &mut &F, _2: A) -> <F as std::ops::FnOnce<A>>::Output {
+    debug self => _1;
+    debug args => _2;
+    let mut _0: <F as std::ops::FnOnce<A>>::Output;
+    let mut _3: &F;
+
+    bb0: {
+        _3 = copy (*_1);
+        _0 = <F as std::ops::Fn<A>>::call(move _3, move _2) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(19) - "dyn_fn_trait::{impl#1}::call_mut<>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/dyn_fn_trait.rs:32:1: 32:29>::call_mut(_1: &mut Foo, _2: (&u32,)) -> u32 {
+    debug self => _1;
+    debug b => _2;
+    let mut _0: u32;
+    let mut _3: Foo;
+
+    bb0: {
+        _3 = copy (*_1);
+        _0 = <Foo as std::ops::FnOnce<(&u32,)>>::call_once(move _3, copy _2) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(20) - "dyn_fn_trait::{impl#0}::call_once<>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/dyn_fn_trait.rs:25:1: 25:30>::call_once(_1: Foo, _2: (&u32,)) -> u32 {
+    debug self => _1;
+    debug b => _2;
+    let mut _0: u32;
+    let mut _3: u32;
+    let mut _4: u32;
+    let mut _5: (u32, bool);
+    let mut _6: &u32;
+
+    bb0: {
+        _3 = copy (_1.0: u32);
+        _6 = deref_copy (_2.0: &u32);
+        _4 = copy (*_6);
+        _5 = AddWithOverflow(copy _3, copy _4);
+        assert(!move (_5.1: bool), "attempt to compute `{} + {}`, which would overflow", move _3, move _4) -> [success: bb1, unwind continue];
+    }
+
+    bb1: {
+        _0 = move (_5.0: u32);
+        return;
+    }
+}
+

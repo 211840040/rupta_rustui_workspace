@@ -1,0 +1,24 @@
+FuncId(0) - "generic_func::main"
+	FuncId(0)::local_4.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_6.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_5 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_2 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_3 (1) ==> { FuncId(0)::local_1 }
+FuncId(1) - "generic_func::generic_id_wrapper<&'{erased} i32>"
+	FuncId(1)::ret (1) ==> { FuncId(0)::local_1 }
+	FuncId(1)::param_1 (1) ==> { FuncId(0)::local_1 }
+FuncId(2) - "generic_func::generic_id_wrapper<Foo<'{erased}>>"
+	FuncId(2)::param_1.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(2)::ret.0 (1) ==> { FuncId(0)::local_1 }
+FuncId(3) - "generic_func::multi_generics<&'{erased} i32, Foo<'{erased}>>"
+	FuncId(3)::local_3 (1) ==> { FuncId(0)::local_1 }
+	FuncId(3)::local_5.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(3)::param_1 (1) ==> { FuncId(0)::local_1 }
+	FuncId(3)::local_4.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(3)::param_2.0 (1) ==> { FuncId(0)::local_1 }
+FuncId(4) - "generic_func::generic_id<&'{erased} i32>"
+	FuncId(4)::ret (1) ==> { FuncId(0)::local_1 }
+	FuncId(4)::param_1 (1) ==> { FuncId(0)::local_1 }
+FuncId(5) - "generic_func::generic_id<Foo<'{erased}>>"
+	FuncId(5)::ret.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(5)::param_1.0 (1) ==> { FuncId(0)::local_1 }

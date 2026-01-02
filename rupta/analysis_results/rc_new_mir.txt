@@ -1,0 +1,579 @@
+[FuncId(0) - "rc_new::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: std::rc::Rc<i32>;
+    let mut _3: &std::rc::Rc<i32>;
+    scope 1 {
+        debug five => _1;
+        let _2: std::rc::Rc<i32>;
+        scope 2 {
+            debug _five_clone => _2;
+        }
+    }
+
+    bb0: {
+        _1 = std::rc::Rc::<i32>::new(const 5_i32) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _3 = &_1;
+        _2 = <std::rc::Rc<i32> as std::clone::Clone>::clone(move _3) -> [return: bb2, unwind: bb5];
+    }
+
+    bb2: {
+        drop(_2) -> [return: bb3, unwind: bb5];
+    }
+
+    bb3: {
+        drop(_1) -> [return: bb4, unwind continue];
+    }
+
+    bb4: {
+        return;
+    }
+
+    bb5 (cleanup): {
+        drop(_1) -> [return: bb6, unwind terminate(cleanup)];
+    }
+
+    bb6 (cleanup): {
+        resume;
+    }
+}
+
+[FuncId(1) - "alloc::rc::{impl#8}::new<i32>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::rc::Rc::<T>::new(_1: T) -> std::rc::Rc<T> {
+    debug value => _1;
+    let mut _0: std::rc::Rc<T>;
+    let mut _2: std::ptr::NonNull<std::rc::RcInner<T>>;
+    let mut _3: std::boxed::Box<std::rc::RcInner<T>>;
+    let mut _4: std::rc::RcInner<T>;
+    scope 1 (inlined std::cell::Cell::<usize>::new) {
+        debug value => const 1_usize;
+        scope 2 (inlined std::cell::UnsafeCell::<usize>::new) {
+        }
+    }
+    scope 3 (inlined std::cell::Cell::<usize>::new) {
+        debug value => const 1_usize;
+        scope 4 (inlined std::cell::UnsafeCell::<usize>::new) {
+        }
+    }
+    scope 5 (inlined std::boxed::Box::<std::rc::RcInner<T>>::leak::<'_>) {
+        debug b => _3;
+        let mut _7: std::ptr::NonNull<std::rc::RcInner<T>>;
+        scope 6 (inlined std::boxed::Box::<std::rc::RcInner<T>>::into_raw) {
+            debug (((b: std::boxed::Box<std::rc::RcInner<T>>).0: std::ptr::Unique<std::rc::RcInner<T>>).0: std::ptr::NonNull<std::rc::RcInner<T>>) => _7;
+            debug (((b: std::boxed::Box<std::rc::RcInner<T>>).0: std::ptr::Unique<std::rc::RcInner<T>>).1: std::marker::PhantomData<std::rc::RcInner<T>>) => const ZeroSized: std::marker::PhantomData<std::rc::RcInner<T>>;
+            debug ((b: std::boxed::Box<std::rc::RcInner<T>>).1: std::alloc::Global) => const std::alloc::Global;
+            scope 7 (inlined std::boxed::Box::<std::rc::RcInner<T>>::into_raw_with_allocator) {
+                debug (((b: std::boxed::Box<std::rc::RcInner<T>>).0: std::ptr::Unique<std::rc::RcInner<T>>).0: std::ptr::NonNull<std::rc::RcInner<T>>) => _7;
+                debug (((b: std::boxed::Box<std::rc::RcInner<T>>).0: std::ptr::Unique<std::rc::RcInner<T>>).1: std::marker::PhantomData<std::rc::RcInner<T>>) => const ZeroSized: std::marker::PhantomData<std::rc::RcInner<T>>;
+                debug ((b: std::boxed::Box<std::rc::RcInner<T>>).1: std::alloc::Global) => const std::alloc::Global;
+                let mut _6: *const std::rc::RcInner<T>;
+                scope 8 {
+                    let _5: *mut std::rc::RcInner<T>;
+                    scope 9 {
+                        scope 10 {
+                        }
+                        scope 13 (inlined <std::mem::ManuallyDrop<std::boxed::Box<std::rc::RcInner<T>>> as std::ops::Deref>::deref) {
+                        }
+                        scope 14 (inlined std::ptr::read::<std::alloc::Global>) {
+                        }
+                    }
+                    scope 12 (inlined <std::mem::ManuallyDrop<std::boxed::Box<std::rc::RcInner<T>>> as std::ops::DerefMut>::deref_mut) {
+                    }
+                }
+                scope 11 (inlined std::mem::ManuallyDrop::<std::boxed::Box<std::rc::RcInner<T>>>::new) {
+                }
+            }
+        }
+    }
+    scope 15 (inlined #[track_caller] <&mut std::rc::RcInner<T> as std::convert::Into<std::ptr::NonNull<std::rc::RcInner<T>>>>::into) {
+        debug self => _5;
+        scope 16 (inlined <std::ptr::NonNull<std::rc::RcInner<T>> as std::convert::From<&mut std::rc::RcInner<T>>>::from) {
+            debug r => _5;
+            scope 17 (inlined std::ptr::NonNull::<std::rc::RcInner<T>>::from_mut) {
+                debug r => _5;
+                let mut _8: *const std::rc::RcInner<T>;
+            }
+        }
+    }
+    scope 18 (inlined std::rc::Rc::<T>::from_inner) {
+        debug ptr => _2;
+        scope 19 (inlined std::rc::Rc::<T>::from_inner_in) {
+        }
+    }
+
+    bb0: {
+        StorageLive(_2);
+        StorageLive(_3);
+        StorageLive(_4);
+        _4 = std::rc::RcInner::<T> { strong: const std::cell::Cell::<usize> {{ value: std::cell::UnsafeCell::<usize> {{ value: 1_usize }} }}, weak: const std::cell::Cell::<usize> {{ value: std::cell::UnsafeCell::<usize> {{ value: 1_usize }} }}, value: move _1 };
+        _3 = std::boxed::Box::<std::rc::RcInner<T>>::new(move _4) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_4);
+        StorageLive(_7);
+        _7 = move ((_3.0: std::ptr::Unique<std::rc::RcInner<T>>).0: std::ptr::NonNull<std::rc::RcInner<T>>);
+        StorageLive(_6);
+        _6 = copy _7 as *const std::rc::RcInner<T> (Transmute);
+        _5 = &raw mut (*_6);
+        StorageDead(_6);
+        StorageDead(_7);
+        StorageDead(_3);
+        StorageLive(_8);
+        _8 = copy _5 as *const std::rc::RcInner<T> (PtrToPtr);
+        _2 = std::ptr::NonNull::<std::rc::RcInner<T>> { pointer: move _8 };
+        StorageDead(_8);
+        _0 = std::rc::Rc::<T> { ptr: copy _2, phantom: const ZeroSized: std::marker::PhantomData<std::rc::RcInner<T>>, alloc: const std::alloc::Global };
+        StorageDead(_2);
+        return;
+    }
+}
+
+[FuncId(2) - "alloc::rc::{impl#33}::clone<i32, std::alloc::Global>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <std::rc::Rc<T, A> as std::clone::Clone>::clone(_1: &std::rc::Rc<T, A>) -> std::rc::Rc<T, A> {
+    debug self => _1;
+    let mut _0: std::rc::Rc<T, A>;
+    let _2: ();
+    let _3: &std::rc::RcInner<T>;
+    let mut _4: std::ptr::NonNull<std::rc::RcInner<T>>;
+    let mut _5: A;
+    let mut _6: &A;
+    scope 1 (inlined std::rc::Rc::<T, A>::inner) {
+        debug self => _1;
+        scope 2 (inlined std::ptr::NonNull::<std::rc::RcInner<T>>::as_ref::<'_>) {
+            let _7: *const std::rc::RcInner<T>;
+            let mut _8: std::ptr::NonNull<std::rc::RcInner<T>>;
+            scope 3 (inlined std::ptr::NonNull::<std::rc::RcInner<T>>::as_ptr) {
+            }
+            scope 4 (inlined std::ptr::mut_ptr::<impl *mut std::rc::RcInner<T>>::cast_const) {
+            }
+        }
+    }
+    scope 5 (inlined std::rc::Rc::<T, A>::from_inner_in) {
+        debug ptr => _4;
+        debug alloc => _5;
+    }
+
+    bb0: {
+        StorageLive(_8);
+        StorageLive(_7);
+        _8 = copy ((*_1).0: std::ptr::NonNull<std::rc::RcInner<T>>);
+        _7 = copy _8 as *const std::rc::RcInner<T> (Transmute);
+        _3 = &(*_7);
+        StorageDead(_7);
+        StorageDead(_8);
+        _2 = <std::rc::RcInner<T> as std::rc::RcInnerPtr>::inc_strong(move _3) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageLive(_4);
+        _4 = copy ((*_1).0: std::ptr::NonNull<std::rc::RcInner<T>>);
+        StorageLive(_5);
+        StorageLive(_6);
+        _6 = &((*_1).2: A);
+        _5 = <A as std::clone::Clone>::clone(move _6) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        StorageDead(_6);
+        _0 = std::rc::Rc::<T, A> { ptr: copy _4, phantom: const ZeroSized: std::marker::PhantomData<std::rc::RcInner<T>>, alloc: copy _5 };
+        StorageDead(_5);
+        StorageDead(_4);
+        return;
+    }
+}
+
+[FuncId(3) - "alloc::boxed::{impl#0}::new<std::rc::RcInner<i32>>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::boxed::Box::<T>::new(_1: T) -> std::boxed::Box<T> {
+    debug x => _1;
+    let mut _0: std::boxed::Box<T>;
+    let mut _2: usize;
+    let mut _3: usize;
+    let mut _4: *mut u8;
+    let mut _5: *const T;
+
+    bb0: {
+        _2 = SizeOf(T);
+        _3 = AlignOf(T);
+        _4 = alloc::alloc::exchange_malloc(move _2, move _3) -> [return: bb1, unwind: bb2];
+    }
+
+    bb1: {
+        _0 = ShallowInitBox(move _4, T);
+        _5 = copy ((_0.0: std::ptr::Unique<T>).0: std::ptr::NonNull<T>) as *const T (Transmute);
+        (*_5) = move _1;
+        return;
+    }
+
+    bb2 (cleanup): {
+        drop(_1) -> [return: bb3, unwind terminate(cleanup)];
+    }
+
+    bb3 (cleanup): {
+        resume;
+    }
+}
+
+[FuncId(4) - "alloc::rc::RcInnerPtr::inc_strong<std::rc::RcInner<i32>>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::rc::RcInnerPtr::inc_strong(_1: &Self) -> () {
+    debug self => _1;
+    let mut _0: ();
+    let _2: usize;
+    let mut _3: bool;
+    let _5: &std::cell::Cell<usize>;
+    let mut _6: bool;
+    let _7: !;
+    scope 1 {
+        debug strong => _2;
+        let _4: usize;
+        scope 2 {
+            debug strong => _4;
+            scope 7 (inlined std::cell::Cell::<usize>::set) {
+                debug self => _5;
+                debug val => _4;
+                scope 8 (inlined std::cell::Cell::<usize>::replace) {
+                    debug self => _5;
+                    debug val => _4;
+                    let mut _10: *mut usize;
+                    scope 9 (inlined std::cell::UnsafeCell::<usize>::get) {
+                        let mut _11: *const std::cell::UnsafeCell<usize>;
+                    }
+                    scope 10 (inlined std::mem::replace::<usize>) {
+                        scope 11 {
+                        }
+                    }
+                }
+            }
+            scope 12 (inlined std::intrinsics::unlikely) {
+                debug b => _6;
+                let _12: ();
+            }
+        }
+        scope 3 (inlined #[track_caller] std::hint::assert_unchecked) {
+            debug cond => _3;
+            let _8: ();
+            scope 4 (inlined core::ub_checks::check_language_ub) {
+                let mut _9: bool;
+                scope 5 (inlined core::ub_checks::check_language_ub::runtime) {
+                }
+            }
+        }
+        scope 6 (inlined core::num::<impl usize>::wrapping_add) {
+            debug self => _2;
+            debug rhs => const 1_usize;
+        }
+    }
+
+    bb0: {
+        _2 = <Self as std::rc::RcInnerPtr>::strong(copy _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageLive(_3);
+        _3 = Ne(copy _2, const 0_usize);
+        StorageLive(_9);
+        _9 = UbChecks();
+        switchInt(copy _9) -> [0: bb4, otherwise: bb3];
+    }
+
+    bb2: {
+        StorageLive(_10);
+        StorageLive(_11);
+        _11 = &raw const ((*_5).0: std::cell::UnsafeCell<usize>);
+        _10 = copy _11 as *mut usize (PtrToPtr);
+        StorageDead(_11);
+        (*_10) = copy _4;
+        StorageDead(_10);
+        StorageLive(_6);
+        _6 = Eq(copy _4, const 0_usize);
+        switchInt(copy _4) -> [0: bb5, otherwise: bb7];
+    }
+
+    bb3: {
+        _8 = std::hint::assert_unchecked::precondition_check(copy _3) -> [return: bb4, unwind unreachable];
+    }
+
+    bb4: {
+        assume(copy _3);
+        StorageDead(_9);
+        StorageDead(_3);
+        _4 = Add(copy _2, const 1_usize);
+        _5 = <Self as std::rc::RcInnerPtr>::strong_ref(move _1) -> [return: bb2, unwind continue];
+    }
+
+    bb5: {
+        _12 = std::intrinsics::cold_path() -> [return: bb6, unwind unreachable];
+    }
+
+    bb6: {
+        StorageDead(_6);
+        _7 = std::intrinsics::abort() -> unwind unreachable;
+    }
+
+    bb7: {
+        StorageDead(_6);
+        return;
+    }
+}
+
+[FuncId(5) - "alloc::alloc::{impl#3}::clone"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <std::alloc::Global as std::clone::Clone>::clone(_1: &std::alloc::Global) -> std::alloc::Global {
+    debug self => _1;
+    let mut _0: std::alloc::Global;
+
+    bb0: {
+        return;
+    }
+}
+
+[FuncId(6) - "alloc::alloc::exchange_malloc"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn alloc::alloc::exchange_malloc(_1: usize, _2: usize) -> *mut u8 {
+    debug size => _1;
+    debug align => _2;
+    let mut _0: *mut u8;
+    let _3: std::alloc::Layout;
+    let mut _4: std::result::Result<std::ptr::NonNull<[u8]>, std::alloc::AllocError>;
+    let mut _5: isize;
+    let mut _7: !;
+    scope 1 {
+        debug layout => _3;
+        let _6: std::ptr::NonNull<[u8]>;
+        scope 2 {
+            debug ptr => _6;
+            scope 5 (inlined std::ptr::NonNull::<[u8]>::as_mut_ptr) {
+                debug self => _6;
+                scope 6 (inlined std::ptr::NonNull::<[u8]>::as_non_null_ptr) {
+                    scope 7 (inlined std::ptr::NonNull::<[u8]>::cast::<u8>) {
+                        let mut _11: *mut [u8];
+                        scope 8 (inlined std::ptr::NonNull::<[u8]>::as_ptr) {
+                        }
+                    }
+                }
+                scope 9 (inlined std::ptr::NonNull::<u8>::as_ptr) {
+                }
+            }
+        }
+        scope 4 (inlined <std::alloc::Global as std::alloc::Allocator>::allocate) {
+            debug self => const alloc::alloc::exchange_malloc::promoted[0];
+            debug layout => _3;
+        }
+    }
+    scope 3 (inlined std::alloc::Layout::from_size_align_unchecked) {
+        debug size => _1;
+        debug align => _2;
+        let mut _8: bool;
+        let _9: ();
+        let mut _10: std::ptr::Alignment;
+    }
+
+    bb0: {
+        StorageLive(_8);
+        _8 = UbChecks();
+        switchInt(move _8) -> [0: bb5, otherwise: bb4];
+    }
+
+    bb1: {
+        unreachable;
+    }
+
+    bb2: {
+        _7 = std::alloc::handle_alloc_error(move _3) -> unwind continue;
+    }
+
+    bb3: {
+        _6 = copy ((_4 as Ok).0: std::ptr::NonNull<[u8]>);
+        StorageLive(_11);
+        _11 = copy _6 as *mut [u8] (Transmute);
+        _0 = copy _11 as *mut u8 (PtrToPtr);
+        StorageDead(_11);
+        StorageDead(_4);
+        return;
+    }
+
+    bb4: {
+        _9 = std::alloc::Layout::from_size_align_unchecked::precondition_check(copy _1, copy _2) -> [return: bb5, unwind unreachable];
+    }
+
+    bb5: {
+        StorageDead(_8);
+        StorageLive(_10);
+        _10 = copy _2 as std::ptr::Alignment (Transmute);
+        _3 = std::alloc::Layout { size: copy _1, align: move _10 };
+        StorageDead(_10);
+        StorageLive(_4);
+        _4 = std::alloc::Global::alloc_impl(const alloc::alloc::exchange_malloc::promoted[0], copy _3, const false) -> [return: bb6, unwind continue];
+    }
+
+    bb6: {
+        _5 = discriminant(_4);
+        switchInt(move _5) -> [0: bb3, 1: bb2, otherwise: bb1];
+    }
+}
+
+const alloc::alloc::exchange_malloc::promoted[0]: &std::alloc::Global = {
+    let mut _0: &std::alloc::Global;
+    let mut _1: std::alloc::Global;
+
+    bb0: {
+        _1 = std::alloc::Global;
+        _0 = &_1;
+        return;
+    }
+}
+
+[FuncId(7) - "alloc::rc::RcInnerPtr::strong<std::rc::RcInner<i32>>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::rc::RcInnerPtr::strong(_1: &Self) -> usize {
+    debug self => _1;
+    let mut _0: usize;
+    let _2: &std::cell::Cell<usize>;
+    scope 1 (inlined std::cell::Cell::<usize>::get) {
+        debug self => _2;
+        let mut _3: *mut usize;
+        scope 2 (inlined std::cell::UnsafeCell::<usize>::get) {
+            let mut _4: *const std::cell::UnsafeCell<usize>;
+        }
+    }
+
+    bb0: {
+        _2 = <Self as std::rc::RcInnerPtr>::strong_ref(move _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageLive(_3);
+        StorageLive(_4);
+        _4 = &raw const ((*_2).0: std::cell::UnsafeCell<usize>);
+        _3 = copy _4 as *mut usize (PtrToPtr);
+        StorageDead(_4);
+        _0 = copy (*_3);
+        StorageDead(_3);
+        return;
+    }
+}
+
+[FuncId(8) - "core::hint::assert_unchecked::precondition_check"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::hint::assert_unchecked::precondition_check(_1: bool) -> () {
+    debug cond => _1;
+    let mut _0: ();
+    let _2: !;
+
+    bb0: {
+        switchInt(copy _1) -> [0: bb1, otherwise: bb2];
+    }
+
+    bb1: {
+        _2 = core::panicking::panic_nounwind(const "unsafe precondition(s) violated: hint::assert_unchecked must never be called when the condition is false\n\nThis indicates a bug in the program. This Undefined Behavior check is optional, and cannot be relied on for safety.") -> unwind unreachable;
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn std::hint::assert_unchecked::precondition_check(_1: bool) -> () {
+    debug cond => _1;
+    let mut _0: ();
+    let mut _2: bool;
+    let mut _3: !;
+    let _4: !;
+
+    bb0: {
+        StorageLive(_2);
+        _2 = copy _1;
+        switchInt(move _2) -> [0: bb1, otherwise: bb2];
+    }
+
+    bb1: {
+        StorageLive(_4);
+        ConstEvalCounter;
+        _4 = core::panicking::panic_nounwind(const "unsafe precondition(s) violated: hint::assert_unchecked must never be called when the condition is false\n\nThis indicates a bug in the program. This Undefined Behavior check is optional, and cannot be relied on for safety.") -> unwind unreachable;
+    }
+
+    bb2: {
+        _0 = const ();
+        StorageDead(_2);
+        return;
+    }
+}
+
+[FuncId(9) - "alloc::rc::{impl#77}::strong_ref<i32>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <std::rc::RcInner<T> as std::rc::RcInnerPtr>::strong_ref(_1: &std::rc::RcInner<T>) -> &std::cell::Cell<usize> {
+    debug self => _1;
+    let mut _0: &std::cell::Cell<usize>;
+
+    bb0: {
+        _0 = &((*_1).0: std::cell::Cell<usize>);
+        return;
+    }
+}
+
+[FuncId(10) - "core::intrinsics::cold_path"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::intrinsics::cold_path() -> () {
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn std::intrinsics::cold_path() -> () {
+    let mut _0: ();
+
+    bb0: {
+        _0 = const ();
+        return;
+    }
+}
+
+[FuncId(11) - "core::intrinsics::abort"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::intrinsics::abort() -> ! {
+    let mut _0: !;
+
+    bb0: {
+        unreachable;
+    }
+}
+
+[FuncId(12) - "core::panicking::panic_nounwind"]
+Mir is unavailable
+

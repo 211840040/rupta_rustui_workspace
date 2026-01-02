@@ -1,0 +1,118 @@
+[FuncId(0) - "static_dispatch::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: ();
+    let _2: ();
+    scope 1 {
+        debug c => const Circle;
+        scope 2 {
+            debug r => const Rectangle;
+        }
+    }
+
+    bb0: {
+        _1 = draw_shape::<Circle>(const Circle) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _2 = draw_shape::<Rectangle>(const Rectangle) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+[FuncId(1) - "static_dispatch::draw_shape<Circle>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn draw_shape(_1: S) -> () {
+    debug s => _1;
+    let mut _0: ();
+    let _2: ();
+    let mut _3: &S;
+
+    bb0: {
+        _3 = &_1;
+        _2 = <S as Shape>::draw(move _3) -> [return: bb1, unwind: bb3];
+    }
+
+    bb1: {
+        drop(_1) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+
+    bb3 (cleanup): {
+        drop(_1) -> [return: bb4, unwind terminate(cleanup)];
+    }
+
+    bb4 (cleanup): {
+        resume;
+    }
+}
+
+[FuncId(2) - "static_dispatch::draw_shape<Rectangle>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn draw_shape(_1: S) -> () {
+    debug s => _1;
+    let mut _0: ();
+    let _2: ();
+    let mut _3: &S;
+
+    bb0: {
+        _3 = &_1;
+        _2 = <S as Shape>::draw(move _3) -> [return: bb1, unwind: bb3];
+    }
+
+    bb1: {
+        drop(_1) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+
+    bb3 (cleanup): {
+        drop(_1) -> [return: bb4, unwind terminate(cleanup)];
+    }
+
+    bb4 (cleanup): {
+        resume;
+    }
+}
+
+[FuncId(3) - "static_dispatch::{impl#0}::draw"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/static_dispatch.rs:15:1: 15:22>::draw(_1: &Circle) -> () {
+    debug self => _1;
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+
+[FuncId(4) - "static_dispatch::{impl#1}::draw"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/static_dispatch.rs:18:1: 18:25>::draw(_1: &Rectangle) -> () {
+    debug self => _1;
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+

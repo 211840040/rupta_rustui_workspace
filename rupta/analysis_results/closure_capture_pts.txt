@@ -1,0 +1,24 @@
+FuncId(1) - "closure_capture::closure_immutable"
+	FuncId(1)::local_3.0 (1) ==> { FuncId(1)::local_2 }
+	FuncId(1)::local_2 (1) ==> { FuncId(1)::local_1 }
+	FuncId(1)::local_6 (1) ==> { FuncId(1)::local_3 }
+	FuncId(1)::local_4 (1) ==> { FuncId(1)::local_2 }
+FuncId(2) - "closure_capture::closure_mutable"
+	FuncId(2)::local_4 (1) ==> { FuncId(2)::local_2 }
+	FuncId(2)::local_2 (1) ==> { FuncId(2)::local_1 }
+	FuncId(2)::local_3.0 (1) ==> { FuncId(2)::local_2 }
+	FuncId(2)::local_6 (1) ==> { FuncId(2)::local_3 }
+FuncId(3) - "closure_capture::closure_immutable::{closure#0}<i8, Binder { value: extern \"RustCall\" fn((i32,)) -> i32, bound_vars: [] }, (&'{erased} &'{erased} i32,)>"
+	FuncId(3)::local_5 (1) ==> { FuncId(1)::local_2 }
+	FuncId(3)::local_6 (1) ==> { FuncId(1)::local_1 }
+	FuncId(3)::param_1 (1) ==> { FuncId(1)::local_3 }
+FuncId(4) - "closure_capture::closure_mutable::{closure#0}<i16, Binder { value: extern \"RustCall\" fn((i32,)) -> i32, bound_vars: [] }, (&'{erased} mut &'{erased} mut i32,)>"
+	FuncId(4)::local_9 (1) ==> { FuncId(2)::local_1 }
+	FuncId(4)::local_8 (1) ==> { FuncId(2)::local_2 }
+	FuncId(4)::param_1 (1) ==> { FuncId(2)::local_3 }
+	FuncId(4)::local_6 (1) ==> { FuncId(2)::local_2 }
+	FuncId(4)::local_10 (1) ==> { FuncId(2)::local_2 }
+	FuncId(4)::local_13 (1) ==> { FuncId(2)::local_1 }
+	FuncId(4)::local_11 (1) ==> { FuncId(2)::local_1 }
+	FuncId(4)::local_7 (1) ==> { FuncId(2)::local_1 }
+	FuncId(4)::local_12 (1) ==> { FuncId(2)::local_2 }

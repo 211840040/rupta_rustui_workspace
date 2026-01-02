@@ -1,0 +1,79 @@
+[FuncId(0) - "union::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: i8;
+    let _6: &i8;
+    let _8: &i8;
+    let _9: ();
+    let mut _10: &mut U<'_>;
+    let _11: &u32;
+    let _12: ();
+    let mut _13: &mut U<'_>;
+    let _14: &u32;
+    scope 1 {
+        debug a => _1;
+        let _2: i8;
+        scope 2 {
+            debug b => _2;
+            let _3: u32;
+            scope 3 {
+                debug c => _3;
+                let _4: u32;
+                scope 4 {
+                    debug d => _4;
+                    let mut _5: U<'_>;
+                    scope 5 {
+                        debug u1 => _5;
+                        let mut _7: U<'_>;
+                        scope 6 {
+                            debug u2 => _7;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const 1_i8;
+        _2 = const 2_i8;
+        _3 = const 3_u32;
+        _4 = const 4_u32;
+        _6 = &_1;
+        _5 = U::<'_> { x: copy _6 };
+        _8 = &_2;
+        _7 = U::<'_> { x: copy _8 };
+        _10 = &mut _5;
+        _11 = &_3;
+        _9 = union_set::<'_, '_>(copy _10, copy _11) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _13 = &mut _7;
+        _14 = &_4;
+        _12 = union_set::<'_, '_>(copy _13, copy _14) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+[FuncId(1) - "union::union_set<>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn union_set(_1: &mut U<'_>, _2: &u32) -> () {
+    debug u => _1;
+    debug y => _2;
+    let mut _0: ();
+
+    bb0: {
+        ((*_1).1: &u32) = copy _2;
+        return;
+    }
+}
+

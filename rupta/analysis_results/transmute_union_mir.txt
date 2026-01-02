@@ -1,0 +1,38 @@
+[FuncId(0) - "transmute_union::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: u32;
+    let mut _4: (&u32, &u32);
+    let _5: &u32;
+    let _6: &u32;
+    scope 1 {
+        debug a => _1;
+        let _2: u32;
+        scope 2 {
+            debug b => _2;
+            let _3: U<'_>;
+            scope 3 {
+                debug u => _3;
+                let _7: (&u32, &u32);
+                scope 4 {
+                    debug _t => _7;
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const 2_u32;
+        _2 = const 3_u32;
+        _5 = &_1;
+        _6 = &_2;
+        _4 = (copy _5, copy _6);
+        _3 = U::<'_> { f1: move _4 };
+        _7 = move _3 as (&u32, &u32) (Transmute);
+        return;
+    }
+}
+

@@ -1,0 +1,16 @@
+digraph {
+    0 [ label = "box_dyn::main" ]
+    1 [ label = "alloc::boxed::{impl#0}::new<Circle>" ]
+    2 [ label = "alloc::boxed::{impl#0}::new<Rectangle>" ]
+    3 [ label = "alloc::alloc::exchange_malloc" ]
+    4 [ label = "box_dyn::{impl#1}::draw" ]
+    5 [ label = "box_dyn::{impl#0}::draw" ]
+    0 -> 1 [ label = "bb0[1]" ]
+    0 -> 2 [ label = "bb2[0]" ]
+    2 -> 3 [ label = "bb0[2]" ]
+    1 -> 3 [ label = "bb0[2]" ]
+    0 -> 4 [ label = "bb1[4]" ]
+    0 -> 5 [ label = "bb1[4]" ]
+    0 -> 5 [ label = "bb4[4]" ]
+    0 -> 4 [ label = "bb4[4]" ]
+}

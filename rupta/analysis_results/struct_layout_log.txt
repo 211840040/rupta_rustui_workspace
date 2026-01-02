@@ -1,0 +1,85 @@
+warning: unused variable: `d`
+  --> tests/unit_tests/struct_layout.rs:27:13
+   |
+27 |     let mut d = unsafe { std::mem::transmute::<B, [u8; 8]>(b) };
+   |             ^ help: if this is intentional, prefix it with an underscore: `_d`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `e`
+  --> tests/unit_tests/struct_layout.rs:28:13
+   |
+28 |     let mut e = unsafe { std::mem::transmute::<C, [u8; 16]>(c) };
+   |             ^ help: if this is intentional, prefix it with an underscore: `_e`
+
+warning: variable does not need to be mutable
+  --> tests/unit_tests/struct_layout.rs:27:9
+   |
+27 |     let mut d = unsafe { std::mem::transmute::<B, [u8; 8]>(b) };
+   |         ----^
+   |         |
+   |         help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` on by default
+
+warning: variable does not need to be mutable
+  --> tests/unit_tests/struct_layout.rs:28:9
+   |
+28 |     let mut e = unsafe { std::mem::transmute::<C, [u8; 16]>(c) };
+   |         ----^
+   |         |
+   |         help: remove this `mut`
+
+warning: fields `m`, `n`, and `p` are never read
+  --> tests/unit_tests/struct_layout.rs:12:5
+   |
+11 | struct B {
+   |        - fields in this struct
+12 |     m: bool,
+   |     ^
+13 |     n: u16,
+   |     ^
+14 |     p: u32,
+   |     ^
+   |
+   = note: `B` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` on by default
+
+warning: fields `b` and `f` are never read
+  --> tests/unit_tests/struct_layout.rs:18:5
+   |
+17 | struct C {
+   |        - fields in this struct
+18 |     b: B,
+   |     ^
+19 |     f: f64,
+   |     ^
+
+Pointer analysis completed.
+Analysis time: 450us 930ns
+##########################################################
+Call Graph Statistics: 
+#Reachable functions (CS): 1
+#Reachable functions (CI): 1
+#Reachable unmonomorphized functions (CI): 1
+#Call graph edges (CS): 0
+#Call graph edges (CI): 0
+#Statically resolved calls: 0
+#Dynamically resolved calls: 0, #call graph edges: 0
+	#Dynamic dispatch calls: 0, #call graph edges: 0
+	#Fnptr calls: 0, #call graph edges: 0
+	#Dynamic Fn* trait calls: 0, #call graph edges: 0
+----------------------------------------------------------
+CS Points-to Statistics: 
+#Pointers: 0
+#Points-to relations: 0
+#Avg points-to size: NaN
+CI Points-to Statistics: 
+#Pointers: 0
+#Points-to relations: 0
+#Avg points-to size: NaN
+##########################################################
+Used Memory Before Analysis: 85 MB
+Max Memory in Analysis: 86 MB
+warning: 6 warnings emitted
+

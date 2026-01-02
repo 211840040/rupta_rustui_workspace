@@ -1,0 +1,15 @@
+/home/wy/rupta_rustdsl_workspace/rupta/tests/rustDSL/target/debug/deps/thiserror-d8c9f66e8fdad9e8.d: /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/lib.rs /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/aserror.rs /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/display.rs /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/provide.rs /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/var.rs /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/private.rs /home/wy/rupta_rustdsl_workspace/rupta/tests/rustDSL/target/debug/build/thiserror-203af7009435e8e9/out/private.rs
+
+/home/wy/rupta_rustdsl_workspace/rupta/tests/rustDSL/target/debug/deps/libthiserror-d8c9f66e8fdad9e8.rlib: /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/lib.rs /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/aserror.rs /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/display.rs /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/provide.rs /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/var.rs /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/private.rs /home/wy/rupta_rustdsl_workspace/rupta/tests/rustDSL/target/debug/build/thiserror-203af7009435e8e9/out/private.rs
+
+/home/wy/rupta_rustdsl_workspace/rupta/tests/rustDSL/target/debug/deps/libthiserror-d8c9f66e8fdad9e8.rmeta: /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/lib.rs /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/aserror.rs /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/display.rs /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/provide.rs /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/var.rs /home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/private.rs /home/wy/rupta_rustdsl_workspace/rupta/tests/rustDSL/target/debug/build/thiserror-203af7009435e8e9/out/private.rs
+
+/home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/lib.rs:
+/home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/aserror.rs:
+/home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/display.rs:
+/home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/provide.rs:
+/home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/var.rs:
+/home/wy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/private.rs:
+/home/wy/rupta_rustdsl_workspace/rupta/tests/rustDSL/target/debug/build/thiserror-203af7009435e8e9/out/private.rs:
+
+# env-dep:OUT_DIR=/home/wy/rupta_rustdsl_workspace/rupta/tests/rustDSL/target/debug/build/thiserror-203af7009435e8e9/out

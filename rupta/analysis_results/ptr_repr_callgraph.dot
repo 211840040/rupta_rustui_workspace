@@ -1,0 +1,7 @@
+digraph {
+    0 [ label = "ptr_repr::main" ]
+    1 [ label = "ptr_repr::foo" ]
+    2 [ label = "ptr_repr::from_raw_parts<i32>" ]
+    0 -> 1 [ label = "bb1[8]" ]
+    0 -> 2 [ label = "bb0[5]" ]
+}

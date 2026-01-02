@@ -1,0 +1,7 @@
+digraph {
+    0 [ label = "cast_box::main" ]
+    1 [ label = "alloc::boxed::{impl#0}::new<A<'{erased}>>" ]
+    2 [ label = "alloc::alloc::exchange_malloc" ]
+    0 -> 1 [ label = "bb0[3]" ]
+    1 -> 2 [ label = "bb0[2]" ]
+}

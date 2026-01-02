@@ -1,0 +1,10 @@
+FuncId(0) - "maybeuninit::main"
+	FuncId(0)::local_8.union_field#1.0 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_3 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_6 (1) ==> { FuncId(0)::local_3 }
+	FuncId(0)::local_10 (1) ==> { FuncId(0)::local_8 }
+	FuncId(0)::local_4 (1) ==> { FuncId(0)::local_2 }
+FuncId(1) - "core::mem::maybe_uninit::{impl#2}::new<&'{erased} i32>"
+	FuncId(1)::local_2.0 (1) ==> { FuncId(0)::local_2 }
+	FuncId(1)::ret.union_field#1.0 (1) ==> { FuncId(0)::local_2 }
+	FuncId(1)::param_1 (1) ==> { FuncId(0)::local_2 }

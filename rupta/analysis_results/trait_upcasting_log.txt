@@ -1,0 +1,36 @@
+warning: the feature `trait_upcasting` has been stable since 1.86.0 and no longer requires an attribute to enable
+ --> tests/unit_tests/trait_upcasting.rs:8:12
+  |
+8 | #![feature(trait_upcasting)]
+  |            ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(stable_features)]` on by default
+
+Pointer analysis completed.
+Analysis time: 2ms 158us 618ns
+##########################################################
+Call Graph Statistics: 
+#Reachable functions (CS): 10
+#Reachable functions (CI): 7
+#Reachable unmonomorphized functions (CI): 7
+#Call graph edges (CS): 10
+#Call graph edges (CI): 8
+#Statically resolved calls: 6
+#Dynamically resolved calls: 2, #call graph edges: 2
+	#Dynamic dispatch calls: 2, #call graph edges: 2
+	#Fnptr calls: 0, #call graph edges: 0
+	#Dynamic Fn* trait calls: 0, #call graph edges: 0
+----------------------------------------------------------
+CS Points-to Statistics: 
+#Pointers: 20
+#Points-to relations: 20
+#Avg points-to size: 1
+CI Points-to Statistics: 
+#Pointers: 14
+#Points-to relations: 14
+#Avg points-to size: 1
+##########################################################
+Used Memory Before Analysis: 81 MB
+Max Memory in Analysis: 82 MB
+warning: 1 warning emitted
+

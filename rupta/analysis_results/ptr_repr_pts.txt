@@ -1,0 +1,7 @@
+FuncId(0) - "ptr_repr::main"
+	FuncId(0)::local_14 (1) ==> { FuncId(0)::local_5 }
+	FuncId(0)::local_4 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_11 (1) ==> { FuncId(0)::local_8 }
+FuncId(2) - "ptr_repr::foo"
+	FuncId(2)::local_5 (1) ==> { FuncId(2)::local_2 }
+	FuncId(2)::param_1 (1) ==> { FuncId(0)::local_5 }

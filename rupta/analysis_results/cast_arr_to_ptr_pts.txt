@@ -1,0 +1,5 @@
+FuncId(0) - "cast_arr_to_ptr::main"
+	FuncId(0)::local_7 (1) ==> { FuncId(0)::local_3 }
+	FuncId(0)::local_4 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_3.index (2) ==> { FuncId(0)::local_1 FuncId(0)::local_2 }
+	FuncId(0)::local_5 (1) ==> { FuncId(0)::local_2 }

@@ -1,0 +1,184 @@
+[FuncId(0) - "opaque::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: u32;
+    let _4: &u32;
+    let _6: &f32;
+    let _8: ();
+    let mut _9: &A<'_>;
+    let _11: ();
+    let mut _12: &B<'_>;
+    let _14: ();
+    let mut _15: &A<'_>;
+    let _17: ();
+    let mut _18: &B<'_>;
+    scope 1 {
+        debug x => _1;
+        let _2: f32;
+        scope 2 {
+            debug y => _2;
+            let _3: A<'_>;
+            scope 3 {
+                debug a => _3;
+                let _5: B<'_>;
+                scope 4 {
+                    debug b => _5;
+                    let _7: A<'_>;
+                    scope 5 {
+                        debug t1 => _7;
+                        let _10: B<'_>;
+                        scope 6 {
+                            debug t2 => _10;
+                            let _13: A<'_>;
+                            scope 7 {
+                                debug t3 => _13;
+                                let _16: B<'_>;
+                                scope 8 {
+                                    debug t4 => _16;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const 2_u32;
+        _2 = const 2f32;
+        _4 = &_1;
+        _3 = A::<'_> { a: copy _4 };
+        _6 = &_2;
+        _5 = B::<'_> { b: copy _6 };
+        _7 = opaque::<A<'_>>(move _3) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _9 = &_7;
+        _8 = <A<'_> as T>::foo(move _9) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _10 = opaque::<B<'_>>(move _5) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        _12 = &_10;
+        _11 = <B<'_> as T>::foo(move _12) -> [return: bb4, unwind continue];
+    }
+
+    bb4: {
+        _13 = opaque_wrapper::<A<'_>>(move _7) -> [return: bb5, unwind continue];
+    }
+
+    bb5: {
+        _15 = &_13;
+        _14 = <A<'_> as T>::foo(move _15) -> [return: bb6, unwind continue];
+    }
+
+    bb6: {
+        _16 = opaque_wrapper::<B<'_>>(move _10) -> [return: bb7, unwind continue];
+    }
+
+    bb7: {
+        _18 = &_16;
+        _17 = <B<'_> as T>::foo(move _18) -> [return: bb8, unwind continue];
+    }
+
+    bb8: {
+        return;
+    }
+}
+
+[FuncId(1) - "opaque::opaque<A<'{erased}>>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn opaque(_1: impl T) -> impl T {
+    debug t => _1;
+    let mut _0: impl T;
+
+    bb0: {
+        _0 = move _1;
+        return;
+    }
+}
+
+[FuncId(2) - "opaque::{impl#0}::foo<>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/opaque.rs:17:1: 17:21>::foo(_1: &A<'_>) -> () {
+    debug self => _1;
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+
+[FuncId(3) - "opaque::opaque<B<'{erased}>>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn opaque(_1: impl T) -> impl T {
+    debug t => _1;
+    let mut _0: impl T;
+
+    bb0: {
+        _0 = move _1;
+        return;
+    }
+}
+
+[FuncId(4) - "opaque::{impl#1}::foo<>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/opaque.rs:26:1: 26:21>::foo(_1: &B<'_>) -> () {
+    debug self => _1;
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+
+[FuncId(5) - "opaque::opaque_wrapper<A<'{erased}>>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn opaque_wrapper(_1: impl T) -> impl T {
+    debug t => _1;
+    let mut _0: impl T;
+
+    bb0: {
+        _0 = opaque::<impl T>(move _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(6) - "opaque::opaque_wrapper<B<'{erased}>>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn opaque_wrapper(_1: impl T) -> impl T {
+    debug t => _1;
+    let mut _0: impl T;
+
+    bb0: {
+        _0 = opaque::<impl T>(move _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+

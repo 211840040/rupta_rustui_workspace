@@ -1,0 +1,4 @@
+FuncId(1) - "const_fn_ptr::CONST_FOO_I32"
+	FuncId(1)::ret (1) ==> { FuncId(2) }
+FuncId(3) - "const_fn_ptr::CONST_TIMES2"
+	FuncId(3)::ret (1) ==> { FuncId(4) }

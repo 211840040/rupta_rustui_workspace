@@ -1,0 +1,32 @@
+[FuncId(0) - "struct_layout::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: B;
+    scope 1 {
+        debug b => _1;
+        let _2: C;
+        scope 2 {
+            debug c => _2;
+            let mut _3: [u8; 8];
+            scope 3 {
+                debug d => _3;
+                let mut _4: [u8; 16];
+                scope 4 {
+                    debug e => _4;
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _1 = B { m: const true, n: const 3_u16, p: const 23_u32 };
+        _2 = C { b: copy _1, f: const 32f64 };
+        _3 = copy _1 as [u8; 8] (Transmute);
+        _4 = move _2 as [u8; 16] (Transmute);
+        return;
+    }
+}
+

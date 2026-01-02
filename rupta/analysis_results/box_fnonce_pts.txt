@@ -1,0 +1,26 @@
+FuncId(0) - "box_fnonce::main"
+	FuncId(0)::local_2.0.0.0 (1) ==> { FuncId(2)::heap_bb0[2].cast#0 }
+	FuncId(0)::local_1.0.0.0 (1) ==> { FuncId(2)::heap_bb0[2].cast#0 }
+FuncId(2) - "alloc::boxed::{impl#0}::new<Closure(DefId(0:5 ~ box_fnonce[463f]::main::{closure#0}), [i8, Binder { value: extern \"RustCall\" fn((u32,)) -> u32, bound_vars: [] }, ()])>"
+	FuncId(2)::ret.0.0.0 (1) ==> { FuncId(2)::heap_bb0[2].cast#0 }
+	FuncId(2)::local_4 (1) ==> { FuncId(2)::heap_bb0[2] }
+	FuncId(2)::local_5 (1) ==> { FuncId(2)::heap_bb0[2].cast#0 }
+FuncId(3) - "box_fnonce::foo"
+	FuncId(3)::param_1.0.0.0 (1) ==> { FuncId(2)::heap_bb0[2].cast#0 }
+FuncId(5) - "alloc::boxed::{impl#28}::call_once<(u32,), dyn [Binder { value: Trait(std::ops::FnOnce<(u32,)>), bound_vars: [] }, Binder { value: Projection(ExistentialProjection { def_id: DefId(2:3925 ~ core[ce1f]::ops::function::FnOnce::Output), args: [(u32,)], term: Term::Ty(u32), use_existential_projection_new_instead: () }), bound_vars: [] }] + '{erased}, std::alloc::Global>"
+	FuncId(5)::local_4 (1) ==> { FuncId(5)::local_3 }
+	FuncId(5)::local_3.0.0.0 (1) ==> { FuncId(2)::heap_bb0[2].cast#0 }
+	FuncId(5)::local_6 (1) ==> { FuncId(5)::local_3 }
+	FuncId(5)::param_1.0.0.0 (1) ==> { FuncId(2)::heap_bb0[2].cast#0 }
+	FuncId(5)::local_8 (1) ==> { FuncId(2)::heap_bb0[2].cast#0 }
+FuncId(6) - "alloc::boxed::{impl#8}::drop<dyn [Binder { value: Trait(std::ops::FnOnce<(u32,)>), bound_vars: [] }, Binder { value: Projection(ExistentialProjection { def_id: DefId(2:3925 ~ core[ce1f]::ops::function::FnOnce::Output), args: [(u32,)], term: Term::Ty(u32), use_existential_projection_new_instead: () }), bound_vars: [] }] + '{erased}, std::alloc::Global>"
+	FuncId(6)::param_1 (1) ==> { FuncId(5)::local_3 }
+	FuncId(6)::local_4 (1) ==> { FuncId(2)::heap_bb0[2].cast#0 }
+	FuncId(6)::local_3 (1) ==> { FuncId(2)::heap_bb0[2].cast#0 }
+	FuncId(6)::local_15.0 (1) ==> { FuncId(2)::heap_bb0[2].cast#0 }
+	FuncId(6)::local_5 (1) ==> { FuncId(6)::local_2 }
+	FuncId(6)::local_7 (1) ==> { FuncId(5)::local_3.1 }
+FuncId(7) - "core::intrinsics::size_of_val<dyn [Binder { value: Trait(std::ops::FnOnce<(u32,)>), bound_vars: [] }, Binder { value: Projection(ExistentialProjection { def_id: DefId(2:3925 ~ core[ce1f]::ops::function::FnOnce::Output), args: [(u32,)], term: Term::Ty(u32), use_existential_projection_new_instead: () }), bound_vars: [] }] + '{erased}>"
+	FuncId(7)::param_1 (1) ==> { FuncId(2)::heap_bb0[2].cast#0 }
+FuncId(9) - "core::intrinsics::min_align_of_val<dyn [Binder { value: Trait(std::ops::FnOnce<(u32,)>), bound_vars: [] }, Binder { value: Projection(ExistentialProjection { def_id: DefId(2:3925 ~ core[ce1f]::ops::function::FnOnce::Output), args: [(u32,)], term: Term::Ty(u32), use_existential_projection_new_instead: () }), bound_vars: [] }] + '{erased}>"
+	FuncId(9)::param_1 (1) ==> { FuncId(2)::heap_bb0[2].cast#0 }

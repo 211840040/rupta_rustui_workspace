@@ -1,0 +1,11 @@
+digraph {
+    0 [ label = "generic_trait::main" ]
+    1 [ label = "generic_trait::{impl#0}::trait_method<f64, i32, bool>" ]
+    2 [ label = "generic_trait::{impl#0}::trait_func<f64, i32, bool>" ]
+    3 [ label = "generic_trait::{impl#1}::trait_method<f64, Foo<i32, f64>>" ]
+    4 [ label = "generic_trait::MyTrait::trait_func<Bar<i32, f64>, f64, Foo<i32, f64>>" ]
+    0 -> 1 [ label = "bb0[3]" ]
+    1 -> 2 [ label = "bb0[0]" ]
+    0 -> 3 [ label = "bb1[1]" ]
+    3 -> 4 [ label = "bb0[0]" ]
+}

@@ -1,0 +1,111 @@
+[FuncId(0) - "two_dimensional_array::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: i32;
+    let mut _7: &i32;
+    let _8: &i32;
+    let _9: &i32;
+    let mut _11: &i32;
+    let _12: &i32;
+    let _13: &i32;
+    let _16: usize;
+    let mut _17: bool;
+    let _19: usize;
+    let mut _20: bool;
+    let _22: usize;
+    let mut _23: bool;
+    let _24: usize;
+    let mut _25: bool;
+    scope 1 {
+        debug a => _1;
+        let _2: i32;
+        scope 2 {
+            debug b => _2;
+            let _3: i32;
+            scope 3 {
+                debug c => _3;
+                let _4: i32;
+                scope 4 {
+                    debug d => _4;
+                    let _5: i32;
+                    scope 5 {
+                        debug e => _5;
+                        let _6: [&i32; 3];
+                        scope 6 {
+                            debug arr1 => _6;
+                            let _10: [&i32; 3];
+                            scope 7 {
+                                debug arr2 => _10;
+                                let _14: [[&i32; 3]; 2];
+                                scope 8 {
+                                    debug arr3 => _14;
+                                    let _15: [&i32; 3];
+                                    scope 9 {
+                                        debug _x => _15;
+                                        let _18: [&i32; 3];
+                                        scope 10 {
+                                            debug _y => _18;
+                                            let _21: &i32;
+                                            scope 11 {
+                                                debug _z => _21;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const 1_i32;
+        _2 = const 2_i32;
+        _3 = const 3_i32;
+        _4 = const 4_i32;
+        _5 = const 5_i32;
+        _7 = &_1;
+        _8 = &_2;
+        _9 = &_3;
+        _6 = [move _7, copy _8, copy _9];
+        _11 = &_3;
+        _12 = &_4;
+        _13 = &_5;
+        _10 = [move _11, copy _12, copy _13];
+        _14 = [copy _6, copy _10];
+        _16 = const 0_usize;
+        _17 = Lt(copy _16, const 2_usize);
+        assert(move _17, "index out of bounds: the length is {} but the index is {}", const 2_usize, copy _16) -> [success: bb1, unwind continue];
+    }
+
+    bb1: {
+        _15 = copy _14[_16];
+        _19 = const 1_usize;
+        _20 = Lt(copy _19, const 2_usize);
+        assert(move _20, "index out of bounds: the length is {} but the index is {}", const 2_usize, copy _19) -> [success: bb2, unwind continue];
+    }
+
+    bb2: {
+        _18 = copy _14[_19];
+        _22 = const 0_usize;
+        _23 = Lt(copy _22, const 2_usize);
+        assert(move _23, "index out of bounds: the length is {} but the index is {}", const 2_usize, copy _22) -> [success: bb3, unwind continue];
+    }
+
+    bb3: {
+        _24 = const 1_usize;
+        _25 = Lt(copy _24, const 3_usize);
+        assert(move _25, "index out of bounds: the length is {} but the index is {}", const 3_usize, copy _24) -> [success: bb4, unwind continue];
+    }
+
+    bb4: {
+        _21 = copy _14[_22][_24];
+        return;
+    }
+}
+

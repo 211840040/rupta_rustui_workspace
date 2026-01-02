@@ -1,0 +1,10 @@
+digraph {
+    0 [ label = "associated_type::main" ]
+    1 [ label = "associated_type::Bar::bar<B>" ]
+    2 [ label = "associated_type::{impl#1}::baz" ]
+    3 [ label = "associated_type::Foo::foo<A>" ]
+    0 -> 1 [ label = "bb0[4]" ]
+    0 -> 2 [ label = "bb1[3]" ]
+    1 -> 3 [ label = "bb0[0]" ]
+    2 -> 3 [ label = "bb0[0]" ]
+}

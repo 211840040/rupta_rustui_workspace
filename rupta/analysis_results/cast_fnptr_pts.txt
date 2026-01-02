@@ -1,0 +1,14 @@
+FuncId(1) - "cast_fnptr::reify_fn_pointer"
+	FuncId(1)::local_1 (1) ==> { FuncId(5) }
+FuncId(2) - "cast_fnptr::closure_fn_pointer"
+	FuncId(2)::local_1 (1) ==> { FuncId(6) }
+	FuncId(2)::aux_3 (1) ==> { FuncId(6) }
+FuncId(3) - "cast_fnptr::fnptr_to_ptr"
+	FuncId(3)::local_3 (1) ==> { FuncId(5) }
+	FuncId(3)::local_1 (1) ==> { FuncId(5) }
+	FuncId(3)::local_2 (1) ==> { FuncId(5).cast#0 }
+FuncId(4) - "cast_fnptr::unsafe_fn_pointer"
+	FuncId(4)::local_1 (1) ==> { FuncId(5) }
+	FuncId(4)::local_2 (1) ==> { FuncId(5) }
+FuncId(6) - "cast_fnptr::closure_fn_pointer::{closure#0}<i8, Binder { value: extern \"RustCall\" fn((i32,)) -> i32, bound_vars: [] }, ()>"
+	FuncId(6)::param_1 (1) ==> { FuncId(6) }

@@ -1,0 +1,441 @@
+[FuncId(0) - "alloc::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: *mut u8;
+    scope 1 {
+        debug p => _1;
+        let _2: std::ptr::NonNull<[u8]>;
+        scope 2 {
+            debug q => _2;
+        }
+    }
+
+    bb0: {
+        _1 = std_alloc() -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _2 = global_alloc() -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+[FuncId(1) - "alloc::std_alloc"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std_alloc() -> *mut u8 {
+    let mut _0: *mut u8;
+    let mut _1: std::alloc::Layout;
+    let mut _2: std::result::Result<std::alloc::Layout, std::alloc::LayoutError>;
+    scope 1 {
+        debug p => _0;
+    }
+
+    bb0: {
+        _2 = std::alloc::Layout::from_size_align(const 4_usize, const 2_usize) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _1 = std::result::Result::<std::alloc::Layout, std::alloc::LayoutError>::unwrap(move _2) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _0 = std::alloc::alloc(move _1) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        return;
+    }
+}
+
+[FuncId(2) - "alloc::global_alloc"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn global_alloc() -> std::ptr::NonNull<[u8]> {
+    let mut _0: std::ptr::NonNull<[u8]>;
+    let _1: std::alloc::Global;
+    let mut _2: std::result::Result<std::ptr::NonNull<[u8]>, std::alloc::AllocError>;
+    let mut _3: &std::alloc::Global;
+    let mut _4: std::alloc::Layout;
+    let mut _5: std::result::Result<std::alloc::Layout, std::alloc::LayoutError>;
+    let mut _6: &str;
+    scope 1 {
+        debug g => const std::alloc::Global;
+        scope 2 {
+            debug p => _0;
+        }
+    }
+
+    bb0: {
+        _3 = &_1;
+        _5 = std::alloc::Layout::from_size_align(const 4_usize, const 2_usize) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _4 = std::result::Result::<std::alloc::Layout, std::alloc::LayoutError>::unwrap(move _5) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _2 = <std::alloc::Global as std::alloc::Allocator>::allocate(move _3, move _4) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        _6 = const "";
+        _0 = std::result::Result::<std::ptr::NonNull<[u8]>, std::alloc::AllocError>::expect(move _2, move _6) -> [return: bb4, unwind continue];
+    }
+
+    bb4: {
+        return;
+    }
+}
+
+[FuncId(3) - "core::alloc::layout::{impl#0}::from_size_align"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::alloc::Layout::from_size_align(_1: usize, _2: usize) -> std::result::Result<std::alloc::Layout, std::alloc::LayoutError> {
+    debug size => _1;
+    debug align => _2;
+    let mut _0: std::result::Result<std::alloc::Layout, std::alloc::LayoutError>;
+    let mut _3: bool;
+    let mut _4: std::alloc::Layout;
+    let mut _5: std::ptr::Alignment;
+
+    bb0: {
+        StorageLive(_3);
+        _3 = std::alloc::Layout::is_size_align_valid(copy _1, copy _2) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        switchInt(move _3) -> [0: bb3, otherwise: bb2];
+    }
+
+    bb2: {
+        StorageLive(_4);
+        StorageLive(_5);
+        _5 = copy _2 as std::ptr::Alignment (Transmute);
+        _4 = std::alloc::Layout { size: copy _1, align: move _5 };
+        StorageDead(_5);
+        _0 = std::result::Result::<std::alloc::Layout, std::alloc::LayoutError>::Ok(move _4);
+        StorageDead(_4);
+        goto -> bb4;
+    }
+
+    bb3: {
+        _0 = const std::result::Result::<std::alloc::Layout, std::alloc::LayoutError>::Err(std::alloc::LayoutError);
+        goto -> bb4;
+    }
+
+    bb4: {
+        StorageDead(_3);
+        return;
+    }
+}
+
+alloc67 (size: 16, align: 8) {
+    00 00 00 00 00 00 00 00 __ __ __ __ __ __ __ __ │ ........░░░░░░░░
+}
+
+// MIR FOR CTFE
+fn std::alloc::Layout::from_size_align(_1: usize, _2: usize) -> std::result::Result<std::alloc::Layout, std::alloc::LayoutError> {
+    debug size => _1;
+    debug align => _2;
+    let mut _0: std::result::Result<std::alloc::Layout, std::alloc::LayoutError>;
+    let mut _3: bool;
+    let mut _4: usize;
+    let mut _5: usize;
+    let mut _6: std::alloc::Layout;
+    let mut _7: usize;
+    let mut _8: std::ptr::Alignment;
+    let mut _9: usize;
+    let mut _10: std::alloc::LayoutError;
+
+    bb0: {
+        StorageLive(_3);
+        StorageLive(_4);
+        _4 = copy _1;
+        StorageLive(_5);
+        _5 = copy _2;
+        ConstEvalCounter;
+        _3 = std::alloc::Layout::is_size_align_valid(move _4, move _5) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        switchInt(move _3) -> [0: bb3, otherwise: bb2];
+    }
+
+    bb2: {
+        StorageDead(_5);
+        StorageDead(_4);
+        StorageLive(_6);
+        StorageLive(_7);
+        _7 = copy _1;
+        StorageLive(_8);
+        StorageLive(_9);
+        _9 = copy _2;
+        _8 = move _9 as std::ptr::Alignment (Transmute);
+        StorageDead(_9);
+        _6 = std::alloc::Layout { size: move _7, align: move _8 };
+        StorageDead(_8);
+        StorageDead(_7);
+        _0 = std::result::Result::<std::alloc::Layout, std::alloc::LayoutError>::Ok(move _6);
+        StorageDead(_6);
+        goto -> bb4;
+    }
+
+    bb3: {
+        StorageDead(_5);
+        StorageDead(_4);
+        StorageLive(_10);
+        _10 = std::alloc::LayoutError;
+        _0 = std::result::Result::<std::alloc::Layout, std::alloc::LayoutError>::Err(move _10);
+        StorageDead(_10);
+        goto -> bb4;
+    }
+
+    bb4: {
+        StorageDead(_3);
+        return;
+    }
+}
+
+[FuncId(4) - "core::result::{impl#0}::unwrap<std::alloc::Layout, std::alloc::LayoutError>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::result::Result::<T, E>::unwrap(_1: std::result::Result<T, E>) -> T {
+    debug self => _1;
+    let mut _0: T;
+    let mut _2: isize;
+    let _3: E;
+    let mut _4: !;
+    let mut _5: &dyn std::fmt::Debug;
+    let _6: &E;
+    scope 1 {
+        debug t => _0;
+    }
+    scope 2 {
+        debug e => _3;
+    }
+
+    bb0: {
+        _2 = discriminant(_1);
+        switchInt(move _2) -> [0: bb3, 1: bb2, otherwise: bb1];
+    }
+
+    bb1: {
+        unreachable;
+    }
+
+    bb2: {
+        StorageLive(_3);
+        _3 = move ((_1 as Err).0: E);
+        StorageLive(_5);
+        _6 = &_3;
+        _5 = copy _6 as &dyn std::fmt::Debug (PointerCoercion(Unsize, Implicit));
+        _4 = std::result::unwrap_failed(const "called `Result::unwrap()` on an `Err` value", move _5) -> bb4;
+    }
+
+    bb3: {
+        _0 = move ((_1 as Ok).0: T);
+        return;
+    }
+
+    bb4 (cleanup): {
+        drop(_3) -> [return: bb5, unwind terminate(cleanup)];
+    }
+
+    bb5 (cleanup): {
+        resume;
+    }
+}
+
+[FuncId(5) - "alloc::alloc::alloc"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::alloc::alloc(_1: std::alloc::Layout) -> *mut u8 {
+    debug layout => _1;
+    let mut _0: *mut u8;
+    let _2: u8;
+    let mut _3: usize;
+    let mut _4: &std::alloc::Layout;
+    let mut _5: usize;
+    let mut _6: &std::alloc::Layout;
+    scope 1 (inlined std::ptr::read_volatile::<u8>) {
+        debug src => const {alloc68: *const u8};
+        let _7: ();
+        let mut _8: *const ();
+        scope 2 (inlined core::ub_checks::check_language_ub) {
+            let mut _9: bool;
+            scope 3 (inlined core::ub_checks::check_language_ub::runtime) {
+            }
+        }
+        scope 4 (inlined std::mem::align_of::<u8>) {
+        }
+    }
+    scope 5 (inlined std::alloc::Layout::size) {
+        debug self => _4;
+    }
+    scope 6 (inlined std::alloc::Layout::align) {
+        debug self => _6;
+        let mut _10: std::ptr::Alignment;
+        scope 7 (inlined std::ptr::Alignment::as_usize) {
+            let _11: std::ptr::alignment::AlignmentEnum;
+            let mut _12: u64;
+            let mut _13: bool;
+            let mut _14: bool;
+            let mut _15: bool;
+        }
+    }
+
+    bb0: {
+        StorageLive(_2);
+        StorageLive(_9);
+        _9 = UbChecks();
+        switchInt(copy _9) -> [0: bb5, otherwise: bb3];
+    }
+
+    bb1: {
+        StorageDead(_5);
+        StorageDead(_3);
+        return;
+    }
+
+    bb2: {
+        StorageDead(_9);
+        StorageDead(_2);
+        StorageLive(_3);
+        StorageLive(_4);
+        _4 = &_1;
+        _3 = copy (_1.0: usize);
+        StorageDead(_4);
+        StorageLive(_5);
+        StorageLive(_6);
+        _6 = &_1;
+        StorageLive(_10);
+        _10 = copy (_1.1: std::ptr::Alignment);
+        StorageLive(_12);
+        StorageLive(_13);
+        StorageLive(_14);
+        StorageLive(_15);
+        StorageLive(_11);
+        _11 = copy (_10.0: std::ptr::alignment::AlignmentEnum);
+        _12 = discriminant(_11);
+        _13 = Ge(copy _12, const 1_u64);
+        _14 = Le(copy _12, const 9223372036854775808_u64);
+        _15 = BitAnd(move _13, move _14);
+        assume(move _15);
+        _5 = copy _12 as usize (IntToInt);
+        StorageDead(_11);
+        StorageDead(_15);
+        StorageDead(_14);
+        StorageDead(_13);
+        StorageDead(_12);
+        StorageDead(_10);
+        StorageDead(_6);
+        _0 = alloc::alloc::__rust_alloc(move _3, move _5) -> [return: bb1, unwind unreachable];
+    }
+
+    bb3: {
+        StorageLive(_8);
+        _8 = const {alloc68: *const u8} as *const () (PtrToPtr);
+        _7 = std::ptr::read_volatile::precondition_check(move _8, const 1_usize, const <u8 as std::mem::SizedTypeProperties>::IS_ZST) -> [return: bb4, unwind unreachable];
+    }
+
+    bb4: {
+        StorageDead(_8);
+        goto -> bb5;
+    }
+
+    bb5: {
+        _2 = std::intrinsics::volatile_load::<u8>(const {alloc68: *const u8}) -> [return: bb2, unwind unreachable];
+    }
+}
+
+alloc68 (extern static: alloc::alloc::__rust_no_alloc_shim_is_unstable)
+
+[FuncId(7) - "core::result::{impl#0}::expect<std::ptr::NonNull<[u8]>, std::alloc::AllocError>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::result::Result::<T, E>::expect(_1: std::result::Result<T, E>, _2: &str) -> T {
+    debug self => _1;
+    debug msg => _2;
+    let mut _0: T;
+    let mut _3: isize;
+    let _4: E;
+    let mut _5: !;
+    let mut _6: &dyn std::fmt::Debug;
+    let _7: &E;
+    scope 1 {
+        debug t => _0;
+    }
+    scope 2 {
+        debug e => _4;
+    }
+
+    bb0: {
+        _3 = discriminant(_1);
+        switchInt(move _3) -> [0: bb3, 1: bb2, otherwise: bb1];
+    }
+
+    bb1: {
+        unreachable;
+    }
+
+    bb2: {
+        StorageLive(_4);
+        _4 = move ((_1 as Err).0: E);
+        StorageLive(_6);
+        _7 = &_4;
+        _6 = copy _7 as &dyn std::fmt::Debug (PointerCoercion(Unsize, Implicit));
+        _5 = std::result::unwrap_failed(move _2, move _6) -> bb4;
+    }
+
+    bb3: {
+        _0 = move ((_1 as Ok).0: T);
+        return;
+    }
+
+    bb4 (cleanup): {
+        drop(_4) -> [return: bb5, unwind terminate(cleanup)];
+    }
+
+    bb5 (cleanup): {
+        resume;
+    }
+}
+
+[FuncId(6) - "alloc::alloc::{impl#1}::allocate"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <std::alloc::Global as std::alloc::Allocator>::allocate(_1: &std::alloc::Global, _2: std::alloc::Layout) -> std::result::Result<std::ptr::NonNull<[u8]>, std::alloc::AllocError> {
+    debug self => _1;
+    debug layout => _2;
+    let mut _0: std::result::Result<std::ptr::NonNull<[u8]>, std::alloc::AllocError>;
+
+    bb0: {
+        _0 = std::alloc::Global::alloc_impl(move _1, move _2, const false) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(8) - "core::alloc::layout::{impl#0}::is_size_align_valid"]
+Mir is unavailable
+
+[FuncId(9) - "core::result::unwrap_failed"]
+Mir is unavailable
+

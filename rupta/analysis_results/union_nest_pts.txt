@@ -1,0 +1,14 @@
+FuncId(0) - "union_nest::main"
+	FuncId(0)::local_4.union_field#0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_5.1 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_9 (1) ==> { FuncId(0)::local_3 }
+	FuncId(0)::local_6 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_7 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_8.union_field#1.union_field#1.1 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_8.union_field#0 (2) ==> { FuncId(0)::local_1 FuncId(0)::local_3 }
+	FuncId(0)::local_8.union_field#1.union_field#0 (2) ==> { FuncId(0)::local_1 FuncId(0)::local_3 }
+	FuncId(0)::local_4.union_field#1.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_10 (2) ==> { FuncId(0)::local_1 FuncId(0)::local_3 }
+	FuncId(0)::local_5.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_4.union_field#1.1 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_8.union_field#1.union_field#1.0 (2) ==> { FuncId(0)::local_3 FuncId(0)::local_1 }

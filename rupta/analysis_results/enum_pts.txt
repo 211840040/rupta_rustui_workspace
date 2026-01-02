@@ -1,0 +1,24 @@
+FuncId(0) - "enum::main"
+	FuncId(0)::local_12 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_10 (1) ==> { FuncId(0)::local_5 }
+	FuncId(0)::local_4 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_9 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_8 (1) ==> { FuncId(0)::local_3 }
+	FuncId(0)::local_3.as_variant#0.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_11 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_6 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_5.as_variant#1.0 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_7 (1) ==> { FuncId(0)::local_1 }
+FuncId(1) - "enum::enum_ref_match"
+	FuncId(1)::local_6 (1) ==> { FuncId(0)::local_1 }
+	FuncId(1)::local_3 (2) ==> { FuncId(0)::local_3.as_variant#0.0 FuncId(0)::local_5.as_variant#0.0 }
+	FuncId(1)::local_5 (1) ==> { FuncId(0)::local_2 }
+	FuncId(1)::ret (2) ==> { FuncId(0)::local_1 FuncId(0)::local_2 }
+	FuncId(1)::param_1 (2) ==> { FuncId(0)::local_5 FuncId(0)::local_3 }
+	FuncId(1)::local_4 (2) ==> { FuncId(0)::local_3.as_variant#1.0 FuncId(0)::local_5.as_variant#1.0 }
+FuncId(2) - "enum::enum_match"
+	FuncId(2)::param_1.as_variant#1.0 (1) ==> { FuncId(0)::local_2 }
+	FuncId(2)::local_3 (1) ==> { FuncId(0)::local_1 }
+	FuncId(2)::local_4 (1) ==> { FuncId(0)::local_2 }
+	FuncId(2)::ret (2) ==> { FuncId(0)::local_1 FuncId(0)::local_2 }
+	FuncId(2)::param_1.as_variant#0.0 (1) ==> { FuncId(0)::local_1 }

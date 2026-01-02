@@ -1,0 +1,5 @@
+FuncId(0) - "array::main"
+	FuncId(0)::local_7 (1) ==> { FuncId(0)::local_3 }
+	FuncId(0)::local_6 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_4.index (3) ==> { FuncId(0)::local_3 FuncId(0)::local_2 FuncId(0)::local_1 }
+	FuncId(0)::local_5 (1) ==> { FuncId(0)::local_1 }

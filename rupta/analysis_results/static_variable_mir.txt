@@ -1,0 +1,259 @@
+[FuncId(0) - "static_variable::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let mut _1: *mut u8;
+    let _2: u8;
+    let mut _3: *mut u8;
+    let _4: &u8;
+    let mut _5: *mut &u8;
+    let mut _7: *mut &u8;
+    let mut _9: *mut fn(u8) -> u8;
+    let _10: u8;
+    let mut _50: *const ();
+    let mut _51: usize;
+    let mut _52: usize;
+    let mut _53: bool;
+    let mut _54: bool;
+    let mut _55: bool;
+    let mut _56: bool;
+    let mut _57: *const ();
+    let mut _58: usize;
+    let mut _59: usize;
+    let mut _60: bool;
+    let mut _61: bool;
+    let mut _62: bool;
+    let mut _63: bool;
+    scope 1 {
+        debug a => _2;
+        let _6: &u8;
+        let mut _17: *const ();
+        let mut _18: usize;
+        let mut _19: usize;
+        let mut _20: usize;
+        let mut _21: usize;
+        let mut _22: bool;
+        let mut _23: *const ();
+        let mut _24: usize;
+        let mut _25: usize;
+        let mut _26: usize;
+        let mut _27: usize;
+        let mut _28: bool;
+        let mut _29: *const ();
+        let mut _30: usize;
+        let mut _31: usize;
+        let mut _32: bool;
+        let mut _33: bool;
+        let mut _34: bool;
+        let mut _35: bool;
+        let mut _36: *const ();
+        let mut _37: usize;
+        let mut _38: usize;
+        let mut _39: bool;
+        let mut _40: bool;
+        let mut _41: bool;
+        let mut _42: bool;
+        scope 2 {
+            debug b => _6;
+            let _8: fn(u8) -> u8;
+            let mut _11: *const ();
+            let mut _12: usize;
+            let mut _13: usize;
+            let mut _14: usize;
+            let mut _15: usize;
+            let mut _16: bool;
+            let mut _43: *const ();
+            let mut _44: usize;
+            let mut _45: usize;
+            let mut _46: bool;
+            let mut _47: bool;
+            let mut _48: bool;
+            let mut _49: bool;
+            scope 3 {
+                debug fp => _8;
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const {alloc1: *mut u8};
+        _57 = copy _1 as *const () (PtrToPtr);
+        _58 = copy _57 as usize (Transmute);
+        _59 = SizeOf(u8);
+        _60 = Ne(copy _59, const 0_usize);
+        _61 = Eq(copy _58, const 0_usize);
+        _62 = BitAnd(copy _61, copy _60);
+        _63 = Not(copy _62);
+        assert(copy _63, "null pointer dereference occurred") -> [success: bb9, unwind unreachable];
+    }
+
+    bb1: {
+        return;
+    }
+
+    bb2: {
+        _43 = copy _9 as *const () (PtrToPtr);
+        _44 = copy _43 as usize (Transmute);
+        _45 = SizeOf(fn(u8) -> u8);
+        _46 = Ne(copy _45, const 0_usize);
+        _47 = Eq(copy _44, const 0_usize);
+        _48 = BitAnd(copy _47, copy _46);
+        _49 = Not(copy _48);
+        assert(copy _49, "null pointer dereference occurred") -> [success: bb7, unwind unreachable];
+    }
+
+    bb3: {
+        _36 = copy _7 as *const () (PtrToPtr);
+        _37 = copy _36 as usize (Transmute);
+        _38 = SizeOf(&u8);
+        _39 = Ne(copy _38, const 0_usize);
+        _40 = Eq(copy _37, const 0_usize);
+        _41 = BitAnd(copy _40, copy _39);
+        _42 = Not(copy _41);
+        assert(copy _42, "null pointer dereference occurred") -> [success: bb6, unwind unreachable];
+    }
+
+    bb4: {
+        _29 = copy _5 as *const () (PtrToPtr);
+        _30 = copy _29 as usize (Transmute);
+        _31 = SizeOf(&u8);
+        _32 = Ne(copy _31, const 0_usize);
+        _33 = Eq(copy _30, const 0_usize);
+        _34 = BitAnd(copy _33, copy _32);
+        _35 = Not(copy _34);
+        assert(copy _35, "null pointer dereference occurred") -> [success: bb5, unwind unreachable];
+    }
+
+    bb5: {
+        (*_5) = copy _4;
+        _7 = const {alloc2: *mut &u8};
+        _17 = copy _7 as *const () (PtrToPtr);
+        _18 = copy _17 as usize (Transmute);
+        _19 = AlignOf(&u8);
+        _20 = Sub(copy _19, const 1_usize);
+        _21 = BitAnd(copy _18, copy _20);
+        _22 = Eq(copy _21, const 0_usize);
+        assert(copy _22, "misaligned pointer dereference: address must be a multiple of {} but is {}", copy _19, copy _18) -> [success: bb3, unwind unreachable];
+    }
+
+    bb6: {
+        _6 = copy (*_7);
+        _9 = const {alloc5: *mut fn(u8) -> u8};
+        _11 = copy _9 as *const () (PtrToPtr);
+        _12 = copy _11 as usize (Transmute);
+        _13 = AlignOf(fn(u8) -> u8);
+        _14 = Sub(copy _13, const 1_usize);
+        _15 = BitAnd(copy _12, copy _14);
+        _16 = Eq(copy _15, const 0_usize);
+        assert(copy _16, "misaligned pointer dereference: address must be a multiple of {} but is {}", copy _13, copy _12) -> [success: bb2, unwind unreachable];
+    }
+
+    bb7: {
+        _8 = copy (*_9);
+        _10 = copy _8(const 2_u8) -> [return: bb1, unwind continue];
+    }
+
+    bb8: {
+        _2 = copy (*_3);
+        _4 = const main::promoted[0];
+        _5 = const {alloc2: *mut &u8};
+        _23 = copy _5 as *const () (PtrToPtr);
+        _24 = copy _23 as usize (Transmute);
+        _25 = AlignOf(&u8);
+        _26 = Sub(copy _25, const 1_usize);
+        _27 = BitAnd(copy _24, copy _26);
+        _28 = Eq(copy _27, const 0_usize);
+        assert(copy _28, "misaligned pointer dereference: address must be a multiple of {} but is {}", copy _25, copy _24) -> [success: bb4, unwind unreachable];
+    }
+
+    bb9: {
+        (*_1) = const 4_u8;
+        _3 = const {alloc1: *mut u8};
+        _50 = copy _3 as *const () (PtrToPtr);
+        _51 = copy _50 as usize (Transmute);
+        _52 = SizeOf(u8);
+        _53 = Ne(copy _52, const 0_usize);
+        _54 = Eq(copy _51, const 0_usize);
+        _55 = BitAnd(copy _54, copy _53);
+        _56 = Not(copy _55);
+        assert(copy _56, "null pointer dereference occurred") -> [success: bb8, unwind unreachable];
+    }
+}
+
+alloc5 (static: STATIC_FNPTR, size: 8, align: 8) {
+    ╾───────alloc6────────╼                         │ ╾──────╼
+}
+
+alloc6 (fn: times2)
+
+alloc2 (static: STATIC_PTR, size: 8, align: 8) {
+    ╾─────alloc4<imm>─────╼                         │ ╾──────╼
+}
+
+alloc4 (size: 1, align: 1) {
+    03                                              │ .
+}
+
+alloc1 (static: STATIC_VAL, size: 1, align: 1) {
+    02                                              │ .
+}
+
+const main::promoted[0]: &u8 = {
+    let mut _0: &u8;
+    let mut _1: u8;
+
+    bb0: {
+        _1 = const 4_u8;
+        _0 = &_1;
+        return;
+    }
+}
+
+[FuncId(5) - "static_variable::times2"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn times2(_1: u8) -> u8 {
+    debug x => _1;
+    let mut _0: u8;
+    let mut _2: u8;
+    let mut _3: *mut u8;
+    let mut _4: (u8, bool);
+    let mut _5: *const ();
+    let mut _6: usize;
+    let mut _7: usize;
+    let mut _8: bool;
+    let mut _9: bool;
+    let mut _10: bool;
+    let mut _11: bool;
+
+    bb0: {
+        _3 = const {alloc1: *mut u8};
+        _5 = copy _3 as *const () (PtrToPtr);
+        _6 = copy _5 as usize (Transmute);
+        _7 = SizeOf(u8);
+        _8 = Ne(copy _7, const 0_usize);
+        _9 = Eq(copy _6, const 0_usize);
+        _10 = BitAnd(copy _9, copy _8);
+        _11 = Not(copy _10);
+        assert(copy _11, "null pointer dereference occurred") -> [success: bb2, unwind unreachable];
+    }
+
+    bb1: {
+        _0 = move (_4.0: u8);
+        return;
+    }
+
+    bb2: {
+        _2 = copy (*_3);
+        _4 = MulWithOverflow(copy _1, copy _2);
+        assert(!move (_4.1: bool), "attempt to compute `{} * {}`, which would overflow", copy _1, move _2) -> [success: bb1, unwind continue];
+    }
+}
+
+alloc1 (static: STATIC_VAL, size: 1, align: 1) {
+    02                                              │ .
+}
+

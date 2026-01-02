@@ -1,0 +1,27 @@
+FuncId(0) - "closure_generic::main"
+	FuncId(0)::local_5.0 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_9 (1) ==> { FuncId(0)::local_5 }
+	FuncId(0)::local_8 (1) ==> { FuncId(0)::local_3 }
+	FuncId(0)::local_3.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_4 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_6 (1) ==> { FuncId(0)::local_2 }
+FuncId(1) - "closure_generic::generic_closure_call<Bar<'{erased}>, Foo<'{erased}>>"
+	FuncId(1)::param_2 (1) ==> { FuncId(0)::local_5 }
+	FuncId(1)::local_5 (1) ==> { FuncId(1)::local_3 }
+	FuncId(1)::local_6.0 (1) ==> { FuncId(0)::local_5 }
+	FuncId(1)::local_3.0 (1) ==> { FuncId(1)::param_1 }
+	FuncId(1)::local_4 (1) ==> { FuncId(1)::param_1 }
+	FuncId(1)::param_1 (1) ==> { FuncId(0)::local_3 }
+FuncId(2) - "closure_generic::generic_closure_call::{closure#0}<Bar<'{erased}>, Foo<'{erased}>, i8, Binder { value: extern \"RustCall\" fn((&'^0 Bar<'{erased}>,)) -> i32, bound_vars: [Region(BrAnon)] }, (&'{erased} &'{erased} Foo<'{erased}>,)>"
+	FuncId(2)::param_2 (1) ==> { FuncId(0)::local_5 }
+	FuncId(2)::param_1 (1) ==> { FuncId(1)::local_3 }
+	FuncId(2)::local_4 (1) ==> { FuncId(0)::local_1 }
+	FuncId(2)::local_9 (1) ==> { FuncId(0)::local_3 }
+	FuncId(2)::local_8 (1) ==> { FuncId(1)::param_1 }
+	FuncId(2)::local_6 (1) ==> { FuncId(0)::local_2 }
+FuncId(3) - "closure_generic::{impl#0}::get<>"
+	FuncId(3)::param_1 (1) ==> { FuncId(0)::local_3 }
+	FuncId(3)::ret (1) ==> { FuncId(0)::local_1 }
+FuncId(4) - "closure_generic::{impl#1}::get<>"
+	FuncId(4)::ret (1) ==> { FuncId(0)::local_2 }
+	FuncId(4)::param_1 (1) ==> { FuncId(0)::local_5 }

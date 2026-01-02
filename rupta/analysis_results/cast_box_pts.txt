@@ -1,0 +1,14 @@
+FuncId(0) - "cast_box::main"
+	FuncId(0)::local_3 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_21 (1) ==> { FuncId(1)::heap_bb0[2].cast#1 }
+	FuncId(0)::local_15 (1) ==> { FuncId(1)::heap_bb0[2].cast#1 }
+	FuncId(0)::local_6 (1) ==> { FuncId(1)::heap_bb0[2].cast#0 }
+	FuncId(0)::local_4.0.0.0 (1) ==> { FuncId(1)::heap_bb0[2].cast#0 }
+	FuncId(0)::local_2.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_8 (1) ==> { FuncId(1)::heap_bb0[2].cast#0 }
+FuncId(1) - "alloc::boxed::{impl#0}::new<A<'{erased}>>"
+	FuncId(1)::local_4 (1) ==> { FuncId(1)::heap_bb0[2] }
+	FuncId(1)::ret.0.0.0 (1) ==> { FuncId(1)::heap_bb0[2].cast#0 }
+	FuncId(1)::local_5 (1) ==> { FuncId(1)::heap_bb0[2].cast#0 }
+	FuncId(1)::param_1.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(1)::heap_bb0[2].cast#0.0 (1) ==> { FuncId(0)::local_1 }

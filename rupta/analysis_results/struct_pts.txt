@@ -1,0 +1,37 @@
+FuncId(1) - "struct::struct_new"
+	FuncId(1)::local_5 (1) ==> { FuncId(1)::local_2 }
+	FuncId(1)::local_3.0 (1) ==> { FuncId(1)::local_1 }
+	FuncId(1)::local_4 (1) ==> { FuncId(1)::local_1 }
+	FuncId(1)::local_3.1 (1) ==> { FuncId(1)::local_2 }
+FuncId(2) - "struct::struct_move"
+	FuncId(2)::local_4 (1) ==> { FuncId(2)::local_1 }
+	FuncId(2)::local_8 (1) ==> { FuncId(2)::local_6 }
+	FuncId(2)::local_3.0 (1) ==> { FuncId(2)::local_1 }
+	FuncId(2)::local_5 (1) ==> { FuncId(2)::local_2 }
+	FuncId(2)::local_6.1 (1) ==> { FuncId(2)::local_2 }
+	FuncId(2)::local_6.0 (1) ==> { FuncId(2)::local_1 }
+	FuncId(2)::local_3.1 (1) ==> { FuncId(2)::local_2 }
+FuncId(3) - "struct::struct_copy"
+	FuncId(3)::local_8 (1) ==> { FuncId(3)::local_6 }
+	FuncId(3)::local_3.1 (1) ==> { FuncId(3)::local_2 }
+	FuncId(3)::local_6.0 (1) ==> { FuncId(3)::local_1 }
+	FuncId(3)::local_4 (1) ==> { FuncId(3)::local_1 }
+	FuncId(3)::local_6.1 (1) ==> { FuncId(3)::local_2 }
+	FuncId(3)::local_5 (1) ==> { FuncId(3)::local_2 }
+	FuncId(3)::local_3.0 (1) ==> { FuncId(3)::local_1 }
+FuncId(4) - "struct::struct_ref"
+	FuncId(4)::local_7 (1) ==> { FuncId(4)::local_4 }
+	FuncId(4)::local_4.0 (2) ==> { FuncId(4)::local_3 FuncId(4)::local_1 }
+	FuncId(4)::local_4.1 (1) ==> { FuncId(4)::local_2 }
+	FuncId(4)::local_6 (1) ==> { FuncId(4)::local_2 }
+	FuncId(4)::local_8 (1) ==> { FuncId(4)::local_3 }
+	FuncId(4)::local_5 (1) ==> { FuncId(4)::local_1 }
+FuncId(5) - "struct::{impl#0}::new<>"
+	FuncId(5)::ret.1 (1) ==> { FuncId(1)::local_2 }
+	FuncId(5)::param_2 (1) ==> { FuncId(1)::local_2 }
+	FuncId(5)::ret.0 (1) ==> { FuncId(1)::local_1 }
+	FuncId(5)::param_1 (1) ==> { FuncId(1)::local_1 }
+FuncId(6) - "struct::{impl#0}::foo<>"
+	FuncId(6)::param_1 (1) ==> { FuncId(2)::local_6 }
+FuncId(7) - "struct::{impl#1}::bar<>"
+	FuncId(7)::param_1 (1) ==> { FuncId(3)::local_6 }

@@ -1,0 +1,46 @@
+warning: field `f` is never read
+ --> tests/unit_tests/box_struct.rs:9:5
+  |
+8 | struct Foo<'f> {
+  |        --- field in this struct
+9 |     f: &'f u32
+  |     ^
+  |
+  = note: `#[warn(dead_code)]` on by default
+
+warning: field `b` is never read
+  --> tests/unit_tests/box_struct.rs:13:5
+   |
+12 | struct Bar<'b> {
+   |        --- field in this struct
+13 |     b: &'b i32
+   |     ^
+
+Pointer analysis completed.
+Analysis time: 1ms 462us 616ns
+##########################################################
+Call Graph Statistics: 
+#Reachable functions (CS): 5
+#Reachable functions (CI): 4
+#Reachable unmonomorphized functions (CI): 3
+#Call graph edges (CS): 4
+#Call graph edges (CI): 4
+#Statically resolved calls: 4
+#Dynamically resolved calls: 0, #call graph edges: 0
+	#Dynamic dispatch calls: 0, #call graph edges: 0
+	#Fnptr calls: 0, #call graph edges: 0
+	#Dynamic Fn* trait calls: 0, #call graph edges: 0
+----------------------------------------------------------
+CS Points-to Statistics: 
+#Pointers: 16
+#Points-to relations: 16
+#Avg points-to size: 1
+CI Points-to Statistics: 
+#Pointers: 16
+#Points-to relations: 16
+#Avg points-to size: 1
+##########################################################
+Used Memory Before Analysis: 78 MB
+Max Memory in Analysis: 79 MB
+warning: 2 warnings emitted
+

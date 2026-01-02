@@ -1,0 +1,5 @@
+error: unexpected `override` with no `extends` nor `implements`
+ --> tests/compile/check_error/invalid_override.rs:9:13
+  |
+9 |         pub override fn new(id: usize) -> Self {
+  |             ^^^^^^^^

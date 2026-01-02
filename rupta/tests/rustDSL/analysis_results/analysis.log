@@ -1,0 +1,185 @@
+       Fresh unicode-ident v1.0.22
+       Fresh proc-macro2 v1.0.103
+       Fresh hashbrown v0.16.0
+       Fresh triomphe v0.1.15
+       Fresh unicode-segmentation v1.12.0
+       Fresh quote v1.0.42
+       Fresh equivalent v1.0.2
+       Fresh convert_case v0.8.0
+       Fresh archery v1.2.2
+       Fresh dyn-hash v0.2.2
+       Fresh bitflags v2.10.0
+       Fresh syn v2.0.110
+       Fresh indexmap v2.12.0
+       Fresh rpds v1.2.0
+       Fresh thiserror-impl v2.0.17
+       Fresh thiserror v2.0.17
+       Fresh classes_macros v0.1.0 (/home/wy/rupta_rustdsl_workspace/rustdsl/classes_macros)
+       Fresh classes v0.1.0 (/home/wy/rupta_rustdsl_workspace/rustdsl/classes)
+       Dirty rustdsl_test v0.1.0 (/home/wy/rupta_rustdsl_workspace/rupta/tests/rustDSL): the file `src/lib.rs` has changed (1763456842.515250102s, 18m 43s after last build at 1763455719.601747654s)
+    Checking rustdsl_test v0.1.0 (/home/wy/rupta_rustdsl_workspace/rupta/tests/rustDSL)
+     Running `/home/wy/rupta_rustdsl_workspace/rupta/target/debug/cargo-pta /home/wy/.rustup/toolchains/nightly-2025-05-09-x86_64-unknown-linux-gnu/bin/rustc --crate-name rustdsl_test --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata -C embed-bitcode=no -C debuginfo=2 --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=f389fdacd797328e -C extra-filename=-c1b46beb23638b39 --out-dir /home/wy/rupta_rustdsl_workspace/rupta/tests/rustDSL/target/debug/deps -C incremental=/home/wy/rupta_rustdsl_workspace/rupta/tests/rustDSL/target/debug/incremental -L dependency=/home/wy/rupta_rustdsl_workspace/rupta/tests/rustDSL/target/debug/deps --extern classes=/home/wy/rupta_rustdsl_workspace/rupta/tests/rustDSL/target/debug/deps/libclasses-c5c373eb907d414e.rmeta -Z always_encode_mir -C prefer-dynamic`
+warning: the feature `builtin_syntax` is internal to the compiler or standard library
+ --> src/lib.rs:5:12
+  |
+5 | #![feature(builtin_syntax)]
+  |            ^^^^^^^^^^^^^^
+  |
+  = note: using it is strongly discouraged
+  = note: `#[warn(internal_features)]` on by default
+
+warning: the feature `panic_internals` is internal to the compiler or standard library
+ --> src/lib.rs:1:12
+  |
+1 | #![feature(panic_internals)]
+  |            ^^^^^^^^^^^^^^^
+  |
+  = note: using it is strongly discouraged
+
+warning: unused import: `::classes::prelude::*`
+  --> src/lib.rs:15:5
+   |
+15 | use ::classes::prelude::*;
+   |     ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `::classes::prelude::*`
+  --> src/lib.rs:20:9
+   |
+20 |     use ::classes::prelude::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unnecessary braces around block return value
+    --> src/lib.rs:1748:17
+     |
+1748 |                 { (self.0.vtable().widget)(self) }
+     |                 ^^                              ^^
+     |
+     = note: `#[warn(unused_braces)]` on by default
+help: remove these braces
+     |
+1748 -                 { (self.0.vtable().widget)(self) }
+1748 +                 (self.0.vtable().widget)(self)
+     |
+
+warning: unused import: `::classes::prelude::*`
+    --> src/lib.rs:1757:9
+     |
+1757 |     use ::classes::prelude::*;
+     |         ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unnecessary braces around block return value
+    --> src/lib.rs:3773:17
+     |
+3773 |                 { (self.0.vtable().rebuild)(self, force) }
+     |                 ^^                                      ^^
+     |
+help: remove these braces
+     |
+3773 -                 { (self.0.vtable().rebuild)(self, force) }
+3773 +                 (self.0.vtable().rebuild)(self, force)
+     |
+
+warning: unnecessary braces around block return value
+    --> src/lib.rs:3777:17
+     |
+3777 |                 { (self.0.vtable().perform_rebuild)(self) }
+     |                 ^^                                       ^^
+     |
+help: remove these braces
+     |
+3777 -                 { (self.0.vtable().perform_rebuild)(self) }
+3777 +                 (self.0.vtable().perform_rebuild)(self)
+     |
+
+warning: unnecessary braces around block return value
+    --> src/lib.rs:3789:17
+     |
+3789 |                 { ::classes::prelude::CData::<Self>::rebuild(self.as_virtual(), force) }
+     |                 ^^                                                                    ^^
+     |
+help: remove these braces
+     |
+3789 -                 { ::classes::prelude::CData::<Self>::rebuild(self.as_virtual(), force) }
+3789 +                 ::classes::prelude::CData::<Self>::rebuild(self.as_virtual(), force)
+     |
+
+warning: unnecessary braces around block return value
+    --> src/lib.rs:3793:17
+     |
+3793 |                 { ::classes::prelude::CData::<Self>::perform_rebuild(self.as_virtual()) }
+     |                 ^^                                                                     ^^
+     |
+help: remove these braces
+     |
+3793 -                 { ::classes::prelude::CData::<Self>::perform_rebuild(self.as_virtual()) }
+3793 +                 ::classes::prelude::CData::<Self>::perform_rebuild(self.as_virtual())
+     |
+
+warning: unnecessary braces around block return value
+    --> src/lib.rs:3797:17
+     |
+3797 |                 { ::classes::prelude::CData::<Self>::widget(self.as_virtual()) }
+     |                 ^^                                                            ^^
+     |
+help: remove these braces
+     |
+3797 -                 { ::classes::prelude::CData::<Self>::widget(self.as_virtual()) }
+3797 +                 ::classes::prelude::CData::<Self>::widget(self.as_virtual())
+     |
+
+warning: unused import: `::classes::prelude::*`
+    --> src/lib.rs:3925:9
+     |
+3925 |     use ::classes::prelude::*;
+     |         ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unnecessary braces around block return value
+    --> src/lib.rs:5628:17
+     |
+5628 |                 { (self.0.vtable().create_element)(self) }
+     |                 ^^                                      ^^
+     |
+help: remove these braces
+     |
+5628 -                 { (self.0.vtable().create_element)(self) }
+5628 +                 (self.0.vtable().create_element)(self)
+     |
+
+warning: the feature `const_fn_trait_bound` has been stable since 1.61.0 and no longer requires an attribute to enable
+ --> src/lib.rs:4:12
+  |
+4 | #![feature(const_fn_trait_bound)]
+  |            ^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(stable_features)]` on by default
+
+Pointer analysis completed.
+Analysis time: 1ms 213us 538ns
+##########################################################
+Call Graph Statistics: 
+#Reachable functions (CS): 1
+#Reachable functions (CI): 1
+#Reachable unmonomorphized functions (CI): 1
+#Call graph edges (CS): 0
+#Call graph edges (CI): 0
+#Statically resolved calls: 0
+#Dynamically resolved calls: 0, #call graph edges: 0
+	#Dynamic dispatch calls: 0, #call graph edges: 0
+	#Fnptr calls: 0, #call graph edges: 0
+	#Dynamic Fn* trait calls: 0, #call graph edges: 0
+----------------------------------------------------------
+CS Points-to Statistics: 
+#Pointers: 0
+#Points-to relations: 0
+#Avg points-to size: NaN
+CI Points-to Statistics: 
+#Pointers: 0
+#Points-to relations: 0
+#Avg points-to size: NaN
+##########################################################
+Used Memory Before Analysis: 119 MB
+Max Memory in Analysis: 120 MB
+warning: `rustdsl_test` (lib) generated 14 warnings (run `cargo fix --lib -p rustdsl_test` to apply 11 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.59s

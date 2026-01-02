@@ -1,0 +1,7 @@
+digraph {
+    0 [ label = "transmute_struct::main" ]
+    1 [ label = "transmute_struct::transmute_struct_a" ]
+    2 [ label = "transmute_struct::transmute_struct_b" ]
+    0 -> 1 [ label = "bb0[0]" ]
+    0 -> 2 [ label = "bb1[0]" ]
+}

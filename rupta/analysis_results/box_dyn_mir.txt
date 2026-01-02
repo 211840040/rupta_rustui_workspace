@@ -1,0 +1,275 @@
+[FuncId(0) - "box_dyn::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let mut _1: std::boxed::Box<dyn Shape>;
+    let mut _2: std::boxed::Box<Circle>;
+    let _3: ();
+    let mut _4: &dyn Shape;
+    let mut _5: std::boxed::Box<Rectangle>;
+    let _6: ();
+    let mut _7: &dyn Shape;
+    let mut _8: bool;
+    let mut _9: *const dyn Shape;
+    let mut _10: *const dyn Shape;
+    scope 1 {
+        debug s => _1;
+        scope 2 {
+            debug c => const Circle;
+            scope 3 {
+                debug r => const Rectangle;
+            }
+        }
+    }
+
+    bb0: {
+        _8 = const false;
+        _2 = std::boxed::Box::<Circle>::new(const Circle) -> [return: bb1, unwind: bb10];
+    }
+
+    bb1: {
+        _8 = const true;
+        _1 = move _2 as std::boxed::Box<dyn Shape> (PointerCoercion(Unsize, Implicit));
+        _9 = copy ((_1.0: std::ptr::Unique<dyn Shape>).0: std::ptr::NonNull<dyn Shape>) as *const dyn Shape (Transmute);
+        _4 = &(*_9);
+        _3 = <dyn Shape as Shape>::draw(move _4) -> [return: bb2, unwind: bb10];
+    }
+
+    bb2: {
+        _5 = std::boxed::Box::<Rectangle>::new(const Rectangle) -> [return: bb3, unwind: bb10];
+    }
+
+    bb3: {
+        drop(_1) -> [return: bb4, unwind: bb5];
+    }
+
+    bb4: {
+        _8 = const true;
+        _1 = move _5 as std::boxed::Box<dyn Shape> (PointerCoercion(Unsize, Implicit));
+        _10 = copy ((_1.0: std::ptr::Unique<dyn Shape>).0: std::ptr::NonNull<dyn Shape>) as *const dyn Shape (Transmute);
+        _7 = &(*_10);
+        _6 = <dyn Shape as Shape>::draw(move _7) -> [return: bb6, unwind: bb10];
+    }
+
+    bb5 (cleanup): {
+        _8 = const true;
+        _1 = move _5 as std::boxed::Box<dyn Shape> (PointerCoercion(Unsize, Implicit));
+        goto -> bb10;
+    }
+
+    bb6: {
+        drop(_1) -> [return: bb7, unwind continue];
+    }
+
+    bb7: {
+        _8 = const false;
+        return;
+    }
+
+    bb8 (cleanup): {
+        resume;
+    }
+
+    bb9 (cleanup): {
+        drop(_1) -> [return: bb8, unwind terminate(cleanup)];
+    }
+
+    bb10 (cleanup): {
+        switchInt(copy _8) -> [0: bb8, otherwise: bb9];
+    }
+}
+
+[FuncId(1) - "alloc::boxed::{impl#0}::new<Circle>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::boxed::Box::<T>::new(_1: T) -> std::boxed::Box<T> {
+    debug x => _1;
+    let mut _0: std::boxed::Box<T>;
+    let mut _2: usize;
+    let mut _3: usize;
+    let mut _4: *mut u8;
+    let mut _5: *const T;
+
+    bb0: {
+        _2 = SizeOf(T);
+        _3 = AlignOf(T);
+        _4 = alloc::alloc::exchange_malloc(move _2, move _3) -> [return: bb1, unwind: bb2];
+    }
+
+    bb1: {
+        _0 = ShallowInitBox(move _4, T);
+        _5 = copy ((_0.0: std::ptr::Unique<T>).0: std::ptr::NonNull<T>) as *const T (Transmute);
+        (*_5) = move _1;
+        return;
+    }
+
+    bb2 (cleanup): {
+        drop(_1) -> [return: bb3, unwind terminate(cleanup)];
+    }
+
+    bb3 (cleanup): {
+        resume;
+    }
+}
+
+[FuncId(2) - "alloc::boxed::{impl#0}::new<Rectangle>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::boxed::Box::<T>::new(_1: T) -> std::boxed::Box<T> {
+    debug x => _1;
+    let mut _0: std::boxed::Box<T>;
+    let mut _2: usize;
+    let mut _3: usize;
+    let mut _4: *mut u8;
+    let mut _5: *const T;
+
+    bb0: {
+        _2 = SizeOf(T);
+        _3 = AlignOf(T);
+        _4 = alloc::alloc::exchange_malloc(move _2, move _3) -> [return: bb1, unwind: bb2];
+    }
+
+    bb1: {
+        _0 = ShallowInitBox(move _4, T);
+        _5 = copy ((_0.0: std::ptr::Unique<T>).0: std::ptr::NonNull<T>) as *const T (Transmute);
+        (*_5) = move _1;
+        return;
+    }
+
+    bb2 (cleanup): {
+        drop(_1) -> [return: bb3, unwind terminate(cleanup)];
+    }
+
+    bb3 (cleanup): {
+        resume;
+    }
+}
+
+[FuncId(3) - "alloc::alloc::exchange_malloc"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn alloc::alloc::exchange_malloc(_1: usize, _2: usize) -> *mut u8 {
+    debug size => _1;
+    debug align => _2;
+    let mut _0: *mut u8;
+    let _3: std::alloc::Layout;
+    let mut _4: std::result::Result<std::ptr::NonNull<[u8]>, std::alloc::AllocError>;
+    let mut _5: isize;
+    let mut _7: !;
+    scope 1 {
+        debug layout => _3;
+        let _6: std::ptr::NonNull<[u8]>;
+        scope 2 {
+            debug ptr => _6;
+            scope 5 (inlined std::ptr::NonNull::<[u8]>::as_mut_ptr) {
+                debug self => _6;
+                scope 6 (inlined std::ptr::NonNull::<[u8]>::as_non_null_ptr) {
+                    scope 7 (inlined std::ptr::NonNull::<[u8]>::cast::<u8>) {
+                        let mut _11: *mut [u8];
+                        scope 8 (inlined std::ptr::NonNull::<[u8]>::as_ptr) {
+                        }
+                    }
+                }
+                scope 9 (inlined std::ptr::NonNull::<u8>::as_ptr) {
+                }
+            }
+        }
+        scope 4 (inlined <std::alloc::Global as std::alloc::Allocator>::allocate) {
+            debug self => const alloc::alloc::exchange_malloc::promoted[0];
+            debug layout => _3;
+        }
+    }
+    scope 3 (inlined std::alloc::Layout::from_size_align_unchecked) {
+        debug size => _1;
+        debug align => _2;
+        let mut _8: bool;
+        let _9: ();
+        let mut _10: std::ptr::Alignment;
+    }
+
+    bb0: {
+        StorageLive(_8);
+        _8 = UbChecks();
+        switchInt(move _8) -> [0: bb5, otherwise: bb4];
+    }
+
+    bb1: {
+        unreachable;
+    }
+
+    bb2: {
+        _7 = std::alloc::handle_alloc_error(move _3) -> unwind continue;
+    }
+
+    bb3: {
+        _6 = copy ((_4 as Ok).0: std::ptr::NonNull<[u8]>);
+        StorageLive(_11);
+        _11 = copy _6 as *mut [u8] (Transmute);
+        _0 = copy _11 as *mut u8 (PtrToPtr);
+        StorageDead(_11);
+        StorageDead(_4);
+        return;
+    }
+
+    bb4: {
+        _9 = std::alloc::Layout::from_size_align_unchecked::precondition_check(copy _1, copy _2) -> [return: bb5, unwind unreachable];
+    }
+
+    bb5: {
+        StorageDead(_8);
+        StorageLive(_10);
+        _10 = copy _2 as std::ptr::Alignment (Transmute);
+        _3 = std::alloc::Layout { size: copy _1, align: move _10 };
+        StorageDead(_10);
+        StorageLive(_4);
+        _4 = std::alloc::Global::alloc_impl(const alloc::alloc::exchange_malloc::promoted[0], copy _3, const false) -> [return: bb6, unwind continue];
+    }
+
+    bb6: {
+        _5 = discriminant(_4);
+        switchInt(move _5) -> [0: bb3, 1: bb2, otherwise: bb1];
+    }
+}
+
+const alloc::alloc::exchange_malloc::promoted[0]: &std::alloc::Global = {
+    let mut _0: &std::alloc::Global;
+    let mut _1: std::alloc::Global;
+
+    bb0: {
+        _1 = std::alloc::Global;
+        _0 = &_1;
+        return;
+    }
+}
+
+[FuncId(4) - "box_dyn::{impl#0}::draw"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/box_dyn.rs:15:1: 15:22>::draw(_1: &Circle) -> () {
+    debug self => _1;
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+
+[FuncId(5) - "box_dyn::{impl#1}::draw"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/box_dyn.rs:18:1: 18:25>::draw(_1: &Rectangle) -> () {
+    debug self => _1;
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+

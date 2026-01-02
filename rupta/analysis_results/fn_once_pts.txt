@@ -1,0 +1,14 @@
+FuncId(0) - "fn_once::main"
+	FuncId(0)::local_5 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_3 (1) ==> { FuncId(1)::local_1 }
+	FuncId(0)::local_2 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_4.0 (1) ==> { FuncId(0)::local_1 }
+FuncId(1) - "fn_once::main::promoted[0]"
+	FuncId(1)::ret (1) ==> { FuncId(1)::local_1 }
+FuncId(2) - "core::ops::function::impls::{impl#2}::call_once<(&'{erased} i32,), FnDef(DefId(0:3 ~ fn_once[b37c]::id), [])>"
+	FuncId(2)::param_2.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(2)::param_1 (1) ==> { FuncId(1)::local_1 }
+	FuncId(2)::ret (1) ==> { FuncId(0)::local_1 }
+FuncId(3) - "fn_once::id"
+	FuncId(3)::ret (1) ==> { FuncId(0)::local_1 }
+	FuncId(3)::param_1 (1) ==> { FuncId(0)::local_1 }

@@ -1,0 +1,9 @@
+FuncId(0) - "dyn_call::main"
+	FuncId(0)::local_7 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_6 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_3 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_4 (1) ==> { FuncId(0)::local_1 }
+FuncId(1) - "dyn_call::{impl#0}::draw"
+	FuncId(1)::param_1 (1) ==> { FuncId(0)::local_1 }
+FuncId(2) - "dyn_call::{impl#1}::draw"
+	FuncId(2)::param_1 (1) ==> { FuncId(0)::local_2 }

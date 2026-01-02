@@ -1,0 +1,118 @@
+[FuncId(0) - "ptr_repr::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: [i32; 4];
+    let mut _3: *const [i32; 4];
+    let _4: &[i32; 4];
+    let mut _6: usize;
+    let mut _10: *const [i32; 4];
+    let _11: &[i32; 4];
+    let _13: ();
+    let mut _14: &mut MyStruct<i32>;
+    scope 1 {
+        debug v1 => _1;
+        scope 2 {
+            debug metadata => const 4_usize;
+            let _2: *const i32;
+            scope 3 {
+                debug addr1 => _2;
+                let mut _5: MyStruct<i32>;
+                scope 4 {
+                    debug m => _5;
+                    let _7: *const i32;
+                    scope 5 {
+                        debug _const_ptr => _7;
+                        let _8: [i32; 4];
+                        scope 6 {
+                            debug v2 => _8;
+                            let _9: *const i32;
+                            scope 7 {
+                                debug addr2 => _9;
+                                let _12: *mut i32;
+                                scope 8 {
+                                    debug _mut_ptr => _12;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _1 = [const 1_i32, const 2_i32, const 3_i32, const 4_i32];
+        _4 = &_1;
+        _3 = &raw const (*_4);
+        _2 = move _3 as *const i32 (PtrToPtr);
+        _6 = const 4_usize;
+        _5 = from_raw_parts::<i32>(copy _2, move _6) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _7 = copy ((_5.0: PtrRepr<i32>).0: *const i32);
+        _8 = [const 2_i32, const 3_i32, const 4_i32, const 5_i32];
+        _11 = &_8;
+        _10 = &raw const (*_11);
+        _9 = move _10 as *const i32 (PtrToPtr);
+        ((_5.0: PtrRepr<i32>).0: *const i32) = copy _9;
+        _12 = copy ((_5.0: PtrRepr<i32>).1: *mut i32);
+        _14 = &mut _5;
+        _13 = foo(copy _14) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+[FuncId(1) - "ptr_repr::from_raw_parts<i32>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn from_raw_parts(_1: *const T, _2: usize) -> MyStruct<T> {
+    debug data_address => _1;
+    debug metadata => _2;
+    let mut _0: MyStruct<T>;
+    let mut _3: PtrRepr<T>;
+    let mut _4: PtrComponents<T>;
+
+    bb0: {
+        _4 = PtrComponents::<T> { data_address: copy _1, metadata: copy _2 };
+        _3 = PtrRepr::<T> { const_ptr: move _4 };
+        _0 = MyStruct::<T> { ptr_repr: move _3 };
+        return;
+    }
+}
+
+[FuncId(2) - "ptr_repr::foo"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn foo(_1: &mut MyStruct<i32>) -> () {
+    debug m => _1;
+    let mut _0: ();
+    let _2: [i32; 4];
+    let mut _4: *const [i32; 4];
+    let _5: &[i32; 4];
+    scope 1 {
+        debug v3 => _2;
+        let _3: *const i32;
+        scope 2 {
+            debug addr3 => _3;
+        }
+    }
+
+    bb0: {
+        _2 = [const 3_i32, const 4_i32, const 5_i32, const 6_i32];
+        _5 = &_2;
+        _4 = &raw const (*_5);
+        _3 = move _4 as *const i32 (PtrToPtr);
+        (((*_1).0: PtrRepr<i32>).0: *const i32) = copy _3;
+        return;
+    }
+}
+

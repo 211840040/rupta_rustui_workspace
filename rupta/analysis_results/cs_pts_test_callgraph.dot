@@ -1,0 +1,14 @@
+digraph {
+    0 [ label = "cs_pts_test::for_cs1" ]
+    1 [ label = "cs_pts_test::id" ]
+    2 [ label = "cs_pts_test::for_cs2" ]
+    3 [ label = "cs_pts_test::id2" ]
+    4 [ label = "cs_pts_test::main" ]
+    0 -> 1 [ label = "bb0[2]" ]
+    2 -> 3 [ label = "bb1[2]" ]
+    4 -> 2 [ label = "bb1[0]" ]
+    3 -> 1 [ label = "bb0[0]" ]
+    0 -> 1 [ label = "bb1[2]" ]
+    2 -> 3 [ label = "bb0[2]" ]
+    4 -> 0 [ label = "bb0[0]" ]
+}

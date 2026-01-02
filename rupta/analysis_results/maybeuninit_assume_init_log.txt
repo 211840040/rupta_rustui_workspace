@@ -1,0 +1,37 @@
+warning: value assigned to `t1` is never read
+  --> tests/unit_tests/maybeuninit_assume_init.rs:55:5
+   |
+55 |     t1 = &c;
+   |     ^^
+   |
+   = help: maybe it is overwritten before being read?
+   = note: `#[warn(unused_assignments)]` on by default
+
+Pointer analysis completed.
+Analysis time: 16ms 367us 877ns
+##########################################################
+Call Graph Statistics: 
+#Reachable functions (CS): 73
+#Reachable functions (CI): 9
+#Reachable unmonomorphized functions (CI): 9
+#Call graph edges (CS): 72
+#Call graph edges (CI): 34
+#Statically resolved calls: 15
+#Dynamically resolved calls: 7, #call graph edges: 19
+	#Dynamic dispatch calls: 7, #call graph edges: 19
+	#Fnptr calls: 0, #call graph edges: 0
+	#Dynamic Fn* trait calls: 0, #call graph edges: 0
+----------------------------------------------------------
+CS Points-to Statistics: 
+#Pointers: 230
+#Points-to relations: 294
+#Avg points-to size: 1.2782608695652173
+CI Points-to Statistics: 
+#Pointers: 58
+#Points-to relations: 92
+#Avg points-to size: 1.5862068965517242
+##########################################################
+Used Memory Before Analysis: 86 MB
+Max Memory in Analysis: 87 MB
+warning: 1 warning emitted
+

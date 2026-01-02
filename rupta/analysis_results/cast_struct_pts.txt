@@ -1,0 +1,13 @@
+FuncId(1) - "cast_struct::cast_struct"
+	FuncId(1)::local_3.1 (1) ==> { FuncId(1)::local_2 }
+	FuncId(1)::local_5 (1) ==> { FuncId(1)::local_2 }
+	FuncId(1)::local_7 (1) ==> { FuncId(1)::local_3 }
+	FuncId(1)::local_3.0 (1) ==> { FuncId(1)::local_1 }
+	FuncId(1)::local_4 (1) ==> { FuncId(1)::local_1 }
+FuncId(2) - "cast_struct::cast_struct_ref"
+	FuncId(2)::local_4 (1) ==> { FuncId(2)::local_1 }
+	FuncId(2)::local_8 (1) ==> { FuncId(2)::local_3 }
+	FuncId(2)::local_7 (1) ==> { FuncId(2)::local_8 }
+	FuncId(2)::local_3.0 (1) ==> { FuncId(2)::local_1 }
+	FuncId(2)::local_3.1 (1) ==> { FuncId(2)::local_2 }
+	FuncId(2)::local_5 (1) ==> { FuncId(2)::local_2 }

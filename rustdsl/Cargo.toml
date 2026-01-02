@@ -1,0 +1,29 @@
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+
+[workspace]
+members = [
+    "classes",
+    "classes_macros",
+]
+
+resolver = "2"
+
+[workspace.dependencies]
+# common utils
+classes = { path = "./classes", default-features = false }
+classes_macros = { path = "./classes_macros", default-features = false }
+
+# Persistent data structures
+rpds = { version = "1.1.1", default-features = false }
+# Rc/Arc alternatives
+archery = "1.2.1"
+# `dyn`-safe Hash trait
+dyn-hash = "0.2.2"
+# Bit flags representations
+bitflags = "2.9.1"
+
+[profile.release]
+panic = "abort"
+strip = true

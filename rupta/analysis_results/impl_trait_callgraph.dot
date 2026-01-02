@@ -1,0 +1,12 @@
+digraph {
+    0 [ label = "impl_trait::draw_shape_two<Circle, Rectangle>" ]
+    1 [ label = "impl_trait::{impl#1}::draw" ]
+    2 [ label = "impl_trait::main" ]
+    3 [ label = "impl_trait::draw_shape<Circle>" ]
+    4 [ label = "impl_trait::{impl#0}::draw" ]
+    0 -> 1 [ label = "bb1[0]" ]
+    2 -> 0 [ label = "bb1[2]" ]
+    2 -> 3 [ label = "bb0[1]" ]
+    3 -> 4 [ label = "bb0[0]" ]
+    0 -> 4 [ label = "bb0[0]" ]
+}

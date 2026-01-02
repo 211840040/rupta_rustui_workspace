@@ -1,0 +1,28 @@
+error[E0609]: no field `sub` on type `&mut _Interface::vtable::opt::Interface`
+  --> tests/compile/check_error/ambiguious_override.rs:17:25
+   |
+17 |         pub override fn sub(&self) {
+   |                         ^^^ unknown field
+   |
+   = note: available field is: `plus`
+
+error[E0599]: no method named `sub` found for struct `_Interface::Interface<RcDyn<_Interface::Interface>>` in the current scope
+  --> tests/compile/check_error/ambiguious_override.rs:17:25
+   |
+4  |       abstract class Interface {
+   |                      --------- method `sub` not found for this struct
+...
+17 |           pub override fn sub(&self) {
+   |  _________________________^^^---------
+   | |                         |
+   | |                         method not found in `Interface<RcDyn<Interface>>`
+18 | |             //~^ ERROR[E0609]: no field `sub` on type `&mut _Interface::vtable::opt::Interface`
+19 | |             //~| ERROR[E0599]: no method named `sub` found for struct `_Interface::Interface<RcDyn<_Interface::Interface>>` in the curren...
+20 | |             let mut id = self.get_mut_id();
+21 | |             *id -= 1;
+22 | |         }
+   | |_________- method `sub` is available on `&_A::A<RcDyn<_A::A>>`
+   |
+   = help: items from traits can only be used if the trait is implemented and in scope
+   = note: the following trait defines an item `sub`, perhaps you need to implement it:
+           candidate #1: `Sub`

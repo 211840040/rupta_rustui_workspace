@@ -1,0 +1,70 @@
+[FuncId(0) - "dyn_call::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: Circle;
+    let _4: &Circle;
+    let _5: ();
+    let _7: &Rectangle;
+    let _8: ();
+    scope 1 {
+        debug c => const Circle;
+        let _2: Rectangle;
+        scope 2 {
+            debug r => const Rectangle;
+            let _3: &dyn Shape;
+            scope 3 {
+                debug s1 => _3;
+                let _6: &dyn Shape;
+                scope 4 {
+                    debug s2 => _6;
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _4 = &_1;
+        _3 = copy _4 as &dyn Shape (PointerCoercion(Unsize, Implicit));
+        _5 = <dyn Shape as Shape>::draw(copy _3) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _7 = &_2;
+        _6 = copy _7 as &dyn Shape (PointerCoercion(Unsize, Implicit));
+        _8 = <dyn Shape as Shape>::draw(copy _6) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+[FuncId(1) - "dyn_call::{impl#0}::draw"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/dyn_call.rs:15:1: 15:22>::draw(_1: &Circle) -> () {
+    debug self => _1;
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+
+[FuncId(2) - "dyn_call::{impl#1}::draw"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/dyn_call.rs:18:1: 18:25>::draw(_1: &Rectangle) -> () {
+    debug self => _1;
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+

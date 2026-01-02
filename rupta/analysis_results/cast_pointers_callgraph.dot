@@ -1,0 +1,11 @@
+digraph {
+    0 [ label = "cast_pointers::main" ]
+    1 [ label = "cast_pointers::tuple_to_array" ]
+    2 [ label = "cast_pointers::const_to_mut" ]
+    3 [ label = "cast_pointers::mut_to_const" ]
+    4 [ label = "cast_pointers::array_to_tuple" ]
+    0 -> 1 [ label = "bb2[0]" ]
+    0 -> 2 [ label = "bb0[0]" ]
+    0 -> 3 [ label = "bb1[0]" ]
+    0 -> 4 [ label = "bb3[0]" ]
+}

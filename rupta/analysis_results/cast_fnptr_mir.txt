@@ -1,0 +1,175 @@
+[FuncId(0) - "cast_fnptr::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: ();
+    let _2: ();
+    let _3: ();
+    let _4: ();
+
+    bb0: {
+        _1 = reify_fn_pointer() -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _2 = closure_fn_pointer() -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _3 = fnptr_to_ptr() -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        _4 = unsafe_fn_pointer() -> [return: bb4, unwind continue];
+    }
+
+    bb4: {
+        return;
+    }
+}
+
+[FuncId(1) - "cast_fnptr::reify_fn_pointer"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn reify_fn_pointer() -> () {
+    let mut _0: ();
+    let _1: fn(i32) -> i32;
+    let _2: i32;
+    scope 1 {
+        debug f => _1;
+    }
+
+    bb0: {
+        _1 = times2 as fn(i32) -> i32 (PointerCoercion(ReifyFnPointer, Implicit));
+        _2 = copy _1(const 2_i32) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(2) - "cast_fnptr::closure_fn_pointer"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn closure_fn_pointer() -> () {
+    let mut _0: ();
+    let _1: fn(i32) -> i32;
+    let _2: i32;
+    scope 1 {
+        debug f => _1;
+    }
+
+    bb0: {
+        _1 = const ZeroSized: {closure@tests/unit_tests/cast_fnptr.rs:23:29: 23:32} as fn(i32) -> i32 (PointerCoercion(ClosureFnPointer(Safe), Implicit));
+        _2 = copy _1(const 2_i32) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(3) - "cast_fnptr::fnptr_to_ptr"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn fnptr_to_ptr() -> () {
+    let mut _0: ();
+    let _1: fn(i32) -> i32;
+    let _4: i32;
+    scope 1 {
+        debug p => _1;
+        let _2: *const ();
+        scope 2 {
+            debug q => _2;
+            let _3: fn(i32) -> i32;
+            scope 3 {
+                debug f => _3;
+            }
+        }
+    }
+
+    bb0: {
+        _1 = times2 as fn(i32) -> i32 (PointerCoercion(ReifyFnPointer, Implicit));
+        _2 = copy _1 as *const () (FnPtrToPtr);
+        _3 = copy _2 as fn(i32) -> i32 (Transmute);
+        _4 = copy _3(const 2_i32) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(4) - "cast_fnptr::unsafe_fn_pointer"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn unsafe_fn_pointer() -> () {
+    let mut _0: ();
+    let _1: fn(i32) -> i32;
+    let _3: i32;
+    scope 1 {
+        debug p => _1;
+        let _2: unsafe fn(i32) -> i32;
+        scope 2 {
+            debug q => _2;
+        }
+    }
+
+    bb0: {
+        _1 = times2 as fn(i32) -> i32 (PointerCoercion(ReifyFnPointer, Implicit));
+        _2 = copy _1 as unsafe fn(i32) -> i32 (PointerCoercion(UnsafeFnPointer, AsCast));
+        _3 = copy _2(const 2_i32) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(5) - "cast_fnptr::times2"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn times2(_1: i32) -> i32 {
+    debug value => _1;
+    let mut _0: i32;
+    let mut _2: (i32, bool);
+
+    bb0: {
+        _2 = MulWithOverflow(const 2_i32, copy _1);
+        assert(!move (_2.1: bool), "attempt to compute `{} * {}`, which would overflow", const 2_i32, copy _1) -> [success: bb1, unwind continue];
+    }
+
+    bb1: {
+        _0 = move (_2.0: i32);
+        return;
+    }
+}
+
+[FuncId(6) - "cast_fnptr::closure_fn_pointer::{closure#0}<i8, Binder { value: extern \"RustCall\" fn((i32,)) -> i32, bound_vars: [] }, ()>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn closure_fn_pointer::{closure#0}(_1: &{closure@tests/unit_tests/cast_fnptr.rs:23:29: 23:32}, _2: i32) -> i32 {
+    debug x => _2;
+    let mut _0: i32;
+    let mut _3: (i32, bool);
+
+    bb0: {
+        _3 = MulWithOverflow(copy _2, const 2_i32);
+        assert(!move (_3.1: bool), "attempt to compute `{} * {}`, which would overflow", copy _2, const 2_i32) -> [success: bb1, unwind continue];
+    }
+
+    bb1: {
+        _0 = move (_3.0: i32);
+        return;
+    }
+}
+

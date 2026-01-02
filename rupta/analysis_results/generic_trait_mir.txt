@@ -1,0 +1,108 @@
+[FuncId(0) - "generic_trait::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: Foo<i32, f64>;
+    let _3: ();
+    let mut _4: &Foo<i32, f64>;
+    let _5: ();
+    let mut _6: &Bar<i32, f64>;
+    scope 1 {
+        debug foo => _1;
+        let _2: Bar<i32, f64>;
+        scope 2 {
+            debug bar => _2;
+        }
+    }
+
+    bb0: {
+        _1 = Foo::<i32, f64> { a: const 1_i32, b: const 2f64 };
+        _2 = Bar::<i32, f64> { a: const 2_i32, b: const 3f64 };
+        _4 = &_1;
+        _3 = <Foo<i32, f64> as MyTrait<i32>>::trait_method::<bool>(move _4, const true) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _6 = &_2;
+        _5 = <Bar<i32, f64> as MyTrait<f64>>::trait_method::<Foo<i32, f64>>(move _6, move _1) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+[FuncId(1) - "generic_trait::{impl#0}::trait_method<f64, i32, bool>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/generic_trait.rs:20:1: 20:36>::trait_method(_1: &Foo<A, B>, _2: V) -> () {
+    debug self => _1;
+    debug t => _2;
+    let mut _0: ();
+    let _3: ();
+
+    bb0: {
+        _3 = <Foo<A, B> as MyTrait<A>>::trait_func::<V>(move _2) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(2) - "generic_trait::{impl#1}::trait_method<f64, Foo<i32, f64>>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/generic_trait.rs:34:1: 34:35>::trait_method(_1: &Bar<i32, C>, _2: T) -> () {
+    debug self => _1;
+    debug t => _2;
+    let mut _0: ();
+    let _3: ();
+
+    bb0: {
+        _3 = <Bar<i32, C> as MyTrait<C>>::trait_func::<T>(move _2) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(3) - "generic_trait::{impl#0}::trait_func<f64, i32, bool>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/generic_trait.rs:20:1: 20:36>::trait_func(_1: Q) -> () {
+    debug q => _1;
+    let mut _0: ();
+
+    bb0: {
+        drop(_1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(4) - "generic_trait::MyTrait::trait_func<Bar<i32, f64>, f64, Foo<i32, f64>>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn MyTrait::trait_func(_1: Q) -> () {
+    debug _q => _1;
+    let mut _0: ();
+
+    bb0: {
+        drop(_1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+

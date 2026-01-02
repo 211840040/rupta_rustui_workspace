@@ -1,0 +1,36 @@
+warning: unused variable: `arr`
+  --> tests/unit_tests/array.rs:12:9
+   |
+12 |     let arr = [&a, &b, &c];
+   |         ^^^ help: if this is intentional, prefix it with an underscore: `_arr`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+Pointer analysis completed.
+Analysis time: 578us 941ns
+##########################################################
+Call Graph Statistics: 
+#Reachable functions (CS): 1
+#Reachable functions (CI): 1
+#Reachable unmonomorphized functions (CI): 1
+#Call graph edges (CS): 0
+#Call graph edges (CI): 0
+#Statically resolved calls: 0
+#Dynamically resolved calls: 0, #call graph edges: 0
+	#Dynamic dispatch calls: 0, #call graph edges: 0
+	#Fnptr calls: 0, #call graph edges: 0
+	#Dynamic Fn* trait calls: 0, #call graph edges: 0
+----------------------------------------------------------
+CS Points-to Statistics: 
+#Pointers: 4
+#Points-to relations: 6
+#Avg points-to size: 1.5
+CI Points-to Statistics: 
+#Pointers: 4
+#Points-to relations: 6
+#Avg points-to size: 1.5
+##########################################################
+Used Memory Before Analysis: 75 MB
+Max Memory in Analysis: 75 MB
+warning: 1 warning emitted
+

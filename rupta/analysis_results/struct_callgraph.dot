@@ -1,0 +1,17 @@
+digraph {
+    0 [ label = "struct::main" ]
+    1 [ label = "struct::struct_move" ]
+    2 [ label = "struct::struct_new" ]
+    3 [ label = "struct::{impl#0}::new<>" ]
+    4 [ label = "struct::struct_copy" ]
+    5 [ label = "struct::{impl#0}::foo<>" ]
+    6 [ label = "struct::struct_ref" ]
+    7 [ label = "struct::{impl#1}::bar<>" ]
+    0 -> 1 [ label = "bb1[0]" ]
+    2 -> 3 [ label = "bb0[4]" ]
+    0 -> 4 [ label = "bb2[0]" ]
+    1 -> 5 [ label = "bb0[7]" ]
+    0 -> 6 [ label = "bb3[0]" ]
+    0 -> 2 [ label = "bb0[0]" ]
+    4 -> 7 [ label = "bb0[7]" ]
+}

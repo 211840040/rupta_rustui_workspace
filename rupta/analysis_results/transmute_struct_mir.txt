@@ -1,0 +1,127 @@
+[FuncId(0) - "transmute_struct::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: ();
+    let _2: ();
+
+    bb0: {
+        _1 = transmute_struct_a() -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _2 = transmute_struct_b() -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+[FuncId(1) - "transmute_struct::transmute_struct_a"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn transmute_struct_a() -> () {
+    let mut _0: ();
+    let _1: u32;
+    let _7: &u32;
+    let mut _8: [&u32; 2];
+    let _9: &u32;
+    let _10: &u32;
+    let mut _11: (&u32, &u32);
+    let _12: &u32;
+    let _13: &u32;
+    let _16: usize;
+    let mut _17: bool;
+    let mut _18: &mut u32;
+    scope 1 {
+        debug x => _1;
+        let _2: u32;
+        scope 2 {
+            debug y => _2;
+            let _3: u32;
+            scope 3 {
+                debug z => _3;
+                let _4: u32;
+                scope 4 {
+                    debug m => _4;
+                    let _5: u32;
+                    scope 5 {
+                        debug n => _5;
+                        let _6: A<'_>;
+                        scope 6 {
+                            debug a => _6;
+                            let _14: [&mut u32; 5];
+                            scope 7 {
+                                debug b => _14;
+                                let _15: u32;
+                                scope 8 {
+                                    debug _x => _15;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const 2_u32;
+        _2 = const 3_u32;
+        _3 = const 4_u32;
+        _4 = const 5_u32;
+        _5 = const 6_u32;
+        _7 = &_1;
+        _9 = &_2;
+        _10 = &_3;
+        _8 = [copy _9, copy _10];
+        _12 = &_4;
+        _13 = &_5;
+        _11 = (copy _12, copy _13);
+        _6 = A::<'_> { x: copy _7, arr: move _8, tup: move _11 };
+        _14 = move _6 as [&mut u32; 5] (Transmute);
+        _16 = const 0_usize;
+        _17 = Lt(copy _16, const 5_usize);
+        assert(move _17, "index out of bounds: the length is {} but the index is {}", const 5_usize, copy _16) -> [success: bb1, unwind continue];
+    }
+
+    bb1: {
+        _18 = deref_copy _14[_16];
+        _15 = copy (*_18);
+        return;
+    }
+}
+
+[FuncId(2) - "transmute_struct::transmute_struct_b"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn transmute_struct_b() -> () {
+    let mut _0: ();
+    let _1: u32;
+    let _3: &u32;
+    scope 1 {
+        debug x => _1;
+        let _2: B<'_>;
+        scope 2 {
+            debug b => _2;
+            let _4: &u32;
+            scope 3 {
+                debug _x => _4;
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const 2_u32;
+        _3 = &_1;
+        _2 = B::<'_> { placeholder: const (), phantom: const std::marker::PhantomData::<u32>, x: copy _3 };
+        _4 = move _2 as &u32 (Transmute);
+        return;
+    }
+}
+

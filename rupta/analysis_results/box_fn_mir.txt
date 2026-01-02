@@ -1,0 +1,244 @@
+[FuncId(0) - "box_fn::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: fn(u32) -> u32;
+    let mut _3: std::boxed::Box<fn(u32) -> u32>;
+    let _4: ();
+    scope 1 {
+        debug fp => _1;
+        let _2: std::boxed::Box<dyn std::ops::Fn(u32) -> u32>;
+        scope 2 {
+            debug b => _2;
+        }
+    }
+
+    bb0: {
+        _1 = const ZeroSized: {closure@tests/unit_tests/box_fn.rs:13:30: 13:38} as fn(u32) -> u32 (PointerCoercion(ClosureFnPointer(Safe), Implicit));
+        _3 = std::boxed::Box::<fn(u32) -> u32>::new(copy _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _2 = move _3 as std::boxed::Box<dyn std::ops::Fn(u32) -> u32> (PointerCoercion(Unsize, Implicit));
+        _4 = foo(move _2) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+}
+
+[FuncId(2) - "alloc::boxed::{impl#0}::new<Binder { value: fn(u32) -> u32, bound_vars: [] }>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::boxed::Box::<T>::new(_1: T) -> std::boxed::Box<T> {
+    debug x => _1;
+    let mut _0: std::boxed::Box<T>;
+    let mut _2: usize;
+    let mut _3: usize;
+    let mut _4: *mut u8;
+    let mut _5: *const T;
+
+    bb0: {
+        _2 = SizeOf(T);
+        _3 = AlignOf(T);
+        _4 = alloc::alloc::exchange_malloc(move _2, move _3) -> [return: bb1, unwind: bb2];
+    }
+
+    bb1: {
+        _0 = ShallowInitBox(move _4, T);
+        _5 = copy ((_0.0: std::ptr::Unique<T>).0: std::ptr::NonNull<T>) as *const T (Transmute);
+        (*_5) = move _1;
+        return;
+    }
+
+    bb2 (cleanup): {
+        drop(_1) -> [return: bb3, unwind terminate(cleanup)];
+    }
+
+    bb3 (cleanup): {
+        resume;
+    }
+}
+
+[FuncId(3) - "box_fn::foo"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn foo(_1: std::boxed::Box<dyn std::ops::Fn(u32) -> u32>) -> () {
+    debug f => _1;
+    let mut _0: ();
+    let _2: u32;
+    let mut _3: &std::boxed::Box<dyn std::ops::Fn(u32) -> u32>;
+    let mut _4: (u32,);
+
+    bb0: {
+        _3 = &_1;
+        _4 = (const 2_u32,);
+        _2 = <std::boxed::Box<dyn std::ops::Fn(u32) -> u32> as std::ops::Fn<(u32,)>>::call(move _3, move _4) -> [return: bb1, unwind: bb3];
+    }
+
+    bb1: {
+        drop(_1) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        return;
+    }
+
+    bb3 (cleanup): {
+        drop(_1) -> [return: bb4, unwind terminate(cleanup)];
+    }
+
+    bb4 (cleanup): {
+        resume;
+    }
+}
+
+[FuncId(4) - "alloc::alloc::exchange_malloc"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn alloc::alloc::exchange_malloc(_1: usize, _2: usize) -> *mut u8 {
+    debug size => _1;
+    debug align => _2;
+    let mut _0: *mut u8;
+    let _3: std::alloc::Layout;
+    let mut _4: std::result::Result<std::ptr::NonNull<[u8]>, std::alloc::AllocError>;
+    let mut _5: isize;
+    let mut _7: !;
+    scope 1 {
+        debug layout => _3;
+        let _6: std::ptr::NonNull<[u8]>;
+        scope 2 {
+            debug ptr => _6;
+            scope 5 (inlined std::ptr::NonNull::<[u8]>::as_mut_ptr) {
+                debug self => _6;
+                scope 6 (inlined std::ptr::NonNull::<[u8]>::as_non_null_ptr) {
+                    scope 7 (inlined std::ptr::NonNull::<[u8]>::cast::<u8>) {
+                        let mut _11: *mut [u8];
+                        scope 8 (inlined std::ptr::NonNull::<[u8]>::as_ptr) {
+                        }
+                    }
+                }
+                scope 9 (inlined std::ptr::NonNull::<u8>::as_ptr) {
+                }
+            }
+        }
+        scope 4 (inlined <std::alloc::Global as std::alloc::Allocator>::allocate) {
+            debug self => const alloc::alloc::exchange_malloc::promoted[0];
+            debug layout => _3;
+        }
+    }
+    scope 3 (inlined std::alloc::Layout::from_size_align_unchecked) {
+        debug size => _1;
+        debug align => _2;
+        let mut _8: bool;
+        let _9: ();
+        let mut _10: std::ptr::Alignment;
+    }
+
+    bb0: {
+        StorageLive(_8);
+        _8 = UbChecks();
+        switchInt(move _8) -> [0: bb5, otherwise: bb4];
+    }
+
+    bb1: {
+        unreachable;
+    }
+
+    bb2: {
+        _7 = std::alloc::handle_alloc_error(move _3) -> unwind continue;
+    }
+
+    bb3: {
+        _6 = copy ((_4 as Ok).0: std::ptr::NonNull<[u8]>);
+        StorageLive(_11);
+        _11 = copy _6 as *mut [u8] (Transmute);
+        _0 = copy _11 as *mut u8 (PtrToPtr);
+        StorageDead(_11);
+        StorageDead(_4);
+        return;
+    }
+
+    bb4: {
+        _9 = std::alloc::Layout::from_size_align_unchecked::precondition_check(copy _1, copy _2) -> [return: bb5, unwind unreachable];
+    }
+
+    bb5: {
+        StorageDead(_8);
+        StorageLive(_10);
+        _10 = copy _2 as std::ptr::Alignment (Transmute);
+        _3 = std::alloc::Layout { size: copy _1, align: move _10 };
+        StorageDead(_10);
+        StorageLive(_4);
+        _4 = std::alloc::Global::alloc_impl(const alloc::alloc::exchange_malloc::promoted[0], copy _3, const false) -> [return: bb6, unwind continue];
+    }
+
+    bb6: {
+        _5 = discriminant(_4);
+        switchInt(move _5) -> [0: bb3, 1: bb2, otherwise: bb1];
+    }
+}
+
+const alloc::alloc::exchange_malloc::promoted[0]: &std::alloc::Global = {
+    let mut _0: &std::alloc::Global;
+    let mut _1: std::alloc::Global;
+
+    bb0: {
+        _1 = std::alloc::Global;
+        _0 = &_1;
+        return;
+    }
+}
+
+[FuncId(5) - "alloc::boxed::{impl#30}::call<(u32,), dyn [Binder { value: Trait(std::ops::Fn<(u32,)>), bound_vars: [] }, Binder { value: Projection(ExistentialProjection { def_id: DefId(2:3925 ~ core[ce1f]::ops::function::FnOnce::Output), args: [(u32,)], term: Term::Ty(u32), use_existential_projection_new_instead: () }), bound_vars: [] }] + '{erased}, std::alloc::Global>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <std::boxed::Box<F, A> as std::ops::Fn<Args>>::call(_1: &std::boxed::Box<F, A>, _2: Args) -> <F as std::ops::FnOnce<Args>>::Output {
+    debug self => _1;
+    debug args => _2;
+    let mut _0: <F as std::ops::FnOnce<Args>>::Output;
+    let mut _3: &F;
+    let mut _4: std::boxed::Box<F, A>;
+    let mut _5: *const F;
+
+    bb0: {
+        StorageLive(_3);
+        _4 = copy (*_1);
+        _5 = copy ((_4.0: std::ptr::Unique<F>).0: std::ptr::NonNull<F>) as *const F (Transmute);
+        _3 = &(*_5);
+        _0 = <F as std::ops::Fn<Args>>::call(move _3, move _2) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        StorageDead(_3);
+        return;
+    }
+}
+
+[FuncId(1) - "box_fn::main::{closure#0}<i8, Binder { value: extern \"RustCall\" fn((u32,)) -> u32, bound_vars: [] }, ()>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main::{closure#0}(_1: &{closure@tests/unit_tests/box_fn.rs:13:30: 13:38}, _2: u32) -> u32 {
+    debug x => _2;
+    let mut _0: u32;
+    let mut _3: (u32, bool);
+
+    bb0: {
+        _3 = MulWithOverflow(copy _2, const 2_u32);
+        assert(!move (_3.1: bool), "attempt to compute `{} * {}`, which would overflow", copy _2, const 2_u32) -> [success: bb1, unwind continue];
+    }
+
+    bb1: {
+        _0 = move (_3.0: u32);
+        return;
+    }
+}
+

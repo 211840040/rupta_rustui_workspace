@@ -1,0 +1,169 @@
+[FuncId(0) - "generic_func::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: i32;
+    let mut _3: &i32;
+    let _5: &i32;
+    let _7: ();
+    scope 1 {
+        debug x => _1;
+        let _2: &i32;
+        scope 2 {
+            debug p => _2;
+            let _4: Foo<'_>;
+            scope 3 {
+                debug f => _4;
+                let _6: Foo<'_>;
+                scope 4 {
+                    debug q => _6;
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const 32_i32;
+        _3 = &_1;
+        _2 = generic_id_wrapper::<&i32>(move _3) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _5 = &_1;
+        _4 = Foo::<'_> { f: copy _5 };
+        _6 = generic_id_wrapper::<Foo<'_>>(move _4) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _7 = multi_generics::<&i32, Foo<'_>>(copy _2, move _6) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        return;
+    }
+}
+
+[FuncId(1) - "generic_func::generic_id_wrapper<&'{erased} i32>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn generic_id_wrapper(_1: T) -> T {
+    debug t => _1;
+    let mut _0: T;
+
+    bb0: {
+        _0 = generic_id::<T>(move _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(2) - "generic_func::generic_id_wrapper<Foo<'{erased}>>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn generic_id_wrapper(_1: T) -> T {
+    debug t => _1;
+    let mut _0: T;
+
+    bb0: {
+        _0 = generic_id::<T>(move _1) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        return;
+    }
+}
+
+[FuncId(3) - "generic_func::multi_generics<&'{erased} i32, Foo<'{erased}>>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn multi_generics(_1: T, _2: U) -> () {
+    debug t => _1;
+    debug u => _2;
+    let mut _0: ();
+    let _3: T;
+    let mut _5: U;
+    let mut _6: bool;
+    scope 1 {
+        debug x => _3;
+        let _4: U;
+        scope 2 {
+            debug y => _4;
+        }
+    }
+
+    bb0: {
+        _6 = const false;
+        _6 = const true;
+        _3 = generic_id::<T>(move _1) -> [return: bb1, unwind: bb8];
+    }
+
+    bb1: {
+        _6 = const false;
+        _5 = move _2;
+        _4 = generic_id::<U>(move _5) -> [return: bb2, unwind: bb5];
+    }
+
+    bb2: {
+        drop(_4) -> [return: bb3, unwind: bb5];
+    }
+
+    bb3: {
+        drop(_3) -> [return: bb4, unwind: bb8];
+    }
+
+    bb4: {
+        return;
+    }
+
+    bb5 (cleanup): {
+        drop(_3) -> [return: bb8, unwind terminate(cleanup)];
+    }
+
+    bb6 (cleanup): {
+        resume;
+    }
+
+    bb7 (cleanup): {
+        drop(_2) -> [return: bb6, unwind terminate(cleanup)];
+    }
+
+    bb8 (cleanup): {
+        switchInt(copy _6) -> [0: bb6, otherwise: bb7];
+    }
+}
+
+[FuncId(4) - "generic_func::generic_id<&'{erased} i32>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn generic_id(_1: T) -> T {
+    debug t => _1;
+    let mut _0: T;
+
+    bb0: {
+        _0 = move _1;
+        return;
+    }
+}
+
+[FuncId(5) - "generic_func::generic_id<Foo<'{erased}>>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn generic_id(_1: T) -> T {
+    debug t => _1;
+    let mut _0: T;
+
+    bb0: {
+        _0 = move _1;
+        return;
+    }
+}
+

@@ -1,0 +1,26 @@
+error: no such field `ida`
+  --> tests/compile/check_error/field.rs:10:20
+   |
+10 |             Self { ida: id }
+   |                    ^^^
+
+error[E0609]: no field `ida` on type `data::A`
+  --> tests/compile/check_error/field.rs:10:20
+   |
+10 |             Self { ida: id }
+   |                    ^^^ unknown field
+   |
+help: a field with a similar name exists
+   |
+10 -             Self { ida: id }
+10 +             Self { id: id }
+   |
+
+error[E0026]: struct `data::A` does not have a field named `ida`
+  --> tests/compile/check_error/field.rs:10:20
+   |
+10 |             Self { ida: id }
+   |                    ^^^
+   |                    |
+   |                    struct `data::A` does not have this field
+   |                    help: a field with a similar name exists: `id`

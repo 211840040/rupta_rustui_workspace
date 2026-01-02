@@ -1,0 +1,17 @@
+error: `const fn` is not supported yet
+  --> tests/compile/check_error/unsupported_kw_fn.rs:13:9
+   |
+13 |         const fn x(&self) {}
+   |         ^^^^^
+
+error: `async fn` is not supported yet
+  --> tests/compile/check_error/unsupported_kw_fn.rs:15:9
+   |
+15 |         async fn y(&self) {}
+   |         ^^^^^
+
+error: `final fn` is not supported yet
+  --> tests/compile/check_error/unsupported_kw_fn.rs:17:9
+   |
+17 |         final fn z(&self) {}
+   |         ^^^^^

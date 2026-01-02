@@ -1,0 +1,51 @@
+[FuncId(0) - "rustdsl_test::test_entry"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn test_entry() -> () {
+    let mut _0: ();
+    let _1: std::option::Option<_classes::_Widget::Widget<classes::ptr::RcDyn<_classes::_Widget::Widget>>>;
+    scope 1 {
+        debug _widget => _1;
+        let _2: std::option::Option<_classes::_Element::Element<classes::ptr::RcDyn<_classes::_Element::Element>>>;
+        scope 2 {
+            debug _element => _2;
+            let _3: std::option::Option<_classes::_BuildContext::BuildContext<classes::ptr::RcDyn<_classes::_BuildContext::BuildContext>>>;
+            scope 3 {
+                debug _context => _3;
+            }
+        }
+    }
+
+    bb0: {
+        _1 = std::option::Option::<_classes::_Widget::Widget<classes::ptr::RcDyn<_classes::_Widget::Widget>>>::None;
+        _2 = std::option::Option::<_classes::_Element::Element<classes::ptr::RcDyn<_classes::_Element::Element>>>::None;
+        _3 = std::option::Option::<_classes::_BuildContext::BuildContext<classes::ptr::RcDyn<_classes::_BuildContext::BuildContext>>>::None;
+        drop(_3) -> [return: bb1, unwind: bb4];
+    }
+
+    bb1: {
+        drop(_2) -> [return: bb2, unwind: bb5];
+    }
+
+    bb2: {
+        drop(_1) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        return;
+    }
+
+    bb4 (cleanup): {
+        drop(_2) -> [return: bb5, unwind terminate(cleanup)];
+    }
+
+    bb5 (cleanup): {
+        drop(_1) -> [return: bb6, unwind terminate(cleanup)];
+    }
+
+    bb6 (cleanup): {
+        resume;
+    }
+}
+

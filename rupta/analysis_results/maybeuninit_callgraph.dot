@@ -1,0 +1,8 @@
+digraph {
+    0 [ label = "maybeuninit::main" ]
+    1 [ label = "maybeuninit::cast" ]
+    2 [ label = "core::mem::maybe_uninit::{impl#2}::new<&'{erased} i32>" ]
+    0 -> 1 [ label = "bb1[2]" ]
+    0 -> 1 [ label = "bb2[0]" ]
+    0 -> 2 [ label = "bb0[7]" ]
+}

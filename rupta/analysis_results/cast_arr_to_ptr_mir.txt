@@ -1,0 +1,82 @@
+[FuncId(0) - "cast_arr_to_ptr::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let mut _1: i32;
+    let mut _4: &i32;
+    let _5: &i32;
+    let mut _6: *const [&i32; 2];
+    let _7: &[&i32; 2];
+    let mut _8: *const &i32;
+    scope 1 {
+        debug x => _1;
+        let mut _2: i32;
+        scope 2 {
+            debug y => _2;
+            let _3: [&i32; 2];
+            scope 3 {
+                debug arr => _3;
+                scope 4 {
+                    debug p1 => _6;
+                    scope 5 {
+                        debug p2 => _8;
+                        let _9: &i32;
+                        let mut _10: *const ();
+                        let mut _11: usize;
+                        let mut _12: usize;
+                        let mut _13: usize;
+                        let mut _14: usize;
+                        let mut _15: bool;
+                        let mut _16: *const ();
+                        let mut _17: usize;
+                        let mut _18: usize;
+                        let mut _19: bool;
+                        let mut _20: bool;
+                        let mut _21: bool;
+                        let mut _22: bool;
+                        scope 6 {
+                            debug e => _9;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const 2_i32;
+        _2 = const 3_i32;
+        _4 = &_1;
+        _5 = &_2;
+        _3 = [move _4, copy _5];
+        _7 = &_3;
+        _6 = &raw const (*_7);
+        _8 = copy _6 as *const &i32 (PtrToPtr);
+        _10 = copy _8 as *const () (PtrToPtr);
+        _11 = copy _10 as usize (Transmute);
+        _12 = AlignOf(&i32);
+        _13 = Sub(copy _12, const 1_usize);
+        _14 = BitAnd(copy _11, copy _13);
+        _15 = Eq(copy _14, const 0_usize);
+        assert(copy _15, "misaligned pointer dereference: address must be a multiple of {} but is {}", copy _12, copy _11) -> [success: bb1, unwind unreachable];
+    }
+
+    bb1: {
+        _16 = copy _8 as *const () (PtrToPtr);
+        _17 = copy _16 as usize (Transmute);
+        _18 = SizeOf(&i32);
+        _19 = Ne(copy _18, const 0_usize);
+        _20 = Eq(copy _17, const 0_usize);
+        _21 = BitAnd(copy _20, copy _19);
+        _22 = Not(copy _21);
+        assert(copy _22, "null pointer dereference occurred") -> [success: bb2, unwind unreachable];
+    }
+
+    bb2: {
+        _9 = copy (*_8);
+        return;
+    }
+}
+

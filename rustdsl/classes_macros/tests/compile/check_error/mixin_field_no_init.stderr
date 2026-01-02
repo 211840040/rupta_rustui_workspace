@@ -1,0 +1,24 @@
+error: constructor in mixin is not supported now
+ --> tests/compile/check_error/mixin_field_no_init.rs:7:21
+  |
+7 |         fn new() -> Self { //~ ERROR: constructor in mixin is not supported now
+  |                     ^^^^
+
+error: missing field `x` in initializer of `Self`
+ --> tests/compile/check_error/mixin_field_no_init.rs:5:19
+  |
+2 |       #[with(Object)]
+  |  ____________-
+3 | |     mixin M {
+  | |___________- in this macro invocation
+4 |           struct {
+5 |               final x: String, //~ ERROR: missing field `x` in initializer of `Self`
+  |                     ^
+  |
+  = note: this error originates in the macro `M` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0601]: `main` function not found in crate `$CRATE`
+  --> tests/compile/check_error/mixin_field_no_init.rs:14:2
+   |
+14 | }
+   |  ^ consider adding a `main` function to `$DIR/tests/compile/check_error/mixin_field_no_init.rs`

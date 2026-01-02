@@ -1,0 +1,29 @@
+FuncId(0) - "opaque::main"
+	FuncId(0)::local_15 (1) ==> { FuncId(0)::local_13 }
+	FuncId(0)::local_18 (1) ==> { FuncId(0)::local_16 }
+	FuncId(0)::local_10.0 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_6 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_13.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_3.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_16.0 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_7.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_12 (1) ==> { FuncId(0)::local_10 }
+	FuncId(0)::local_4 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_5.0 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_9 (1) ==> { FuncId(0)::local_7 }
+FuncId(1) - "opaque::opaque<A<'{erased}>>"
+	FuncId(1)::ret.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(1)::param_1.0 (1) ==> { FuncId(0)::local_1 }
+FuncId(2) - "opaque::{impl#0}::foo<>"
+	FuncId(2)::param_1 (2) ==> { FuncId(0)::local_13 FuncId(0)::local_7 }
+FuncId(3) - "opaque::opaque<B<'{erased}>>"
+	FuncId(3)::ret.0 (1) ==> { FuncId(0)::local_2 }
+	FuncId(3)::param_1.0 (1) ==> { FuncId(0)::local_2 }
+FuncId(4) - "opaque::{impl#1}::foo<>"
+	FuncId(4)::param_1 (2) ==> { FuncId(0)::local_10 FuncId(0)::local_16 }
+FuncId(5) - "opaque::opaque_wrapper<A<'{erased}>>"
+	FuncId(5)::ret.0 (1) ==> { FuncId(0)::local_1 }
+	FuncId(5)::param_1.0 (1) ==> { FuncId(0)::local_1 }
+FuncId(6) - "opaque::opaque_wrapper<B<'{erased}>>"
+	FuncId(6)::param_1.0 (1) ==> { FuncId(0)::local_2 }
+	FuncId(6)::ret.0 (1) ==> { FuncId(0)::local_2 }

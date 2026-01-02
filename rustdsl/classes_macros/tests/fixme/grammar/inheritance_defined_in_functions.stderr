@@ -1,0 +1,12 @@
+error[E0425]: cannot find value `MODULE_PATH` in this scope
+  --> tests/fixme/grammar/inheritance_defined_in_functions.rs:7:5
+   |
+7  | /     classes! {
+8  | |         //~^ ERROR: cannot find value `MODULE_PATH` in this scope
+9  | |         class Animal {
+10 | |             struct {
+...  |
+28 | |     }
+   | |_____^ not found in this scope
+   |
+   = note: this error originates in the macro `classes` (in Nightly builds, run with -Z macro-backtrace for more info)

@@ -1,0 +1,24 @@
+FuncId(1) - "closure::closure1"
+	FuncId(1)::local_3 (1) ==> { FuncId(1)::local_1 }
+	FuncId(1)::local_5 (1) ==> { FuncId(1)::local_6 }
+	FuncId(1)::local_6 (1) ==> { FuncId(1)::local_1 }
+FuncId(2) - "closure::closure2"
+	FuncId(2)::local_3 (1) ==> { FuncId(2)::local_1 }
+	FuncId(2)::local_2 (1) ==> { FuncId(7)::local_1 }
+	FuncId(2)::local_4 (1) ==> { FuncId(2)::local_5 }
+	FuncId(2)::local_6 (1) ==> { FuncId(7)::local_1 }
+	FuncId(2)::local_5 (1) ==> { FuncId(2)::local_1 }
+FuncId(3) - "closure::closure1::{closure#0}<i8, Binder { value: extern \"RustCall\" fn((i32,)) -> i32, bound_vars: [] }, ()>"
+	FuncId(3)::param_1 (1) ==> { FuncId(1)::local_1 }
+FuncId(4) - "core::ops::function::impls::{impl#0}::call<(i32,), Closure(DefId(0:4 ~ closure[385b]::closure1::{closure#0}), [i8, Binder { value: extern \"RustCall\" fn((i32,)) -> i32, bound_vars: [] }, ()])>"
+	FuncId(4)::local_3 (1) ==> { FuncId(1)::local_1 }
+	FuncId(4)::param_1 (1) ==> { FuncId(1)::local_6 }
+FuncId(5) - "closure::closure2::{closure#0}<i8, Binder { value: extern \"RustCall\" fn(()) -> &'{erased} i32, bound_vars: [] }, ()>"
+	FuncId(5)::param_1 (1) ==> { FuncId(2)::local_1 }
+	FuncId(5)::ret (1) ==> { FuncId(7)::local_1 }
+FuncId(6) - "core::ops::function::impls::{impl#0}::call<(), Closure(DefId(0:6 ~ closure[385b]::closure2::{closure#0}), [i8, Binder { value: extern \"RustCall\" fn(()) -> &'{erased} i32, bound_vars: [] }, ()])>"
+	FuncId(6)::ret (1) ==> { FuncId(7)::local_1 }
+	FuncId(6)::param_1 (1) ==> { FuncId(2)::local_5 }
+	FuncId(6)::local_3 (1) ==> { FuncId(2)::local_1 }
+FuncId(7) - "closure::closure2::{closure#0}::promoted[0]"
+	FuncId(7)::ret (1) ==> { FuncId(7)::local_1 }

@@ -1,0 +1,9 @@
+digraph {
+    0 [ label = "option::main" ]
+    1 [ label = "core::option::{impl#0}::unwrap<&'{erased} u32>" ]
+    2 [ label = "core::option::{impl#0}::is_some<&'{erased} u32>" ]
+    3 [ label = "core::option::unwrap_failed" ]
+    0 -> 1 [ label = "bb2[0]" ]
+    0 -> 2 [ label = "bb0[4]" ]
+    1 -> 3 [ label = "bb2[0]" ]
+}

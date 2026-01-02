@@ -1,0 +1,221 @@
+[FuncId(0) - "func_ptr::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: fn(i32) -> i32;
+    let _2: i32;
+    let _4: i32;
+    let _6: ();
+    let _9: ();
+    let _10: &MyStruct;
+    let _12: i32;
+    let _13: &MyStruct;
+    let _15: ();
+    let _16: &MyStruct;
+    let _18: ();
+    let _19: &MyStruct;
+    let _21: i32;
+    let mut _22: &{closure@tests/unit_tests/func_ptr.rs:67:15: 67:23};
+    let mut _23: (i32,);
+    scope 1 {
+        debug fp1 => _1;
+        let _3: fn(i32) -> i32;
+        scope 2 {
+            debug fp2 => _3;
+            let _5: fn();
+            scope 3 {
+                debug fp3 => _5;
+                let _7: MyStruct;
+                scope 4 {
+                    debug m => const MyStruct;
+                    let _8: for<'a> fn(&'a MyStruct);
+                    scope 5 {
+                        debug fp4 => _8;
+                        let _11: for<'a> fn(&'a MyStruct, i32) -> i32;
+                        scope 6 {
+                            debug fp5 => _11;
+                            let _14: for<'a> fn(&'a MyStruct);
+                            scope 7 {
+                                debug fp6 => _14;
+                                let _17: for<'a> fn(&'a MyStruct);
+                                scope 8 {
+                                    debug fp7 => _17;
+                                    let _20: {closure@tests/unit_tests/func_ptr.rs:67:15: 67:23};
+                                    scope 9 {
+                                        debug fp8 => const ZeroSized: {closure@tests/unit_tests/func_ptr.rs:67:15: 67:23};
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _1 = times2 as fn(i32) -> i32 (PointerCoercion(ReifyFnPointer, Implicit));
+        _2 = copy _1(const 2_i32) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _3 = id::<i32> as fn(i32) -> i32 (PointerCoercion(ReifyFnPointer, Implicit));
+        _4 = copy _3(const 2_i32) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _5 = MyStruct::foo as fn() (PointerCoercion(ReifyFnPointer, Implicit));
+        _6 = copy _5() -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        _8 = MyStruct::bar as for<'a> fn(&'a MyStruct) (PointerCoercion(ReifyFnPointer, Implicit));
+        _10 = &_7;
+        _9 = copy _8(copy _10) -> [return: bb4, unwind continue];
+    }
+
+    bb4: {
+        _11 = MyStruct::use_generic::<i32> as for<'a> fn(&'a MyStruct, i32) -> i32 (PointerCoercion(ReifyFnPointer, Implicit));
+        _13 = &_7;
+        _12 = copy _11(copy _13, const 2_i32) -> [return: bb5, unwind continue];
+    }
+
+    bb5: {
+        _14 = <MyStruct as MyTrait>::f as for<'a> fn(&'a MyStruct) (PointerCoercion(ReifyFnPointer, Implicit));
+        _16 = &_7;
+        _15 = copy _14(copy _16) -> [return: bb6, unwind continue];
+    }
+
+    bb6: {
+        _17 = <MyStruct as MyTrait>::g as for<'a> fn(&'a MyStruct) (PointerCoercion(ReifyFnPointer, Implicit));
+        _19 = &_7;
+        _18 = copy _17(copy _19) -> [return: bb7, unwind continue];
+    }
+
+    bb7: {
+        _22 = &_20;
+        _23 = (const 2_i32,);
+        _21 = <{closure@tests/unit_tests/func_ptr.rs:67:15: 67:23} as std::ops::Fn<(i32,)>>::call(move _22, move _23) -> [return: bb8, unwind continue];
+    }
+
+    bb8: {
+        return;
+    }
+}
+
+[FuncId(8) - "func_ptr::main::{closure#0}<i8, Binder { value: extern \"RustCall\" fn((i32,)) -> i32, bound_vars: [] }, ()>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main::{closure#0}(_1: &{closure@tests/unit_tests/func_ptr.rs:67:15: 67:23}, _2: i32) -> i32 {
+    debug x => _2;
+    let mut _0: i32;
+
+    bb0: {
+        _0 = copy _2;
+        return;
+    }
+}
+
+[FuncId(1) - "func_ptr::times2"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn times2(_1: i32) -> i32 {
+    debug value => _1;
+    let mut _0: i32;
+    let mut _2: (i32, bool);
+
+    bb0: {
+        _2 = MulWithOverflow(const 2_i32, copy _1);
+        assert(!move (_2.1: bool), "attempt to compute `{} * {}`, which would overflow", const 2_i32, copy _1) -> [success: bb1, unwind continue];
+    }
+
+    bb1: {
+        _0 = move (_2.0: i32);
+        return;
+    }
+}
+
+[FuncId(2) - "func_ptr::id<i32>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn id(_1: T) -> T {
+    debug t => _1;
+    let mut _0: T;
+
+    bb0: {
+        _0 = move _1;
+        return;
+    }
+}
+
+[FuncId(3) - "func_ptr::{impl#0}::foo"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/func_ptr.rs:15:1: 15:14>::foo() -> () {
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+
+[FuncId(4) - "func_ptr::{impl#0}::bar"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/func_ptr.rs:15:1: 15:14>::bar(_1: &MyStruct) -> () {
+    debug self => _1;
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+
+[FuncId(5) - "func_ptr::{impl#0}::use_generic<i32>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/func_ptr.rs:15:1: 15:14>::use_generic(_1: &MyStruct, _2: T) -> T {
+    debug self => _1;
+    debug t => _2;
+    let mut _0: T;
+
+    bb0: {
+        _0 = move _2;
+        return;
+    }
+}
+
+[FuncId(6) - "func_ptr::{impl#1}::f"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn <impl at tests/unit_tests/func_ptr.rs:28:1: 28:26>::f(_1: &MyStruct) -> () {
+    debug self => _1;
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+
+[FuncId(7) - "func_ptr::MyTrait::g<MyStruct>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn MyTrait::g(_1: &Self) -> () {
+    debug self => _1;
+    let mut _0: ();
+
+    bb0: {
+        return;
+    }
+}
+

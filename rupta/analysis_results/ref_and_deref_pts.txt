@@ -1,0 +1,4 @@
+FuncId(0) - "ref_and_deref::main"
+	FuncId(0)::local_3 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_2 (1) ==> { FuncId(0)::local_3 }
+	FuncId(0)::local_4 (1) ==> { FuncId(0)::local_1 }

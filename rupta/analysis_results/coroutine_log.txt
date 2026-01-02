@@ -1,0 +1,13 @@
+error: `yield` can only be used in `#[coroutine]` closures, or `gen` blocks
+  --> tests/unit_tests/coroutine.rs:18:9
+   |
+18 |         yield *p;
+   |         ^^^^^^^^
+   |
+help: use `#[coroutine]` to make this closure a coroutine
+   |
+17 |     let mut coroutine = #[coroutine] move || {
+   |                         ++++++++++++
+
+error: aborting due to 1 previous error
+

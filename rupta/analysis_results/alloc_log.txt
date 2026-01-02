@@ -1,0 +1,42 @@
+warning: unused variable: `p`
+  --> tests/unit_tests/alloc.rs:28:9
+   |
+28 |     let p = std_alloc();
+   |         ^ help: if this is intentional, prefix it with an underscore: `_p`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `q`
+  --> tests/unit_tests/alloc.rs:29:9
+   |
+29 |     let q = global_alloc();
+   |         ^ help: if this is intentional, prefix it with an underscore: `_q`
+
+Pointer analysis completed.
+Analysis time: 9ms 554us 276ns
+##########################################################
+Call Graph Statistics: 
+#Reachable functions (CS): 15
+#Reachable functions (CI): 10
+#Reachable unmonomorphized functions (CI): 10
+#Call graph edges (CS): 14
+#Call graph edges (CI): 12
+#Statically resolved calls: 12
+#Dynamically resolved calls: 0, #call graph edges: 0
+	#Dynamic dispatch calls: 0, #call graph edges: 0
+	#Fnptr calls: 0, #call graph edges: 0
+	#Dynamic Fn* trait calls: 0, #call graph edges: 0
+----------------------------------------------------------
+CS Points-to Statistics: 
+#Pointers: 15
+#Points-to relations: 15
+#Avg points-to size: 1
+CI Points-to Statistics: 
+#Pointers: 13
+#Points-to relations: 13
+#Avg points-to size: 1
+##########################################################
+Used Memory Before Analysis: 85 MB
+Max Memory in Analysis: 86 MB
+warning: 2 warnings emitted
+

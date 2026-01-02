@@ -1,0 +1,15 @@
+FuncId(0) - "rc_new::main"
+	FuncId(0)::local_3 (1) ==> { FuncId(0)::local_1 }
+FuncId(1) - "alloc::rc::{impl#8}::new<i32>"
+	FuncId(1)::local_6 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(1)::local_7.0 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(1)::local_3.0.0.0 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+FuncId(2) - "alloc::rc::{impl#33}::clone<i32, std::alloc::Global>"
+	FuncId(2)::param_1 (1) ==> { FuncId(0)::local_1 }
+	FuncId(2)::local_6 (1) ==> { FuncId(0)::local_1.2 }
+FuncId(3) - "alloc::boxed::{impl#0}::new<std::rc::RcInner<i32>>"
+	FuncId(3)::local_4 (1) ==> { FuncId(3)::heap_bb0[2] }
+	FuncId(3)::ret.0.0.0 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+	FuncId(3)::local_5 (1) ==> { FuncId(3)::heap_bb0[2].cast#0 }
+FuncId(5) - "alloc::alloc::{impl#3}::clone"
+	FuncId(5)::param_1 (1) ==> { FuncId(0)::local_1.2 }

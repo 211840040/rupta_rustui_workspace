@@ -1,0 +1,18 @@
+FuncId(0) - "closure_param::main"
+	FuncId(0)::local_6.1 (1) ==> { FuncId(0)::local_3 }
+	FuncId(0)::local_11 (1) ==> { FuncId(0)::local_3 }
+	FuncId(0)::local_6.0 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_7 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_5 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_10 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_8 (1) ==> { FuncId(0)::local_3 }
+FuncId(1) - "closure_param::main::{closure#0}<i8, Binder { value: extern \"RustCall\" fn((&'^0 i32, &'^1 i32)) -> i32, bound_vars: [Region(BrAnon), Region(BrAnon)] }, ()>"
+	FuncId(1)::param_3 (1) ==> { FuncId(0)::local_3 }
+	FuncId(1)::param_1 (2) ==> { FuncId(0)::local_1 FuncId(2)::param_1 }
+	FuncId(1)::param_2 (1) ==> { FuncId(0)::local_2 }
+FuncId(2) - "closure_param::foo<Closure(DefId(0:6 ~ closure_param[3e8b]::main::{closure#0}), [i8, Binder { value: extern \"RustCall\" fn((&'^0 i32, &'^1 i32)) -> i32, bound_vars: [Region(BrAnon), Region(BrAnon)] }, ()])>"
+	FuncId(2)::param_3 (1) ==> { FuncId(0)::local_3 }
+	FuncId(2)::local_4.1 (1) ==> { FuncId(0)::local_3 }
+	FuncId(2)::param_2 (1) ==> { FuncId(0)::local_2 }
+	FuncId(2)::local_4.0 (1) ==> { FuncId(0)::local_2 }
+	FuncId(2)::aux_5 (1) ==> { FuncId(2)::param_1 }

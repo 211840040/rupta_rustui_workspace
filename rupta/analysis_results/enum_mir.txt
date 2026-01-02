@@ -1,0 +1,162 @@
+[FuncId(0) - "enum::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: i32;
+    let _4: &i32;
+    let _6: &i32;
+    let _8: &Foo<'_>;
+    let _10: &Foo<'_>;
+    scope 1 {
+        debug a => _1;
+        let _2: i32;
+        scope 2 {
+            debug b => _2;
+            let _3: Foo<'_>;
+            scope 3 {
+                debug f1 => _3;
+                let _5: Foo<'_>;
+                scope 4 {
+                    debug f2 => _5;
+                    let _7: &i32;
+                    scope 5 {
+                        debug x1 => _7;
+                        let _9: &i32;
+                        scope 6 {
+                            debug x2 => _9;
+                            let _11: &i32;
+                            scope 7 {
+                                debug x3 => _11;
+                                let _12: &i32;
+                                scope 8 {
+                                    debug x4 => _12;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const 2_i32;
+        _2 = const 3_i32;
+        _4 = &_1;
+        _3 = Foo::<'_>::A(copy _4);
+        _6 = &_2;
+        _5 = Foo::<'_>::B(copy _6);
+        _8 = &_3;
+        _7 = enum_ref_match(copy _8) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _10 = &_5;
+        _9 = enum_ref_match(copy _10) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _11 = enum_match(move _3) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        _12 = enum_match(move _5) -> [return: bb4, unwind continue];
+    }
+
+    bb4: {
+        return;
+    }
+}
+
+[FuncId(1) - "enum::enum_ref_match"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn enum_ref_match(_1: &Foo<'_>) -> &i32 {
+    debug foo => _1;
+    let mut _0: &i32;
+    let mut _2: isize;
+    let _3: &&i32;
+    let _4: &&i32;
+    let mut _5: &i32;
+    let mut _6: &i32;
+    scope 1 {
+        debug x => _3;
+    }
+    scope 2 {
+        debug x => _4;
+    }
+
+    bb0: {
+        _2 = discriminant((*_1));
+        switchInt(move _2) -> [0: bb3, 1: bb2, otherwise: bb1];
+    }
+
+    bb1: {
+        unreachable;
+    }
+
+    bb2: {
+        _4 = &(((*_1) as B).0: &i32);
+        _5 = deref_copy (*_4);
+        _0 = copy _5;
+        goto -> bb4;
+    }
+
+    bb3: {
+        _3 = &(((*_1) as A).0: &i32);
+        _6 = deref_copy (*_3);
+        _0 = copy _6;
+        goto -> bb4;
+    }
+
+    bb4: {
+        return;
+    }
+}
+
+[FuncId(2) - "enum::enum_match"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn enum_match(_1: Foo<'_>) -> &i32 {
+    debug foo => _1;
+    let mut _0: &i32;
+    let mut _2: isize;
+    let _3: &i32;
+    let _4: &i32;
+    scope 1 {
+        debug x => _3;
+    }
+    scope 2 {
+        debug x => _4;
+    }
+
+    bb0: {
+        _2 = discriminant(_1);
+        switchInt(move _2) -> [0: bb3, 1: bb2, otherwise: bb1];
+    }
+
+    bb1: {
+        unreachable;
+    }
+
+    bb2: {
+        _4 = copy ((_1 as B).0: &i32);
+        _0 = copy _4;
+        goto -> bb4;
+    }
+
+    bb3: {
+        _3 = copy ((_1 as A).0: &i32);
+        _0 = copy _3;
+        goto -> bb4;
+    }
+
+    bb4: {
+        return;
+    }
+}
+

@@ -1,0 +1,94 @@
+warning: variable does not need to be mutable
+  --> tests/unit_tests/copy_nonoverlapping.rs:12:9
+   |
+12 |     let mut x = 2;
+   |         ----^
+   |         |
+   |         help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` on by default
+
+warning: variable does not need to be mutable
+  --> tests/unit_tests/copy_nonoverlapping.rs:13:9
+   |
+13 |     let mut y = 3;
+   |         ----^
+   |         |
+   |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> tests/unit_tests/copy_nonoverlapping.rs:14:9
+   |
+14 |     let mut m = 4;
+   |         ----^
+   |         |
+   |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> tests/unit_tests/copy_nonoverlapping.rs:15:9
+   |
+15 |     let mut n = 5;
+   |         ----^
+   |         |
+   |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> tests/unit_tests/copy_nonoverlapping.rs:27:9
+   |
+27 |     let mut x = 2;
+   |         ----^
+   |         |
+   |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> tests/unit_tests/copy_nonoverlapping.rs:28:9
+   |
+28 |     let mut y = 3;
+   |         ----^
+   |         |
+   |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> tests/unit_tests/copy_nonoverlapping.rs:29:9
+   |
+29 |     let mut m = 4;
+   |         ----^
+   |         |
+   |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> tests/unit_tests/copy_nonoverlapping.rs:30:9
+   |
+30 |     let mut n = 5;
+   |         ----^
+   |         |
+   |         help: remove this `mut`
+
+Pointer analysis completed.
+Analysis time: 3ms 859us 756ns
+##########################################################
+Call Graph Statistics: 
+#Reachable functions (CS): 23
+#Reachable functions (CI): 11
+#Reachable unmonomorphized functions (CI): 10
+#Call graph edges (CS): 24
+#Call graph edges (CI): 15
+#Statically resolved calls: 15
+#Dynamically resolved calls: 0, #call graph edges: 0
+	#Dynamic dispatch calls: 0, #call graph edges: 0
+	#Fnptr calls: 0, #call graph edges: 0
+	#Dynamic Fn* trait calls: 0, #call graph edges: 0
+----------------------------------------------------------
+CS Points-to Statistics: 
+#Pointers: 16
+#Points-to relations: 20
+#Avg points-to size: 1.25
+CI Points-to Statistics: 
+#Pointers: 16
+#Points-to relations: 20
+#Avg points-to size: 1.25
+##########################################################
+Used Memory Before Analysis: 76 MB
+Max Memory in Analysis: 77 MB
+warning: 8 warnings emitted
+

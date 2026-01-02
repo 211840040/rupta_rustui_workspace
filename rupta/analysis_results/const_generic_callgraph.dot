@@ -1,0 +1,12 @@
+digraph {
+    0 [ label = "const_generic::main" ]
+    1 [ label = "const_generic::new_foo<3>" ]
+    2 [ label = "const_generic::const_global" ]
+    3 [ label = "const_generic::const_arith" ]
+    4 [ label = "const_generic::new_foo<8>" ]
+    0 -> 1 [ label = "bb0[1]" ]
+    2 -> 1 [ label = "bb0[2]" ]
+    3 -> 4 [ label = "bb0[2]" ]
+    0 -> 2 [ label = "bb2[0]" ]
+    0 -> 3 [ label = "bb1[0]" ]
+}

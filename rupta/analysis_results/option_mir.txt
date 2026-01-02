@@ -1,0 +1,159 @@
+[FuncId(0) - "option::main"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn main() -> () {
+    let mut _0: ();
+    let _1: u32;
+    let _3: &u32;
+    let mut _4: bool;
+    let mut _5: &std::option::Option<&u32>;
+    scope 1 {
+        debug a => _1;
+        let _2: std::option::Option<&u32>;
+        scope 2 {
+            debug o => _2;
+            let _6: &u32;
+            scope 3 {
+                debug _x => _6;
+            }
+        }
+    }
+
+    bb0: {
+        _1 = const 2_u32;
+        _3 = &_1;
+        _2 = std::option::Option::<&u32>::Some(copy _3);
+        _5 = &_2;
+        _4 = std::option::Option::<&u32>::is_some(move _5) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        switchInt(move _4) -> [0: bb3, otherwise: bb2];
+    }
+
+    bb2: {
+        _6 = std::option::Option::<&u32>::unwrap(copy _2) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        return;
+    }
+}
+
+[FuncId(1) - "core::option::{impl#0}::is_some<&'{erased} u32>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::option::Option::<T>::is_some(_1: &std::option::Option<T>) -> bool {
+    debug self => _1;
+    let mut _0: bool;
+    let mut _2: isize;
+
+    bb0: {
+        _2 = discriminant((*_1));
+        _0 = Eq(copy _2, const 1_isize);
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn std::option::Option::<T>::is_some(_1: &std::option::Option<T>) -> bool {
+    debug self => _1;
+    let mut _0: bool;
+    let mut _2: isize;
+
+    bb0: {
+        _2 = discriminant((*_1));
+        switchInt(move _2) -> [1: bb2, otherwise: bb1];
+    }
+
+    bb1: {
+        _0 = const false;
+        goto -> bb3;
+    }
+
+    bb2: {
+        _0 = const true;
+        goto -> bb3;
+    }
+
+    bb3: {
+        return;
+    }
+}
+
+[FuncId(2) - "core::option::{impl#0}::unwrap<&'{erased} u32>"]
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+// HINT: See also -Z dump-mir for MIR at specific points during compilation.
+fn std::option::Option::<T>::unwrap(_1: std::option::Option<T>) -> T {
+    debug self => _1;
+    let mut _0: T;
+    let mut _2: isize;
+    let mut _3: !;
+    scope 1 {
+        debug val => _0;
+    }
+
+    bb0: {
+        _2 = discriminant(_1);
+        switchInt(move _2) -> [0: bb2, 1: bb3, otherwise: bb1];
+    }
+
+    bb1: {
+        unreachable;
+    }
+
+    bb2: {
+        _3 = std::option::unwrap_failed() -> unwind continue;
+    }
+
+    bb3: {
+        _0 = move ((_1 as Some).0: T);
+        return;
+    }
+}
+
+// MIR FOR CTFE
+fn std::option::Option::<T>::unwrap(_1: std::option::Option<T>) -> T {
+    debug self => _1;
+    let mut _0: T;
+    let mut _2: isize;
+    let _3: T;
+    let mut _4: !;
+    scope 1 {
+        debug val => _3;
+    }
+
+    bb0: {
+        _2 = discriminant(_1);
+        switchInt(move _2) -> [0: bb2, 1: bb3, otherwise: bb1];
+    }
+
+    bb1: {
+        unreachable;
+    }
+
+    bb2: {
+        StorageLive(_4);
+        ConstEvalCounter;
+        _4 = std::option::unwrap_failed() -> bb4;
+    }
+
+    bb3: {
+        StorageLive(_3);
+        _3 = move ((_1 as Some).0: T);
+        _0 = move _3;
+        StorageDead(_3);
+        return;
+    }
+
+    bb4 (cleanup): {
+        resume;
+    }
+}
+
+[FuncId(3) - "core::option::unwrap_failed"]
+Mir is unavailable
+

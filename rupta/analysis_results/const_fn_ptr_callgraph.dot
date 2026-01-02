@@ -1,0 +1,7 @@
+digraph {
+    0 [ label = "const_fn_ptr::main" ]
+    1 [ label = "const_fn_ptr::times2" ]
+    2 [ label = "const_fn_ptr::foo<i32>" ]
+    0 -> 1 [ label = "bb0[0]" ]
+    0 -> 2 [ label = "bb1[0]" ]
+}

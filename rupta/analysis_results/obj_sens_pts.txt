@@ -1,0 +1,26 @@
+FuncId(1) - "obj_sens::bar"
+	FuncId(1)::local_4 (1) ==> { FuncId(1)::local_2 }
+	FuncId(1)::local_7 (1) ==> { FuncId(1)::local_3 }
+	FuncId(1)::local_6 (1) ==> { FuncId(1)::local_2 }
+	FuncId(1)::local_5 (1) ==> { FuncId(1)::local_1 }
+	FuncId(1)::local_9 (1) ==> { FuncId(1)::local_3 }
+	FuncId(1)::local_8 (1) ==> { FuncId(1)::local_1 }
+FuncId(2) - "obj_sens::baz"
+	FuncId(2)::local_8 (2) ==> { FuncId(2)::local_4 FuncId(2)::local_3 }
+	FuncId(2)::local_5 (2) ==> { FuncId(2)::local_4 FuncId(2)::local_3 }
+	FuncId(2)::local_7 (1) ==> { FuncId(2)::local_3 }
+	FuncId(2)::local_6 (1) ==> { FuncId(2)::local_1 }
+	FuncId(2)::local_10 (1) ==> { FuncId(2)::local_4 }
+	FuncId(2)::local_9 (1) ==> { FuncId(2)::local_2 }
+FuncId(3) - "obj_sens::{impl#0}::id"
+	FuncId(3)::param_2 (4) ==> { FuncId(1)::local_3 FuncId(2)::local_4 FuncId(2)::local_3 FuncId(1)::local_2 }
+	FuncId(3)::param_1 (3) ==> { FuncId(1)::local_1 FuncId(2)::local_2 FuncId(2)::local_1 }
+	FuncId(3)::ret (4) ==> { FuncId(2)::local_4 FuncId(1)::local_3 FuncId(2)::local_3 FuncId(1)::local_2 }
+FuncId(4) - "obj_sens::{impl#0}::id3"
+	FuncId(4)::param_1 (2) ==> { FuncId(2)::local_2 FuncId(2)::local_1 }
+	FuncId(4)::param_2 (2) ==> { FuncId(2)::local_3 FuncId(2)::local_4 }
+	FuncId(4)::ret (2) ==> { FuncId(2)::local_4 FuncId(2)::local_3 }
+FuncId(5) - "obj_sens::{impl#0}::id2"
+	FuncId(5)::param_1 (2) ==> { FuncId(2)::local_1 FuncId(2)::local_2 }
+	FuncId(5)::ret (2) ==> { FuncId(2)::local_3 FuncId(2)::local_4 }
+	FuncId(5)::param_2 (2) ==> { FuncId(2)::local_4 FuncId(2)::local_3 }

@@ -1,0 +1,128 @@
+FuncId(1) - "fntrait::fn_item"
+	FuncId(1)::local_1 (1) ==> { FuncId(6)::local_1 }
+FuncId(2) - "fntrait::fn_ptr"
+	FuncId(2)::local_1 (1) ==> { FuncId(11)::local_1 }
+	FuncId(2)::local_2 (1) ==> { FuncId(7) }
+FuncId(3) - "fntrait::closure"
+	FuncId(3)::local_2 (1) ==> { FuncId(15)::local_1 }
+	FuncId(3)::local_6 (1) ==> { FuncId(3)::local_1 }
+	FuncId(3)::local_4 (1) ==> { FuncId(3)::local_1 }
+FuncId(4) - "fntrait::ref_fn"
+	FuncId(4)::local_5 (1) ==> { FuncId(4)::local_3 }
+	FuncId(4)::local_2 (1) ==> { FuncId(20)::local_1 }
+	FuncId(4)::local_1 (1) ==> { FuncId(21)::local_1 }
+	FuncId(4)::local_3 (1) ==> { FuncId(4)::local_2 }
+FuncId(5) - "fntrait::foo"
+	FuncId(5)::local_1 (1) ==> { FuncId(25)::local_1 }
+FuncId(6) - "fntrait::fn_item::promoted[0]"
+	FuncId(6)::ret (1) ==> { FuncId(6)::local_1 }
+FuncId(7) - "fntrait::times2"
+	FuncId(7)::param_1 (3) ==> { FuncId(21)::local_1 FuncId(11)::local_1 FuncId(6)::local_1 }
+FuncId(8) - "fntrait::fn_call<FnDef(DefId(0:8 ~ fntrait[940f]::times2), [])>"
+	FuncId(8)::param_2 (1) ==> { FuncId(6)::local_1 }
+	FuncId(8)::local_5.0 (1) ==> { FuncId(6)::local_1 }
+	FuncId(8)::local_4 (1) ==> { FuncId(8)::param_1 }
+FuncId(9) - "fntrait::fnmut_call<FnDef(DefId(0:8 ~ fntrait[940f]::times2), [])>"
+	FuncId(9)::local_5.0 (1) ==> { FuncId(6)::local_1 }
+	FuncId(9)::param_2 (1) ==> { FuncId(6)::local_1 }
+	FuncId(9)::local_4 (1) ==> { FuncId(9)::param_1 }
+FuncId(10) - "fntrait::fnonce_call<FnDef(DefId(0:8 ~ fntrait[940f]::times2), [])>"
+	FuncId(10)::local_4.0 (1) ==> { FuncId(6)::local_1 }
+	FuncId(10)::param_2 (1) ==> { FuncId(6)::local_1 }
+FuncId(11) - "fntrait::fn_ptr::promoted[0]"
+	FuncId(11)::ret (1) ==> { FuncId(11)::local_1 }
+FuncId(12) - "fntrait::fn_call<Binder { value: fn(&'^0 u32) -> u32, bound_vars: [Region(BrAnon)] }>"
+	FuncId(12)::aux_6 (1) ==> { FuncId(7) }
+	FuncId(12)::param_2 (1) ==> { FuncId(11)::local_1 }
+	FuncId(12)::local_5.0 (1) ==> { FuncId(11)::local_1 }
+	FuncId(12)::param_1 (1) ==> { FuncId(7) }
+	FuncId(12)::local_4 (1) ==> { FuncId(12)::param_1 }
+FuncId(13) - "fntrait::fnmut_call<Binder { value: fn(&'^0 u32) -> u32, bound_vars: [Region(BrAnon)] }>"
+	FuncId(13)::local_5.0 (1) ==> { FuncId(11)::local_1 }
+	FuncId(13)::param_1 (1) ==> { FuncId(7) }
+	FuncId(13)::local_4 (1) ==> { FuncId(13)::param_1 }
+	FuncId(13)::param_2 (1) ==> { FuncId(11)::local_1 }
+	FuncId(13)::aux_6 (1) ==> { FuncId(7) }
+FuncId(14) - "fntrait::fnonce_call<Binder { value: fn(&'^0 u32) -> u32, bound_vars: [Region(BrAnon)] }>"
+	FuncId(14)::local_4.0 (1) ==> { FuncId(11)::local_1 }
+	FuncId(14)::param_1 (1) ==> { FuncId(7) }
+	FuncId(14)::param_2 (1) ==> { FuncId(11)::local_1 }
+FuncId(15) - "fntrait::closure::promoted[0]"
+	FuncId(15)::ret (1) ==> { FuncId(15)::local_1 }
+FuncId(16) - "fntrait::fn_call<&'{erased} Closure(DefId(0:18 ~ fntrait[940f]::closure::{closure#0}), [i8, Binder { value: extern \"RustCall\" fn((&'^0 u32,)) -> u32, bound_vars: [Region(BrAnon)] }, ()])>"
+	FuncId(16)::param_2 (1) ==> { FuncId(15)::local_1 }
+	FuncId(16)::local_4 (1) ==> { FuncId(16)::param_1 }
+	FuncId(16)::param_1 (1) ==> { FuncId(3)::local_1 }
+	FuncId(16)::local_5.0 (1) ==> { FuncId(15)::local_1 }
+FuncId(17) - "fntrait::fnmut_call<&'{erased} mut Closure(DefId(0:18 ~ fntrait[940f]::closure::{closure#0}), [i8, Binder { value: extern \"RustCall\" fn((&'^0 u32,)) -> u32, bound_vars: [Region(BrAnon)] }, ()])>"
+	FuncId(17)::local_5.0 (1) ==> { FuncId(15)::local_1 }
+	FuncId(17)::param_2 (1) ==> { FuncId(15)::local_1 }
+	FuncId(17)::param_1 (1) ==> { FuncId(3)::local_1 }
+	FuncId(17)::local_4 (1) ==> { FuncId(17)::param_1 }
+FuncId(18) - "fntrait::closure::{closure#0}<i8, Binder { value: extern \"RustCall\" fn((&'^0 u32,)) -> u32, bound_vars: [Region(BrAnon)] }, ()>"
+	FuncId(18)::param_2 (1) ==> { FuncId(15)::local_1 }
+	FuncId(18)::param_1 (2) ==> { FuncId(3)::local_1 FuncId(19)::param_1 }
+FuncId(19) - "fntrait::fnonce_call<Closure(DefId(0:18 ~ fntrait[940f]::closure::{closure#0}), [i8, Binder { value: extern \"RustCall\" fn((&'^0 u32,)) -> u32, bound_vars: [Region(BrAnon)] }, ()])>"
+	FuncId(19)::local_4.0 (1) ==> { FuncId(15)::local_1 }
+	FuncId(19)::param_2 (1) ==> { FuncId(15)::local_1 }
+	FuncId(19)::aux_5 (1) ==> { FuncId(19)::param_1 }
+FuncId(20) - "fntrait::ref_fn::promoted[0]"
+	FuncId(20)::ret (1) ==> { FuncId(20)::local_1 }
+FuncId(21) - "fntrait::ref_fn::promoted[1]"
+	FuncId(21)::ret (1) ==> { FuncId(21)::local_1 }
+FuncId(22) - "fntrait::fn_call<&'{erased} &'{erased} &'{erased} FnDef(DefId(0:8 ~ fntrait[940f]::times2), [])>"
+	FuncId(22)::local_5.0 (1) ==> { FuncId(21)::local_1 }
+	FuncId(22)::param_2 (1) ==> { FuncId(21)::local_1 }
+	FuncId(22)::param_1 (1) ==> { FuncId(4)::local_3 }
+	FuncId(22)::local_4 (1) ==> { FuncId(22)::param_1 }
+FuncId(23) - "fntrait::fnmut_call<&'{erased} &'{erased} FnDef(DefId(0:8 ~ fntrait[940f]::times2), [])>"
+	FuncId(23)::param_1 (1) ==> { FuncId(4)::local_2 }
+	FuncId(23)::param_2 (1) ==> { FuncId(21)::local_1 }
+	FuncId(23)::local_4 (1) ==> { FuncId(23)::param_1 }
+	FuncId(23)::local_5.0 (1) ==> { FuncId(21)::local_1 }
+FuncId(24) - "fntrait::fnonce_call<&'{erased} &'{erased} FnDef(DefId(0:8 ~ fntrait[940f]::times2), [])>"
+	FuncId(24)::local_4.0 (1) ==> { FuncId(21)::local_1 }
+	FuncId(24)::param_2 (1) ==> { FuncId(21)::local_1 }
+	FuncId(24)::param_1 (1) ==> { FuncId(4)::local_2 }
+FuncId(25) - "fntrait::foo::promoted[0]"
+	FuncId(25)::ret (1) ==> { FuncId(25)::local_1 }
+FuncId(26) - "fntrait::fnmut_call<Foo>"
+	FuncId(26)::local_5.0 (1) ==> { FuncId(25)::local_1 }
+	FuncId(26)::param_2 (1) ==> { FuncId(25)::local_1 }
+	FuncId(26)::local_4 (1) ==> { FuncId(26)::param_1 }
+FuncId(27) - "fntrait::fnonce_call<Foo>"
+	FuncId(27)::param_2 (1) ==> { FuncId(25)::local_1 }
+	FuncId(27)::local_4.0 (1) ==> { FuncId(25)::local_1 }
+FuncId(28) - "core::ops::function::impls::{impl#0}::call<(&'{erased} u32,), Closure(DefId(0:18 ~ fntrait[940f]::closure::{closure#0}), [i8, Binder { value: extern \"RustCall\" fn((&'^0 u32,)) -> u32, bound_vars: [Region(BrAnon)] }, ()])>"
+	FuncId(28)::param_2.0 (1) ==> { FuncId(15)::local_1 }
+	FuncId(28)::local_3 (1) ==> { FuncId(3)::local_1 }
+	FuncId(28)::param_1 (1) ==> { FuncId(16)::param_1 }
+FuncId(29) - "core::ops::function::impls::{impl#3}::call_mut<(&'{erased} u32,), Closure(DefId(0:18 ~ fntrait[940f]::closure::{closure#0}), [i8, Binder { value: extern \"RustCall\" fn((&'^0 u32,)) -> u32, bound_vars: [Region(BrAnon)] }, ()])>"
+	FuncId(29)::local_3 (1) ==> { FuncId(3)::local_1 }
+	FuncId(29)::param_2.0 (1) ==> { FuncId(15)::local_1 }
+	FuncId(29)::param_1 (1) ==> { FuncId(17)::param_1 }
+FuncId(30) - "core::ops::function::impls::{impl#0}::call<(&'{erased} u32,), &'{erased} &'{erased} FnDef(DefId(0:8 ~ fntrait[940f]::times2), [])>"
+	FuncId(30)::local_3 (1) ==> { FuncId(4)::local_3 }
+	FuncId(30)::param_2.0 (1) ==> { FuncId(21)::local_1 }
+	FuncId(30)::param_1 (1) ==> { FuncId(22)::param_1 }
+FuncId(31) - "core::ops::function::impls::{impl#1}::call_mut<(&'{erased} u32,), &'{erased} FnDef(DefId(0:8 ~ fntrait[940f]::times2), [])>"
+	FuncId(31)::param_1 (1) ==> { FuncId(23)::param_1 }
+	FuncId(31)::param_2.0 (1) ==> { FuncId(21)::local_1 }
+	FuncId(31)::local_3 (1) ==> { FuncId(4)::local_2 }
+FuncId(32) - "core::ops::function::impls::{impl#2}::call_once<(&'{erased} u32,), &'{erased} FnDef(DefId(0:8 ~ fntrait[940f]::times2), [])>"
+	FuncId(32)::param_2.0 (1) ==> { FuncId(21)::local_1 }
+	FuncId(32)::param_1 (1) ==> { FuncId(4)::local_2 }
+FuncId(33) - "fntrait::{impl#1}::call_mut<>"
+	FuncId(33)::param_2.0 (1) ==> { FuncId(25)::local_1 }
+	FuncId(33)::param_1 (1) ==> { FuncId(26)::param_1 }
+FuncId(34) - "fntrait::{impl#0}::call_once<>"
+	FuncId(34)::param_2.0 (1) ==> { FuncId(25)::local_1 }
+	FuncId(34)::local_6 (1) ==> { FuncId(25)::local_1 }
+FuncId(35) - "core::ops::function::impls::{impl#0}::call<(&'{erased} u32,), &'{erased} FnDef(DefId(0:8 ~ fntrait[940f]::times2), [])>"
+	FuncId(35)::local_3 (1) ==> { FuncId(4)::local_2 }
+	FuncId(35)::param_1 (1) ==> { FuncId(4)::local_3 }
+	FuncId(35)::param_2.0 (1) ==> { FuncId(21)::local_1 }
+FuncId(36) - "core::ops::function::impls::{impl#0}::call<(&'{erased} u32,), FnDef(DefId(0:8 ~ fntrait[940f]::times2), [])>"
+	FuncId(36)::param_2.0 (1) ==> { FuncId(21)::local_1 }
+	FuncId(36)::param_1 (1) ==> { FuncId(4)::local_2 }
+	FuncId(36)::local_3 (1) ==> { FuncId(20)::local_1 }

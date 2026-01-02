@@ -1,0 +1,7 @@
+digraph {
+    0 [ label = "cast_struct::main" ]
+    1 [ label = "cast_struct::cast_struct" ]
+    2 [ label = "cast_struct::cast_struct_ref" ]
+    0 -> 1 [ label = "bb0[0]" ]
+    0 -> 2 [ label = "bb1[0]" ]
+}

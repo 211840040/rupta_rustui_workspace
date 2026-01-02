@@ -1,0 +1,77 @@
+FuncId(0) - "slice::main"
+	FuncId(0)::local_5 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_3 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_12 (1) ==> { FuncId(0)::local_10 }
+	FuncId(0)::local_1.0.0.0.0.0.0 (2) ==> { FuncId(20)::heap_bb4[2] FuncId(20)::heap_bb5[2] }
+	FuncId(0)::local_8 (1) ==> { FuncId(0)::local_1 }
+FuncId(1) - "alloc::string::{impl#47}::from<>"
+	FuncId(1)::ret.0.0.0.0.0.0 (2) ==> { FuncId(20)::heap_bb5[2] FuncId(20)::heap_bb4[2] }
+	FuncId(1)::local_2.0.0.0.0.0 (2) ==> { FuncId(20)::heap_bb4[2] FuncId(20)::heap_bb5[2] }
+FuncId(2) - "alloc::string::{impl#0}::len"
+	FuncId(2)::param_1 (1) ==> { FuncId(0)::local_1 }
+FuncId(3) - "alloc::string::{impl#28}::index<std::ops::Range<usize>>"
+	FuncId(3)::local_10 (2) ==> { FuncId(20)::heap_bb4[2].cast#2 FuncId(20)::heap_bb5[2].cast#2 }
+	FuncId(3)::local_5 (1) ==> { FuncId(0)::local_1.0 }
+	FuncId(3)::local_6 (2) ==> { FuncId(20)::heap_bb5[2] FuncId(20)::heap_bb4[2] }
+	FuncId(3)::local_8.0 (2) ==> { FuncId(20)::heap_bb4[2] FuncId(20)::heap_bb5[2] }
+	FuncId(3)::param_1 (1) ==> { FuncId(0)::local_1 }
+FuncId(4) - "alloc::string::{impl#28}::index<std::ops::RangeFrom<usize>>"
+	FuncId(4)::local_8.0 (2) ==> { FuncId(20)::heap_bb4[2] FuncId(20)::heap_bb5[2] }
+	FuncId(4)::local_10 (2) ==> { FuncId(20)::heap_bb5[2].cast#2 FuncId(20)::heap_bb4[2].cast#2 }
+	FuncId(4)::param_1 (1) ==> { FuncId(0)::local_1 }
+	FuncId(4)::local_5 (1) ==> { FuncId(0)::local_1.0 }
+	FuncId(4)::local_6 (2) ==> { FuncId(20)::heap_bb5[2] FuncId(20)::heap_bb4[2] }
+FuncId(5) - "core::array::{impl#15}::index<i32, std::ops::Range<usize>, 5>"
+	FuncId(5)::param_1 (1) ==> { FuncId(0)::local_10 }
+	FuncId(5)::local_3 (1) ==> { FuncId(0)::local_10.cast#1 }
+FuncId(6) - "alloc::slice::{impl#0}::to_vec_in::{impl#1}::to_vec<u8, std::alloc::Global>"
+	FuncId(6)::local_12.0 (2) ==> { FuncId(20)::heap_bb4[2] FuncId(20)::heap_bb5[2] }
+	FuncId(6)::local_3.0.0.0.0.0 (2) ==> { FuncId(20)::heap_bb5[2] FuncId(20)::heap_bb4[2] }
+	FuncId(6)::local_7 (1) ==> { FuncId(6)::local_3 }
+	FuncId(6)::local_8 (1) ==> { FuncId(6)::local_3 }
+	FuncId(6)::local_10.0.0.0 (2) ==> { FuncId(20)::heap_bb4[2] FuncId(20)::heap_bb5[2] }
+	FuncId(6)::ret.0.0.0.0.0 (2) ==> { FuncId(20)::heap_bb5[2] FuncId(20)::heap_bb4[2] }
+	FuncId(6)::local_6 (2) ==> { FuncId(20)::heap_bb4[2] FuncId(20)::heap_bb5[2] }
+	FuncId(6)::local_9.0.0.0.0 (2) ==> { FuncId(20)::heap_bb4[2] FuncId(20)::heap_bb5[2] }
+	FuncId(6)::local_15 (2) ==> { FuncId(20)::heap_bb4[2].cast#2 FuncId(20)::heap_bb5[2].cast#2 }
+FuncId(7) - "core::slice::raw::from_raw_parts::precondition_check"
+	FuncId(7)::local_6 (2) ==> { FuncId(20)::heap_bb4[2].cast#2 FuncId(20)::heap_bb5[2].cast#2 }
+	FuncId(7)::param_1 (2) ==> { FuncId(20)::heap_bb4[2].cast#2 FuncId(20)::heap_bb5[2].cast#2 }
+FuncId(10) - "core::slice::index::{impl#0}::index<i32, std::ops::Range<usize>>"
+	FuncId(10)::param_1 (1) ==> { FuncId(0)::local_10.cast#1 }
+FuncId(11) - "alloc::raw_vec::{impl#4}::with_capacity_in<std::alloc::Global>"
+	FuncId(11)::local_6.0.0.0 (2) ==> { FuncId(20)::heap_bb4[2] FuncId(20)::heap_bb5[2] }
+	FuncId(11)::local_16 (1) ==> { FuncId(11)::local_10 }
+	FuncId(11)::local_9 (1) ==> { FuncId(11)::local_6 }
+	FuncId(11)::local_4.as_variant#0.0.0.0.0 (2) ==> { FuncId(20)::heap_bb4[2] FuncId(20)::heap_bb5[2] }
+	FuncId(11)::ret.0.0.0 (2) ==> { FuncId(20)::heap_bb5[2] FuncId(20)::heap_bb4[2] }
+FuncId(12) - "core::intrinsics::copy_nonoverlapping::precondition_check"
+	FuncId(12)::local_12 (2) ==> { FuncId(20)::heap_bb5[2].cast#2 FuncId(20)::heap_bb4[2].cast#2 }
+	FuncId(12)::param_2 (2) ==> { FuncId(20)::heap_bb5[2].cast#2 FuncId(20)::heap_bb4[2].cast#2 }
+FuncId(19) - "core::slice::index::{impl#4}::index<i32>"
+	FuncId(19)::param_2 (1) ==> { FuncId(0)::local_10.cast#1 }
+FuncId(20) - "alloc::raw_vec::{impl#4}::try_allocate_in<std::alloc::Global>"
+	FuncId(20)::local_32 (1) ==> { FuncId(20)::local_7 }
+	FuncId(20)::local_26.0 (2) ==> { FuncId(20)::heap_bb4[2] FuncId(20)::heap_bb5[2] }
+	FuncId(20)::local_10 (1) ==> { FuncId(20)::local_5 }
+	FuncId(20)::local_16.as_variant#0.0.0 (2) ==> { FuncId(20)::heap_bb4[2].cast#0 FuncId(20)::heap_bb5[2].cast#0 }
+	FuncId(20)::local_25.0.0 (2) ==> { FuncId(20)::heap_bb4[2] FuncId(20)::heap_bb5[2] }
+	FuncId(20)::local_15 (1) ==> { FuncId(20)::local_5 }
+	FuncId(20)::local_42 (2) ==> { FuncId(20)::heap_bb4[2].cast#0 FuncId(20)::heap_bb5[2].cast#0 }
+	FuncId(20)::local_41 (2) ==> { FuncId(20)::heap_bb4[2] FuncId(20)::heap_bb5[2] }
+	FuncId(20)::local_21.0 (2) ==> { FuncId(20)::heap_bb4[2].cast#0 FuncId(20)::heap_bb5[2].cast#0 }
+	FuncId(20)::aux_44 (1) ==> { FuncId(20)::heap_bb5[2].cast#0 }
+	FuncId(20)::local_18 (1) ==> { FuncId(20)::param_3 }
+	FuncId(20)::aux_43 (1) ==> { FuncId(20)::heap_bb4[2].cast#0 }
+	FuncId(20)::local_24.0.0.0 (2) ==> { FuncId(20)::heap_bb4[2] FuncId(20)::heap_bb5[2] }
+	FuncId(20)::local_19 (1) ==> { FuncId(20)::param_3 }
+	FuncId(20)::local_14 (1) ==> { FuncId(20)::param_4 }
+	FuncId(20)::ret.as_variant#0.0.0.0.0 (2) ==> { FuncId(20)::heap_bb4[2] FuncId(20)::heap_bb5[2] }
+FuncId(23) - "core::ub_checks::maybe_is_nonoverlapping::runtime"
+	FuncId(23)::param_2 (2) ==> { FuncId(20)::heap_bb5[2].cast#2 FuncId(20)::heap_bb4[2].cast#2 }
+FuncId(27) - "core::alloc::layout::{impl#0}::repeat"
+	FuncId(27)::local_9 (1) ==> { FuncId(27)::local_3 }
+	FuncId(27)::local_5 (1) ==> { FuncId(27)::local_3 }
+	FuncId(27)::param_1 (1) ==> { FuncId(20)::local_7 }
+FuncId(32) - "core::alloc::layout::{impl#0}::repeat_packed"
+	FuncId(32)::param_1 (1) ==> { FuncId(27)::local_3 }

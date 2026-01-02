@@ -1,0 +1,26 @@
+Pointer analysis completed.
+Analysis time: 1ms 425us 269ns
+##########################################################
+Call Graph Statistics: 
+#Reachable functions (CS): 4
+#Reachable functions (CI): 3
+#Reachable unmonomorphized functions (CI): 3
+#Call graph edges (CS): 3
+#Call graph edges (CI): 3
+#Statically resolved calls: 3
+#Dynamically resolved calls: 0, #call graph edges: 0
+	#Dynamic dispatch calls: 0, #call graph edges: 0
+	#Fnptr calls: 0, #call graph edges: 0
+	#Dynamic Fn* trait calls: 0, #call graph edges: 0
+----------------------------------------------------------
+CS Points-to Statistics: 
+#Pointers: 18
+#Points-to relations: 18
+#Avg points-to size: 1
+CI Points-to Statistics: 
+#Pointers: 15
+#Points-to relations: 16
+#Avg points-to size: 1.0666666666666667
+##########################################################
+Used Memory Before Analysis: 74 MB
+Max Memory in Analysis: 75 MB

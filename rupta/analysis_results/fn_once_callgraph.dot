@@ -1,0 +1,7 @@
+digraph {
+    0 [ label = "fn_once::main" ]
+    1 [ label = "core::ops::function::impls::{impl#2}::call_once<(&'{erased} i32,), FnDef(DefId(0:3 ~ fn_once[b37c]::id), [])>" ]
+    2 [ label = "fn_once::id" ]
+    0 -> 1 [ label = "bb0[4]" ]
+    1 -> 2 [ label = "bb0[0]" ]
+}

@@ -1,0 +1,14 @@
+FuncId(1) - "cast_unsize::slice_unsize"
+	FuncId(1)::local_2 (1) ==> { FuncId(1)::local_1.cast#0 }
+	FuncId(1)::local_3 (1) ==> { FuncId(1)::local_1 }
+FuncId(2) - "cast_unsize::ref_dyn_unsize"
+	FuncId(2)::local_6 (1) ==> { FuncId(2)::local_2 }
+	FuncId(2)::local_3 (1) ==> { FuncId(2)::local_1 }
+	FuncId(2)::local_4 (1) ==> { FuncId(2)::local_1 }
+	FuncId(2)::local_5 (1) ==> { FuncId(2)::local_2 }
+FuncId(3) - "cast_unsize::raw_dyn_unsize"
+	FuncId(3)::local_3 (1) ==> { FuncId(3)::local_1 }
+FuncId(4) - "cast_unsize::{impl#0}::draw"
+	FuncId(4)::param_1 (1) ==> { FuncId(2)::local_1 }
+FuncId(5) - "cast_unsize::{impl#1}::draw"
+	FuncId(5)::param_1 (1) ==> { FuncId(2)::local_2 }

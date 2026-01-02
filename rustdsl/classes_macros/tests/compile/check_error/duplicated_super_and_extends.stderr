@@ -1,0 +1,5 @@
+error: expected `Super`
+  --> tests/compile/check_error/duplicated_super_and_extends.rs:27:24
+   |
+27 |                 super: A::new(id),
+   |                        ^

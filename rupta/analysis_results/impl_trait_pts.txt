@@ -1,0 +1,13 @@
+FuncId(0) - "impl_trait::main"
+	FuncId(0)::local_6 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_4 (1) ==> { FuncId(0)::local_1 }
+	FuncId(0)::local_7 (1) ==> { FuncId(0)::local_2 }
+FuncId(1) - "impl_trait::draw_shape<Circle>"
+	FuncId(1)::param_1 (1) ==> { FuncId(0)::local_1 }
+FuncId(2) - "impl_trait::draw_shape_two<Circle, Rectangle>"
+	FuncId(2)::param_1 (1) ==> { FuncId(0)::local_1 }
+	FuncId(2)::param_2 (1) ==> { FuncId(0)::local_2 }
+FuncId(3) - "impl_trait::{impl#0}::draw"
+	FuncId(3)::param_1 (1) ==> { FuncId(0)::local_1 }
+FuncId(4) - "impl_trait::{impl#1}::draw"
+	FuncId(4)::param_1 (1) ==> { FuncId(0)::local_2 }

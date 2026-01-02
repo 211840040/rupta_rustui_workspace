@@ -1,0 +1,19 @@
+FuncId(1) - "trait_upcasting::dyn_bar"
+	FuncId(1)::local_4 (1) ==> { FuncId(4)::heap_bb0[2].cast#0 }
+	FuncId(1)::local_1.0.0.0 (1) ==> { FuncId(4)::heap_bb0[2].cast#0 }
+	FuncId(1)::local_5 (1) ==> { FuncId(4)::heap_bb0[2].cast#0 }
+	FuncId(1)::local_2.0.0.0 (1) ==> { FuncId(4)::heap_bb0[2].cast#0 }
+FuncId(2) - "trait_upcasting::trait_upcasting"
+	FuncId(2)::local_1.0.0.0 (1) ==> { FuncId(4)::heap_bb0[2].cast#0 }
+	FuncId(2)::local_2.0.0.0 (1) ==> { FuncId(4)::heap_bb0[2].cast#0 }
+	FuncId(2)::local_5 (1) ==> { FuncId(4)::heap_bb0[2].cast#0 }
+	FuncId(2)::local_4 (1) ==> { FuncId(4)::heap_bb0[2].cast#0 }
+FuncId(3) - "trait_upcasting::get"
+	FuncId(3)::local_1.0.0.0 (1) ==> { FuncId(4)::heap_bb0[2].cast#0 }
+	FuncId(3)::ret.0.0.0 (1) ==> { FuncId(4)::heap_bb0[2].cast#0 }
+FuncId(4) - "alloc::boxed::{impl#0}::new<A>"
+	FuncId(4)::local_4 (1) ==> { FuncId(4)::heap_bb0[2] }
+	FuncId(4)::ret.0.0.0 (1) ==> { FuncId(4)::heap_bb0[2].cast#0 }
+	FuncId(4)::local_5 (1) ==> { FuncId(4)::heap_bb0[2].cast#0 }
+FuncId(6) - "trait_upcasting::{impl#1}::foo"
+	FuncId(6)::param_1 (1) ==> { FuncId(4)::heap_bb0[2].cast#0 }
