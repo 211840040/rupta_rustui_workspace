@@ -21,6 +21,7 @@ use crate::pta::DiffPTDataTy;
 use crate::pta::strategies::context_strategy::ContextStrategy;
 use crate::pts_set::points_to::PointsToSet;
 use crate::util;
+use crate::util::class_analysis;
 
 pub fn dump_results<P: PAGPath, F, S>(
     acx: &AnalysisContext, 
@@ -64,6 +65,12 @@ pub fn dump_results<P: PAGPath, F, S>(
     if let Some(dyn_calls_output) = &acx.analysis_options.dyn_calls_output {
         info!("Dumping dynamically resolved calls...");
         dump_dyn_calls(acx, call_graph, dyn_calls_output);
+    }
+
+    // dump class-level information
+    if let Some(class_info_output) = &acx.analysis_options.class_info_output {
+        info!("Dumping class-level information...");
+        dump_class_info(acx, call_graph, class_info_output);
     }
 }
 
@@ -157,12 +164,28 @@ pub fn dump_ci_pts<P: PAGPath>(acx: &AnalysisContext, pt_data: &DiffPTDataTy, pa
             .write_all(format!("{:?} - {:?}\n", func_id, acx.get_function_reference(func_id).to_string()).as_bytes())
             .expect("Unable to write data");
         for (pt, pts) in pts_map {
+            // Check if this pointer is a class reference (points to class instance)
+            let is_class_ref = pts.iter().any(|pointee| {
+                class_analysis::is_class_instance_heap_obj(acx, pointee)
+            });
+            
+            let pt_label = if is_class_ref {
+                format!("{:?} [CLASS_REF]", pt)
+            } else {
+                format!("{:?}", pt)
+            };
+            
             pts_writer
-                .write_all(format!("\t{:?} ({:?}) ==> {{ ", pt, pts.len()).as_bytes())
+                .write_all(format!("\t{} ({:?}) ==> {{ ", pt_label, pts.len()).as_bytes())
                 .expect("Unable to write data");
             for pointee in pts {
+                let pointee_label = if class_analysis::is_class_instance_heap_obj(acx, pointee) {
+                    format!("{:?} [CLASS_INSTANCE]", pointee)
+                } else {
+                    format!("{:?}", pointee)
+                };
                 pts_writer
-                    .write_all(format!("{:?} ", pointee).as_bytes())
+                    .write_all(format!("{} ", pointee_label).as_bytes())
                     .expect("Unable to write data");
             }
             pts_writer
@@ -426,4 +449,89 @@ fn to_ci_call_graph<F, S>(
         }
     }
     ci_call_graph
+}
+
+/// Dumps class-level information (constructors, instances, etc.)
+pub fn dump_class_info<F: CGFunction + Into<FuncId>, S: CGCallSite>(
+    acx: &AnalysisContext,
+    call_graph: &CallGraph<F, S>,
+    class_info_path: &String,
+) {
+    let mut class_info_writer = BufWriter::new(match &class_info_path[..] {
+        "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
+        _ => Box::new(File::create(class_info_path).expect("Unable to create file")) as Box<dyn Write>,
+    });
+
+    // Collect all class constructors
+    let mut class_constructors: Vec<(FuncId, class_analysis::ClassConstructor)> = Vec::new();
+    let mut visited_funcs = std::collections::HashSet::new();
+
+    for func in call_graph.reach_funcs_iter() {
+        let func_id: FuncId = func.into();
+        if visited_funcs.contains(&func_id) {
+            continue;
+        }
+        visited_funcs.insert(func_id);
+
+        let func_ref = acx.get_function_reference(func_id);
+        if let Some(constructor) = class_analysis::identify_class_constructor(&func_ref) {
+            class_constructors.push((func_id, constructor));
+        }
+    }
+
+    // Write class-level information
+    class_info_writer
+        .write_all(b"# Class-Level Analysis Results\n")
+        .expect("Unable to write data");
+    class_info_writer
+        .write_all(b"# This file contains class-related information extracted from the analysis\n\n")
+        .expect("Unable to write data");
+
+    if class_constructors.is_empty() {
+        class_info_writer
+            .write_all(b"No class constructors found.\n")
+            .expect("Unable to write data");
+        return;
+    }
+
+    let total_constructors = class_constructors.len();
+
+    // Group by class name
+    let mut by_class: std::collections::BTreeMap<String, Vec<(FuncId, class_analysis::ClassConstructor)>> = 
+        std::collections::BTreeMap::new();
+    for (func_id, constructor) in class_constructors {
+        by_class.entry(constructor.class_name.clone())
+            .or_default()
+            .push((func_id, constructor));
+    }
+
+    // Write information for each class
+    for (class_name, constructors) in by_class {
+        class_info_writer
+            .write_all(format!("## Class: {}\n\n", class_name).as_bytes())
+            .expect("Unable to write data");
+
+        for (func_id, constructor) in constructors {
+            let func_ref = acx.get_function_reference(func_id);
+            class_info_writer
+                .write_all(format!("### Constructor: {:?}\n", func_id).as_bytes())
+                .expect("Unable to write data");
+            class_info_writer
+                .write_all(format!("  Function: {}\n", func_ref.to_string()).as_bytes())
+                .expect("Unable to write data");
+            class_info_writer
+                .write_all(format!("  Type: {}\n", 
+                    if constructor.is_wrapper { "Wrapper" } else { "Data Constructor" }
+                ).as_bytes())
+                .expect("Unable to write data");
+            class_info_writer
+                .write_all(b"\n")
+                .expect("Unable to write data");
+        }
+    }
+
+    class_info_writer
+        .write_all(format!("\n# Total: {} class constructor(s) found\n", 
+            total_constructors).as_bytes())
+        .expect("Unable to write data");
 }

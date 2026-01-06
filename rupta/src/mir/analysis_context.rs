@@ -94,6 +94,9 @@ pub struct AnalysisContext<'tcx, 'compilation> {
     /// Heap objects that have been cast to a concretized type.
     pub concretized_heap_objs: HashMap<Rc<Path>, Ty<'tcx>>,
 
+    /// Heap objects that represent class instances (created by class constructors).
+    pub class_instance_heap_objs: HashSet<Rc<Path>>,
+
     /// Record the max index of the auxiliary local variable for each function instance.
     pub(crate) aux_local_indexer: HashMap<FuncId, usize>,
 
@@ -165,6 +168,7 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
                 special_functions: HashSet::new(),
                 aux_local_indexer: HashMap::new(),
                 concretized_heap_objs: HashMap::new(),
+                class_instance_heap_objs: HashSet::new(),
                 known_names_cache: KnownNamesCache::create_cache_from_language_items(),
             })
         } else {

@@ -16,6 +16,7 @@ use crate::mir::path::{Path, PathEnum, PathSelector};
 pub mod bit_vec;
 pub mod call_graph_stat;
 pub mod chunked_queue;
+pub mod class_analysis;
 pub mod dot;
 pub mod index_tree;
 pub mod mem_watcher;

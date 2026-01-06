@@ -20,6 +20,7 @@ use crate::mir::analysis_context::AnalysisContext;
 use crate::mir::known_names::KnownNames;
 use crate::mir::path::{Path, PathEnum, PathSelector};
 use crate::util::type_util;
+use crate::util::class_analysis;
 
 lazy_static! {
     static ref SPECIALLY_HANDLED_FUNCTIONS: HashSet<KnownNames> = {
@@ -168,6 +169,15 @@ pub fn handled_as_special_function_call<'tcx>(
             return false;
         }
         _ => {
+            // Check if this is a class constructor before handling as alloc
+            // For class constructors, we create HeapObj and pointer relationships,
+            // but we still need to build the call graph to analyze the constructor's body
+            if is_class_constructor(&mut *fpb.acx, *callee_def_id, gen_args) {
+                handle_class_constructor(fpb, callee_def_id, gen_args, destination, location);
+                // Return false to continue with normal call graph building
+                // This allows analysis of the constructor's internal implementation
+                return false;
+            }
             return handle_alloc(fpb, callee_known_name, args, destination, location);
         }
     }
@@ -500,4 +510,72 @@ fn const_u8_rawptr_type(tcx: TyCtxt) -> Ty {
         tcx.mk_ty_from_kind(TyKind::Slice(tcx.types.u8)),
         rustc_middle::mir::Mutability::Not,
     ))
+}
+
+/// Checks if a function is a class constructor (wrapper constructor, not data constructor)
+/// We only handle wrapper constructors here, as they are the entry point for class instantiation.
+fn is_class_constructor<'tcx>(
+    acx: &mut AnalysisContext<'tcx, '_>,
+    callee_def_id: DefId,
+    gen_args: &GenericArgsRef<'tcx>,
+) -> bool {
+    let func_id = acx.get_func_id(callee_def_id, *gen_args);
+    let func_ref = acx.get_function_reference(func_id);
+    
+    if let Some(constructor) = class_analysis::identify_class_constructor(&func_ref) {
+        // Only handle wrapper constructors (the public API)
+        // Data constructors are internal implementation details
+        return constructor.is_wrapper;
+    }
+    
+    false
+}
+
+/// Handles class constructor calls by creating a heap object abstraction
+/// and establishing pointer relationships.
+/// 
+/// For `let p = Point::new(10, 20);`:
+/// - Creates a HeapObj node representing the Point instance
+/// - Establishes that `p` (or the pointer inside `p`) points to this HeapObj
+fn handle_class_constructor<'tcx>(
+    fpb: &mut FuncPAGBuilder<'_, 'tcx, '_>,
+    _callee_def_id: &DefId,
+    _gen_args: &GenericArgsRef<'tcx>,
+    destination: &Rc<Path>,
+    location: mir::Location,
+) {
+    
+    // Get the return type of the constructor (e.g., Point<RcDyn<Point>>)
+    let return_ty = fpb.acx.get_path_rustc_type(destination)
+        .expect("Failed to get return type for class constructor");
+    
+    // Create a heap object to represent the class instance
+    // This represents the actual class data allocated on the heap
+    let heap_object_path = Path::new_heap_obj(fpb.fpag.func_id, location);
+    
+    // The heap object represents the concrete class data type
+    // For now, we use the return type, but ideally we'd extract the inner data type
+    // For Point, the heap object would be of type data::Point
+    fpb.acx.set_path_rustc_type(heap_object_path.clone(), return_ty);
+    
+    // Store the concretized type for the heap object
+    // This allows the analysis to know what type this heap object represents
+    fpb.acx
+        .concretized_heap_objs
+        .insert(heap_object_path.clone(), return_ty);
+    
+    // Mark this HeapObj as a class instance
+    fpb.acx
+        .class_instance_heap_objs
+        .insert(heap_object_path.clone());
+    
+    // Establish that the destination points to the heap object
+    // Use add_addr_edge because the constructor returns a pointer/reference to the heap object
+    // This creates: destination -> (address of) -> HeapObj
+    fpb.add_addr_edge(heap_object_path, destination.clone());
+    
+    debug!(
+        "Class constructor: created HeapObj at {:?} for type {:?}, destination: {:?}",
+        location, return_ty, destination
+    );
 }

@@ -94,6 +94,14 @@ fn make_options_parser() -> Command<'static> {
             .takes_value(true)
             .hide(true)
             .help("Dump type indices for debugging."))
+        .arg(Arg::new("class-level-mode")
+            .long("class-level-mode")
+            .takes_value(false)
+            .help("Enable class-level analysis mode (filters out non-class related information)."))
+        .arg(Arg::new("class-info-output")
+            .long("dump-class-info")
+            .takes_value(true)
+            .help("Dump class-level information (constructors, instances, etc.) to the output file."))
         .arg(Arg::new("INPUT")
             .multiple(true)
             .help("The input file to be analyzed.")
@@ -119,7 +127,11 @@ pub struct AnalysisOptions {
     pub type_indices_output: Option<String>,
     pub dyn_calls_output: Option<String>,
     pub unsafe_stat_output: Option<String>,
-    pub func_ctxts_output: Option<String>, 
+    pub func_ctxts_output: Option<String>,
+    
+    // Class-level analysis options
+    pub class_level_mode: bool,
+    pub class_info_output: Option<String>, 
 }
 
 impl Default for AnalysisOptions {
@@ -139,6 +151,8 @@ impl Default for AnalysisOptions {
             dyn_calls_output: None,
             unsafe_stat_output: None,
             func_ctxts_output: None,
+            class_level_mode: false,
+            class_info_output: None,
         }
     }
 }
@@ -223,6 +237,10 @@ impl AnalysisOptions {
         self.unsafe_stat_output = matches.get_one::<String>("unsafe-stats-output").cloned();
         self.dyn_calls_output = matches.get_one::<String>("dyn-calls-output").cloned();
         self.type_indices_output = matches.get_one::<String>("type-indices-output").cloned();
+        
+        // Class-level analysis options
+        self.class_level_mode = matches.contains_id("class-level-mode");
+        self.class_info_output = matches.get_one::<String>("class-info-output").cloned();
 
         // If the user provide the input source code file path before the `--` token, 
         // add it to the rustc arguments.
