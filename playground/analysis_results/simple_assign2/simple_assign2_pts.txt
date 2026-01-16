@@ -1,0 +1,390 @@
+FuncId(0) - "simple_assign2::main"
+	FuncId(0)::local_4 (1) ==> { FuncId(0)::local_2 }
+	FuncId(0)::local_1 [CLASS_REF] (1) ==> { FuncId(0)::heap_bb0[0] [CLASS_INSTANCE] }
+	FuncId(0)::local_5 [CLASS_REF] (1) ==> { FuncId(0)::heap_bb2[0] [CLASS_INSTANCE] }
+	FuncId(0)::local_8 (1) ==> { FuncId(0)::local_6 }
+FuncId(1) - "simple_assign2::_classes::_Point::{impl#0}::new"
+	FuncId(1)::local_3 [CLASS_REF] (1) ==> { FuncId(1)::heap_bb0[0] [CLASS_INSTANCE] }
+FuncId(2) - "simple_assign2::_classes::_Point::{impl#0}::dummy"
+	FuncId(2)::param_1 (2) ==> { FuncId(0)::local_2 FuncId(0)::local_6 }
+	FuncId(2)::local_4 (2) ==> { FuncId(0)::local_2.0 FuncId(0)::local_6.0 }
+FuncId(5) - "simple_assign2::_classes::_Point::data::{impl#0}::new"
+	FuncId(5)::local_12 (1) ==> { FuncId(5)::param_1 }
+	FuncId(5)::local_7 (1) ==> { FuncId(5)::param_1 }
+FuncId(6) - "classes::ptr::{impl#14}::vtable<_classes::_Point::Point<classes::class::ClassMarker, classes::class::Virtual>>"
+	FuncId(6)::local_2 (2) ==> { FuncId(0)::local_6.0.1 FuncId(0)::local_2.0.1 }
+	FuncId(6)::param_1 (2) ==> { FuncId(0)::local_6.0 FuncId(0)::local_2.0 }
+FuncId(11) - "simple_assign2::_classes::_Point::{impl#60}::VTABLE"
+	FuncId(11)::aux_3 (1) ==> { static_variable::VTABLE }
+	FuncId(11)::local_1 (1) ==> { static_variable::VTABLE }
+	FuncId(11)::local_2 (1) ==> { static_variable::VTABLE }
+FuncId(13) - "classes::ptr::{impl#25}::as_mut_ptr<_classes::_Point::Point<classes::class::ClassMarker, classes::class::Virtual>>"
+	FuncId(13)::local_33 (1) ==> { FuncId(5)::param_1.0 }
+	FuncId(13)::local_16.0 (1) ==> { FuncId(13)::local_18 }
+	FuncId(13)::local_2.1 (1) ==> { FuncId(26)::local_1 }
+	FuncId(13)::local_6 (1) ==> { FuncId(5)::param_1.0 }
+	FuncId(13)::local_9 (1) ==> { FuncId(26)::local_1 }
+	FuncId(13)::local_23 (1) ==> { FuncId(25)::local_1 }
+	FuncId(13)::local_17 (1) ==> { FuncId(13)::local_18 }
+	FuncId(13)::local_8 (1) ==> { FuncId(13)::local_4 }
+	FuncId(13)::local_19 (1) ==> { FuncId(5)::param_1.0.0 }
+	FuncId(13)::local_22 (1) ==> { FuncId(13)::local_18 }
+	FuncId(13)::local_32 (1) ==> { FuncId(5)::param_1.0.0 }
+	FuncId(13)::local_21 (1) ==> { FuncId(25)::local_1 }
+	FuncId(13)::local_16.1 (1) ==> { FuncId(25)::local_1 }
+	FuncId(13)::local_5 (1) ==> { FuncId(5)::param_1.0.0 }
+	FuncId(13)::local_7 (1) ==> { FuncId(26)::local_1 }
+	FuncId(13)::local_20 (1) ==> { FuncId(5)::param_1.0 }
+	FuncId(13)::local_2.0 (1) ==> { FuncId(13)::local_4 }
+	FuncId(13)::param_1 (1) ==> { FuncId(5)::param_1 }
+	FuncId(13)::local_3 (1) ==> { FuncId(13)::local_4 }
+FuncId(19) - "core::ptr::non_null::{impl#3}::as_ref<_classes::_Point::vtable::Point>"
+	FuncId(19)::param_1 (2) ==> { FuncId(0)::local_2.0.1 FuncId(0)::local_6.0.1 }
+FuncId(23) - "alloc::rc::{impl#19}::allocate_for_layout<std::mem::MaybeUninit<classes::ptr::Dyn<_classes::_Point::data::Point>>, Closure(DefId(3:5543 ~ alloc[0243]::rc::{impl#8}::new_uninit::{closure#0}), [classes::ptr::Dyn<_classes::_Point::data::Point>, i32, Binder { value: extern \"RustCall\" fn((std::alloc::Layout,)) -> std::result::Result<std::ptr::NonNull<[u8]>, std::alloc::AllocError>, bound_vars: [] }, ()]), FnDef(DefId(2:2820 ~ core[ce1f]::ptr::mut_ptr::{impl#0}::cast), [u8, std::rc::RcInner<std::mem::MaybeUninit<classes::ptr::Dyn<_classes::_Point::data::Point>>>])>"
+	FuncId(23)::local_8 (1) ==> { FuncId(23)::local_4 }
+FuncId(24) - "core::ptr::non_null::{impl#3}::new_unchecked::precondition_check"
+	FuncId(24)::param_1 (2) ==> { FuncId(114)::heap_bb3[0].cast#0 FuncId(114)::heap_bb4[0].cast#0 }
+FuncId(25) - "classes::ptr::{impl#25}::as_mut_ptr::promoted[0]"
+	FuncId(25)::ret (1) ==> { FuncId(25)::local_1 }
+FuncId(26) - "classes::ptr::{impl#25}::as_mut_ptr::promoted[1]"
+	FuncId(26)::ret (1) ==> { FuncId(26)::local_1 }
+FuncId(28) - "core::mem::manually_drop::{impl#2}::deref<classes::Rc<std::mem::MaybeUninit<classes::ptr::Dyn<_classes::_Point::data::Point>>, std::alloc::Global>>"
+	FuncId(28)::param_1 (2) ==> { FuncId(51)::param_1.0 FuncId(5)::param_1.0 }
+	FuncId(28)::ret (2) ==> { FuncId(51)::param_1.0.0 FuncId(5)::param_1.0.0 }
+FuncId(29) - "alloc::rc::{impl#15}::strong_count<std::mem::MaybeUninit<classes::ptr::Dyn<_classes::_Point::data::Point>>, std::alloc::Global>"
+	FuncId(29)::param_1 (2) ==> { FuncId(51)::param_1.0.0 FuncId(5)::param_1.0.0 }
+FuncId(30) - "core::panicking::assert_failed<usize, usize>"
+	FuncId(30)::local_8 (1) ==> { FuncId(30)::param_3 }
+	FuncId(30)::local_6 (1) ==> { FuncId(30)::param_2 }
+	FuncId(30)::param_3 (6) ==> { FuncId(26)::local_1 FuncId(25)::local_1 FuncId(67)::local_1 FuncId(66)::local_1 FuncId(78)::local_1 FuncId(79)::local_1 }
+	FuncId(30)::local_7 (1) ==> { FuncId(30)::param_3 }
+	FuncId(30)::local_5 (1) ==> { FuncId(30)::param_2 }
+	FuncId(30)::param_2 (6) ==> { FuncId(13)::local_4 FuncId(51)::local_4 FuncId(13)::local_18 FuncId(55)::local_18 FuncId(55)::local_4 FuncId(51)::local_18 }
+FuncId(31) - "alloc::rc::{impl#15}::weak_count<std::mem::MaybeUninit<classes::ptr::Dyn<_classes::_Point::data::Point>>, std::alloc::Global>"
+	FuncId(31)::param_1 (2) ==> { FuncId(51)::param_1.0.0 FuncId(5)::param_1.0.0 }
+FuncId(32) - "alloc::rc::{impl#15}::as_ptr<std::mem::MaybeUninit<classes::ptr::Dyn<_classes::_Point::data::Point>>, std::alloc::Global>"
+	FuncId(32)::param_1 (1) ==> { FuncId(5)::param_1.0.0 }
+FuncId(51) - "classes::ptr::{impl#25}::into_raw<_classes::_Point::Point<classes::class::ClassMarker, classes::class::Virtual>>"
+	FuncId(51)::local_37 (1) ==> { FuncId(51)::local_30.0 }
+	FuncId(51)::local_16.1 (2) ==> { FuncId(66)::local_1 FuncId(78)::local_1 }
+	FuncId(51)::local_41 (1) ==> { FuncId(51)::local_30 }
+	FuncId(51)::local_7 (2) ==> { FuncId(67)::local_1 FuncId(79)::local_1 }
+	FuncId(51)::local_9 (2) ==> { FuncId(79)::local_1 FuncId(67)::local_1 }
+	FuncId(51)::local_20 (1) ==> { FuncId(51)::param_1.0 }
+	FuncId(51)::local_16.0 (1) ==> { FuncId(51)::local_18 }
+	FuncId(51)::local_8 (1) ==> { FuncId(51)::local_4 }
+	FuncId(51)::local_21 (2) ==> { FuncId(78)::local_1 FuncId(66)::local_1 }
+	FuncId(51)::local_17 (1) ==> { FuncId(51)::local_18 }
+	FuncId(51)::local_3 (1) ==> { FuncId(51)::local_4 }
+	FuncId(51)::local_2.0 (1) ==> { FuncId(51)::local_4 }
+	FuncId(51)::local_22 (1) ==> { FuncId(51)::local_18 }
+	FuncId(51)::local_6 (1) ==> { FuncId(51)::param_1.0 }
+	FuncId(51)::local_30 [CLASS_REF] (1) ==> { FuncId(51)::heap_bb8[2] [CLASS_INSTANCE] }
+	FuncId(51)::local_23 (2) ==> { FuncId(78)::local_1 FuncId(66)::local_1 }
+	FuncId(51)::local_38 (1) ==> { FuncId(51)::local_30 }
+	FuncId(51)::local_2.1 (2) ==> { FuncId(67)::local_1 FuncId(79)::local_1 }
+	FuncId(51)::local_19 (1) ==> { FuncId(51)::param_1.0.0 }
+	FuncId(51)::local_5 (1) ==> { FuncId(51)::param_1.0.0 }
+	FuncId(51)::local_40 (1) ==> { FuncId(51)::local_30.0 }
+	FuncId(51)::local_36 (1) ==> { FuncId(51)::local_30.0.0 }
+FuncId(55) - "classes::ptr::{impl#25}::into_raw<classes::object::Object<classes::class::ClassMarker, classes::class::Virtual>>"
+	FuncId(55)::local_2.1 (2) ==> { FuncId(67)::local_1 FuncId(79)::local_1 }
+	FuncId(55)::local_22 (1) ==> { FuncId(55)::local_18 }
+	FuncId(55)::local_19 (1) ==> { FuncId(55)::param_1.0.0 }
+	FuncId(55)::local_41 (1) ==> { FuncId(55)::local_30 }
+	FuncId(55)::local_17 (1) ==> { FuncId(55)::local_18 }
+	FuncId(55)::local_38 (1) ==> { FuncId(55)::local_30 }
+	FuncId(55)::local_20 (1) ==> { FuncId(55)::param_1.0 }
+	FuncId(55)::local_5 (1) ==> { FuncId(55)::param_1.0.0 }
+	FuncId(55)::local_23 (2) ==> { FuncId(78)::local_1 FuncId(66)::local_1 }
+	FuncId(55)::local_7 (2) ==> { FuncId(79)::local_1 FuncId(67)::local_1 }
+	FuncId(55)::local_21 (2) ==> { FuncId(78)::local_1 FuncId(66)::local_1 }
+	FuncId(55)::local_6 (1) ==> { FuncId(55)::param_1.0 }
+	FuncId(55)::local_9 (2) ==> { FuncId(79)::local_1 FuncId(67)::local_1 }
+	FuncId(55)::local_16.1 (2) ==> { FuncId(66)::local_1 FuncId(78)::local_1 }
+	FuncId(55)::local_8 (1) ==> { FuncId(55)::local_4 }
+	FuncId(55)::local_40 (1) ==> { FuncId(55)::local_30.0 }
+	FuncId(55)::local_36 (1) ==> { FuncId(55)::local_30.0.0 }
+	FuncId(55)::local_2.0 (1) ==> { FuncId(55)::local_4 }
+	FuncId(55)::local_3 (1) ==> { FuncId(55)::local_4 }
+	FuncId(55)::local_37 (1) ==> { FuncId(55)::local_30.0 }
+	FuncId(55)::local_16.0 (1) ==> { FuncId(55)::local_18 }
+FuncId(59) - "classes::ptr::{impl#14}::into_raw<classes::object::Object<classes::class::ClassMarker, classes::class::Virtual>>"
+	FuncId(59)::local_7 (1) ==> { FuncId(59)::local_2.0.0.0 }
+	FuncId(59)::local_9 (1) ==> { FuncId(59)::local_2.0 }
+	FuncId(59)::local_13 (1) ==> { FuncId(59)::local_2 }
+	FuncId(59)::local_12 (1) ==> { FuncId(59)::local_2.0 }
+	FuncId(59)::local_10 (1) ==> { FuncId(59)::local_2 }
+	FuncId(59)::local_8 (1) ==> { FuncId(59)::local_2.0.0 }
+FuncId(60) - "classes::ptr::{impl#9}::cast_subclass_unchecked<classes::object::_Object::vtable::Object, _classes::_Point::vtable::Point>"
+	FuncId(60)::local_4 (1) ==> { FuncId(60)::param_1 }
+FuncId(66) - "classes::ptr::{impl#25}::into_raw::promoted[0]"
+	FuncId(66)::ret (1) ==> { FuncId(66)::local_1 }
+FuncId(67) - "classes::ptr::{impl#25}::into_raw::promoted[1]"
+	FuncId(67)::ret (1) ==> { FuncId(67)::local_1 }
+FuncId(70) - "core::mem::manually_drop::{impl#3}::deref_mut<classes::ptr::RcDynUninit<_classes::_Point::Point<classes::class::ClassMarker, classes::class::Virtual>>>"
+	FuncId(70)::ret (1) ==> { FuncId(51)::local_30.0 }
+	FuncId(70)::param_1 (1) ==> { FuncId(51)::local_30 }
+FuncId(71) - "core::mem::manually_drop::{impl#0}::take<classes::Rc<std::mem::MaybeUninit<classes::ptr::Dyn<_classes::_Point::data::Point>>, std::alloc::Global>>"
+	FuncId(71)::param_1 (1) ==> { FuncId(51)::local_30.0.0 }
+FuncId(74) - "core::mem::manually_drop::{impl#2}::deref<classes::ptr::RcDynUninit<_classes::_Point::Point<classes::class::ClassMarker, classes::class::Virtual>>>"
+	FuncId(74)::param_1 (1) ==> { FuncId(51)::local_30 }
+	FuncId(74)::ret (1) ==> { FuncId(51)::local_30.0 }
+FuncId(78) - "classes::ptr::{impl#25}::into_raw::promoted[0]"
+	FuncId(78)::ret (1) ==> { FuncId(78)::local_1 }
+FuncId(79) - "classes::ptr::{impl#25}::into_raw::promoted[1]"
+	FuncId(79)::ret (1) ==> { FuncId(79)::local_1 }
+FuncId(81) - "core::mem::manually_drop::{impl#2}::deref<classes::Rc<std::mem::MaybeUninit<classes::ptr::Dyn<classes::object::_Object::data::Object>>, std::alloc::Global>>"
+	FuncId(81)::param_1 (1) ==> { FuncId(55)::param_1.0 }
+	FuncId(81)::ret (1) ==> { FuncId(55)::param_1.0.0 }
+FuncId(82) - "alloc::rc::{impl#15}::strong_count<std::mem::MaybeUninit<classes::ptr::Dyn<classes::object::_Object::data::Object>>, std::alloc::Global>"
+	FuncId(82)::param_1 (1) ==> { FuncId(55)::param_1.0.0 }
+FuncId(83) - "alloc::rc::{impl#15}::weak_count<std::mem::MaybeUninit<classes::ptr::Dyn<classes::object::_Object::data::Object>>, std::alloc::Global>"
+	FuncId(83)::param_1 (1) ==> { FuncId(55)::param_1.0.0 }
+FuncId(86) - "core::mem::manually_drop::{impl#3}::deref_mut<classes::ptr::RcDynUninit<classes::object::Object<classes::class::ClassMarker, classes::class::Virtual>>>"
+	FuncId(86)::ret (1) ==> { FuncId(55)::local_30.0 }
+	FuncId(86)::param_1 (1) ==> { FuncId(55)::local_30 }
+FuncId(87) - "core::mem::manually_drop::{impl#0}::take<classes::Rc<std::mem::MaybeUninit<classes::ptr::Dyn<classes::object::_Object::data::Object>>, std::alloc::Global>>"
+	FuncId(87)::param_1 (1) ==> { FuncId(55)::local_30.0.0 }
+FuncId(92) - "core::mem::manually_drop::{impl#2}::deref<classes::ptr::RcDynUninit<classes::object::Object<classes::class::ClassMarker, classes::class::Virtual>>>"
+	FuncId(92)::param_1 (1) ==> { FuncId(55)::local_30 }
+	FuncId(92)::ret (1) ==> { FuncId(55)::local_30.0 }
+FuncId(96) - "core::mem::manually_drop::{impl#2}::deref<classes::ptr::RcDyn<classes::object::Object<classes::class::ClassMarker, classes::class::Virtual>>>"
+	FuncId(96)::param_1 (1) ==> { FuncId(59)::local_2 }
+	FuncId(96)::ret (1) ==> { FuncId(59)::local_2.0 }
+FuncId(98) - "core::mem::manually_drop::{impl#2}::deref<classes::Rc<classes::ptr::Dyn<classes::object::_Object::data::Object>, std::alloc::Global>>"
+	FuncId(98)::ret (1) ==> { FuncId(59)::local_2.0.0.0 }
+	FuncId(98)::param_1 (1) ==> { FuncId(59)::local_2.0.0 }
+FuncId(99) - "alloc::rc::{impl#15}::as_ptr<classes::ptr::Dyn<classes::object::_Object::data::Object>, std::alloc::Global>"
+	FuncId(99)::param_1 (1) ==> { FuncId(59)::local_2.0.0.0 }
+FuncId(103) - "classes::ptr::{impl#7}::vtable<std::ptr::NonNull<classes::object::_Object::data::Object>, classes::object::_Object::vtable::Object>"
+	FuncId(103)::param_1 (1) ==> { FuncId(60)::param_1 }
+	FuncId(103)::local_2 (1) ==> { FuncId(60)::param_1.1 }
+FuncId(113) - "alloc::rc::{impl#8}::new_uninit::{closure#0}::promoted[0]"
+	FuncId(113)::ret (1) ==> { FuncId(113)::local_1 }
+FuncId(114) - "alloc::alloc::{impl#0}::alloc_impl"
+	FuncId(114)::local_10.as_variant#0.0.0 (2) ==> { FuncId(114)::heap_bb3[0] FuncId(114)::heap_bb4[0] }
+	FuncId(114)::local_29 (2) ==> { FuncId(114)::heap_bb3[0].cast#0 FuncId(114)::heap_bb4[0].cast#0 }
+	FuncId(114)::local_9 (2) ==> { FuncId(114)::heap_bb3[0] FuncId(114)::heap_bb4[0] }
+	FuncId(114)::local_14.0 (2) ==> { FuncId(114)::heap_bb4[0] FuncId(114)::heap_bb3[0] }
+	FuncId(114)::local_8 (1) ==> { FuncId(114)::param_2 }
+	FuncId(114)::local_25.0 (2) ==> { FuncId(114)::heap_bb4[0] FuncId(114)::heap_bb3[0] }
+	FuncId(114)::local_36 (2) ==> { FuncId(114)::heap_bb4[0].cast#0 FuncId(114)::heap_bb3[0].cast#0 }
+	FuncId(114)::local_11.as_variant#0.0.0 (2) ==> { FuncId(114)::heap_bb3[0] FuncId(114)::heap_bb4[0] }
+	FuncId(114)::local_13 (2) ==> { FuncId(114)::heap_bb3[0] FuncId(114)::heap_bb4[0] }
+	FuncId(114)::param_1 (1) ==> { FuncId(113)::local_1 }
+	FuncId(114)::local_26 (2) ==> { FuncId(114)::heap_bb3[0] FuncId(114)::heap_bb4[0] }
+	FuncId(114)::local_5 (1) ==> { FuncId(114)::param_2 }
+	FuncId(114)::local_12.as_variant#1.0.0 (2) ==> { FuncId(114)::heap_bb4[0] FuncId(114)::heap_bb3[0] }
+	FuncId(114)::local_34 (2) ==> { FuncId(114)::heap_bb4[0] FuncId(114)::heap_bb3[0] }
+	FuncId(114)::local_32.0 (2) ==> { FuncId(114)::heap_bb3[0] FuncId(114)::heap_bb4[0] }
+	FuncId(114)::local_31.0 (2) ==> { FuncId(114)::heap_bb4[0] FuncId(114)::heap_bb3[0] }
+FuncId(116) - "alloc::rc::data_offset<classes::ptr::Dyn<classes::object::_Object::data::Object>>"
+	FuncId(116)::local_4 (1) ==> { FuncId(116)::local_3 }
+	FuncId(116)::local_6 (1) ==> { FuncId(116)::local_3 }
+FuncId(117) - "core::ptr::non_null::{impl#3}::as_ref<classes::object::_Object::vtable::Object>"
+	FuncId(117)::param_1 (1) ==> { FuncId(60)::param_1.1 }
+FuncId(120) - "classes::vtable::{impl#43}::is_subclass_of"
+	FuncId(120)::local_5 (1) ==> { FuncId(120)::local_3 }
+	FuncId(120)::local_6 (1) ==> { FuncId(120)::param_2 }
+FuncId(121) - "simple_assign2::_classes::_Point::{impl#33}::TYPE"
+	FuncId(121)::local_2 (1) ==> { static_variable::TYPE }
+	FuncId(121)::aux_3 (1) ==> { static_variable::TYPE }
+	FuncId(121)::local_1 (1) ==> { static_variable::TYPE }
+FuncId(126) - "alloc::rc::data_offset<std::mem::MaybeUninit<classes::ptr::Dyn<classes::object::_Object::data::Object>>>"
+	FuncId(126)::local_4 (1) ==> { FuncId(126)::local_3 }
+	FuncId(126)::local_6 (1) ==> { FuncId(126)::local_3 }
+FuncId(128) - "core::alloc::layout::{impl#0}::padding_needed_for"
+	FuncId(128)::param_1 (3) ==> { FuncId(116)::local_3 FuncId(126)::local_3 FuncId(135)::local_3 }
+FuncId(133) - "core::cmp::PartialEq::ne<classes::vtable::Type<classes::vtable::TypeInfo<0_usize>>, classes::vtable::Type<classes::vtable::TypeInfo<0_usize>>>"
+	FuncId(133)::param_1 (1) ==> { FuncId(120)::local_3 }
+	FuncId(133)::param_2 (1) ==> { FuncId(120)::param_2 }
+FuncId(135) - "alloc::rc::data_offset<classes::ptr::Dyn<_classes::_Point::data::Point>>"
+	FuncId(135)::local_4 (1) ==> { FuncId(135)::local_3 }
+	FuncId(135)::local_6 (1) ==> { FuncId(135)::local_3 }
+FuncId(145) - "classes::vtable::{impl#27}::eq<classes::vtable::TypeInfo<0_usize>>"
+	FuncId(145)::param_1 (1) ==> { FuncId(120)::local_3 }
+	FuncId(145)::local_6 (1) ==> { FuncId(145)::local_7 }
+	FuncId(145)::param_2 (1) ==> { FuncId(120)::param_2 }
+	FuncId(145)::local_3 (1) ==> { FuncId(145)::local_4 }
+FuncId(149) - "classes::vtable::{impl#19}::offset_of_object_header"
+	FuncId(149)::local_10 (1) ==> { StrRefArr }
+	FuncId(149)::local_9.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(149)::local_9.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+FuncId(153) - "core::num::nonzero::{impl#3}::eq<usize>"
+	FuncId(153)::param_2 (1) ==> { FuncId(145)::local_7 }
+	FuncId(153)::param_1 (1) ==> { FuncId(145)::local_4 }
+	FuncId(153)::local_3 (1) ==> { FuncId(153)::local_4 }
+	FuncId(153)::local_6 (1) ==> { FuncId(153)::local_7 }
+FuncId(154) - "classes::vtable::{impl#26}::type_info<classes::vtable::TypeInfo<0_usize>>"
+	FuncId(154)::local_2 (1) ==> { FuncId(154)::local_3 }
+FuncId(156) - "classes::vtable::{impl#19}::offset_of_object_header::promoted[0]"
+	FuncId(156)::ret (1) ==> { StrRefArr }
+FuncId(159) - "core::fmt::rt::{impl#2}::new_const<1>"
+	FuncId(159)::ret.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(159)::local_3 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(159)::ret.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(159)::param_1 (1) ==> { StrRefArr }
+	FuncId(159)::local_2 (1) ==> { StrRefArr.cast#2 }
+FuncId(164) - "core::cmp::impls::{impl#21}::eq"
+	FuncId(164)::param_1 (1) ==> { FuncId(153)::local_4 }
+	FuncId(164)::param_2 (1) ==> { FuncId(153)::local_7 }
+FuncId(166) - "core::ptr::non_null::{impl#3}::as_ref<classes::vtable::TypeInfo<0_usize>>"
+	FuncId(166)::param_1 (1) ==> { FuncId(154)::local_3 }
+FuncId(168) - "classes::vtable::{impl#26}::debug_assert_kind<classes::vtable::TypeInfo<0_usize>>"
+	FuncId(168)::local_58.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_25.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_79.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_95 (1) ==> { StrRefArr }
+	FuncId(168)::local_94.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_100.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_76.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_40.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_17 (1) ==> { StrRefArr }
+	FuncId(168)::local_71 (1) ==> { StrRefArr }
+	FuncId(168)::local_73.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_61.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_53 (1) ==> { StrRefArr }
+	FuncId(168)::local_68 (1) ==> { StrRefArr }
+	FuncId(168)::local_13.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_13.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_70.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_31.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_49.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_34.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_16.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_64.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_37.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_26 (1) ==> { StrRefArr }
+	FuncId(168)::local_32 (1) ==> { StrRefArr }
+	FuncId(168)::local_88.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_47 (1) ==> { StrRefArr }
+	FuncId(168)::local_97.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_98 (1) ==> { StrRefArr }
+	FuncId(168)::local_34.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_80 (1) ==> { StrRefArr }
+	FuncId(168)::local_61.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_94.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_91.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_82.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_65 (1) ==> { StrRefArr }
+	FuncId(168)::local_31.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_55.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_35 (1) ==> { StrRefArr }
+	FuncId(168)::local_89 (1) ==> { StrRefArr }
+	FuncId(168)::local_20 (1) ==> { StrRefArr }
+	FuncId(168)::local_85.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_86 (1) ==> { StrRefArr }
+	FuncId(168)::local_23 (1) ==> { StrRefArr }
+	FuncId(168)::local_41 (1) ==> { StrRefArr }
+	FuncId(168)::local_101 (1) ==> { StrRefArr }
+	FuncId(168)::local_28.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_46.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_28.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_14 (1) ==> { StrRefArr }
+	FuncId(168)::local_77 (1) ==> { StrRefArr }
+	FuncId(168)::local_76.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_83 (1) ==> { StrRefArr }
+	FuncId(168)::local_49.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_29 (1) ==> { StrRefArr }
+	FuncId(168)::local_56 (1) ==> { StrRefArr }
+	FuncId(168)::local_67.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_82.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_52.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_38 (1) ==> { StrRefArr }
+	FuncId(168)::local_92 (1) ==> { StrRefArr }
+	FuncId(168)::local_19.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_44 (1) ==> { StrRefArr }
+	FuncId(168)::local_52.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_62 (1) ==> { StrRefArr }
+	FuncId(168)::local_73.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_74 (1) ==> { StrRefArr }
+	FuncId(168)::local_59 (1) ==> { StrRefArr }
+	FuncId(168)::local_22.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_46.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_91.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_43.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_16.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_19.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_85.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_43.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_100.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_55.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_25.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_97.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_64.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_70.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_50 (1) ==> { StrRefArr }
+	FuncId(168)::local_79.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_40.0 (1) ==> { StrRefArr.cast#2 }
+	FuncId(168)::local_88.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_22.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_37.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_67.2 (1) ==> { FuncId(170)::local_1.cast#1 }
+	FuncId(168)::local_58.0 (1) ==> { StrRefArr.cast#2 }
+FuncId(170) - "core::fmt::rt::{impl#2}::new_const::promoted[0]"
+	FuncId(170)::ret (1) ==> { FuncId(170)::local_1 }
+FuncId(171) - "classes::vtable::{impl#26}::as_inner<classes::vtable::MixinInstanceTypeInfo<0_usize>>"
+	FuncId(171)::local_2 (1) ==> { FuncId(171)::param_1.0 }
+FuncId(174) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[0]"
+	FuncId(174)::ret (1) ==> { StrRefArr }
+FuncId(175) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[1]"
+	FuncId(175)::ret (1) ==> { StrRefArr }
+FuncId(176) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[2]"
+	FuncId(176)::ret (1) ==> { StrRefArr }
+FuncId(177) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[3]"
+	FuncId(177)::ret (1) ==> { StrRefArr }
+FuncId(178) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[4]"
+	FuncId(178)::ret (1) ==> { StrRefArr }
+FuncId(179) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[5]"
+	FuncId(179)::ret (1) ==> { StrRefArr }
+FuncId(180) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[6]"
+	FuncId(180)::ret (1) ==> { StrRefArr }
+FuncId(181) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[7]"
+	FuncId(181)::ret (1) ==> { StrRefArr }
+FuncId(182) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[8]"
+	FuncId(182)::ret (1) ==> { StrRefArr }
+FuncId(183) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[9]"
+	FuncId(183)::ret (1) ==> { StrRefArr }
+FuncId(184) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[10]"
+	FuncId(184)::ret (1) ==> { StrRefArr }
+FuncId(185) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[11]"
+	FuncId(185)::ret (1) ==> { StrRefArr }
+FuncId(186) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[12]"
+	FuncId(186)::ret (1) ==> { StrRefArr }
+FuncId(187) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[13]"
+	FuncId(187)::ret (1) ==> { StrRefArr }
+FuncId(188) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[14]"
+	FuncId(188)::ret (1) ==> { StrRefArr }
+FuncId(189) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[15]"
+	FuncId(189)::ret (1) ==> { StrRefArr }
+FuncId(190) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[16]"
+	FuncId(190)::ret (1) ==> { StrRefArr }
+FuncId(191) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[17]"
+	FuncId(191)::ret (1) ==> { StrRefArr }
+FuncId(192) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[18]"
+	FuncId(192)::ret (1) ==> { StrRefArr }
+FuncId(193) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[19]"
+	FuncId(193)::ret (1) ==> { StrRefArr }
+FuncId(194) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[20]"
+	FuncId(194)::ret (1) ==> { StrRefArr }
+FuncId(195) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[21]"
+	FuncId(195)::ret (1) ==> { StrRefArr }
+FuncId(196) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[22]"
+	FuncId(196)::ret (1) ==> { StrRefArr }
+FuncId(197) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[23]"
+	FuncId(197)::ret (1) ==> { StrRefArr }
+FuncId(198) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[24]"
+	FuncId(198)::ret (1) ==> { StrRefArr }
+FuncId(199) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[25]"
+	FuncId(199)::ret (1) ==> { StrRefArr }
+FuncId(200) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[26]"
+	FuncId(200)::ret (1) ==> { StrRefArr }
+FuncId(201) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[27]"
+	FuncId(201)::ret (1) ==> { StrRefArr }
+FuncId(202) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[28]"
+	FuncId(202)::ret (1) ==> { StrRefArr }
+FuncId(203) - "classes::vtable::{impl#26}::debug_assert_kind::promoted[29]"
+	FuncId(203)::ret (1) ==> { StrRefArr }
+FuncId(204) - "core::ptr::non_null::{impl#3}::as_ref<classes::vtable::MixinInstanceTypeInfo<0_usize>>"
+	FuncId(204)::param_1 (1) ==> { FuncId(171)::param_1.0 }

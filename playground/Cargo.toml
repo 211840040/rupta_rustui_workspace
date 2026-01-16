@@ -15,3 +15,18 @@ path = "src/bin/simple_new.rs"
 name = "simple_new2"
 path = "src/bin/simple_new2.rs"
 
+[[bin]]
+name = "simple_assign"
+path = "src/bin/simple_assign.rs"
+
+[[bin]]
+name = "simple_assign2"
+path = "src/bin/simple_assign2.rs"
+
+[[bin]]
+name = "simple_load_store"
+path = "src/bin/simple_load_store.rs"
+
+[[bin]]
+name = "example1"
+path = "src/bin/example1.rs"

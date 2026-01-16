@@ -127,7 +127,7 @@ pub struct AnalysisOptions {
     pub type_indices_output: Option<String>,
     pub dyn_calls_output: Option<String>,
     pub unsafe_stat_output: Option<String>,
-    pub func_ctxts_output: Option<String>,
+    pub func_ctxts_output: Option<String>, 
     
     // Class-level analysis options
     pub class_level_mode: bool,
