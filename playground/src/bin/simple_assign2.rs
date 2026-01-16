@@ -14,7 +14,7 @@ classes! {
         }
 
         pub fn dummy(&self) -> i32 {
-            self.x + self.y
+            self._as_inner().x + self._as_inner().y
         }
     }
 }

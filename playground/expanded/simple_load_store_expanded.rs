@@ -5,6 +5,7 @@ use std::prelude::rust_2021::*;
 #[macro_use]
 extern crate std;
 use classes_macros::classes;
+use classes::prelude::CRc;
 #[allow(unused_imports)]
 use _classes::Point;
 #[allow(unused_imports)]
@@ -3549,12 +3550,14 @@ mod _classes {
 fn main() {
     let _p1 = Point::new(10, 20);
     let _p2 = Point::new(30, 40);
-    let _c1 = Container::new();
+    let mut _c1 = Container::new();
     _c1.set_point(_p1);
     let _p3 = _c1.get_point();
-    let _c2 = Container::new();
+    let mut _c2 = Container::new();
     _c2.set_point(_p2);
     let _p4 = _c2.get_point();
     std::mem::drop(_p3);
     std::mem::drop(_p4);
+    std::mem::drop(_c1);
+    std::mem::drop(_c2);
 }
