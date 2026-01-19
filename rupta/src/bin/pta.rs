@@ -29,11 +29,16 @@ fn main() {
     if env::var("RUSTC_LOG").is_ok() {
         rustc_driver::init_rustc_env_logger(&early_dcx);
     }
-    if env::var("PTA_LOG").is_ok() {
-        let e = env_logger::Env::new()
-            .filter("PTA_LOG")
-            .write_style("PTA_LOG_STYLE");
-        env_logger::init_from_env(e);
+    // Initialize env_logger if RUST_LOG or PTA_LOG is set
+    if env::var("RUST_LOG").is_ok() || env::var("PTA_LOG").is_ok() {
+        // Use RUST_LOG if set, otherwise use PTA_LOG with default level
+        let log_filter = env::var("RUST_LOG").unwrap_or_else(|_| {
+            env::var("PTA_LOG").unwrap_or_else(|_| "rupta=debug".to_string())
+        });
+        let e = env_logger::Env::default()
+            .filter_or("RUST_LOG", log_filter)
+            .write_style_or("RUST_LOG_STYLE", env::var("PTA_LOG_STYLE").unwrap_or_else(|_| "always".to_string()));
+        env_logger::Builder::from_env(e).init();
     }
 
     // Get any options specified via the PTA_FLAGS environment variable

@@ -22,6 +22,7 @@ use crate::mir::function::{FuncId, GenericArgE};
 use crate::mir::path::{PathEnum, ProjectionElems};
 use crate::util::bit_vec::Idx;
 use crate::util::chunked_queue::{self, ChunkedQueue};
+use crate::util::class_analysis;
 
 // Unique identifiers for graph node and edges.
 pub type PAGNodeId = NodeIndex<DefaultIx>;
@@ -453,8 +454,15 @@ impl<P: PAGPath> PAG<P> {
         };
 
         if ty.is_any_ptr() {
+            debug!("add_new_direct_edges: ty={:?} is pointer, creating direct edge from {:?} to {:?}", ty, src, dst);
+            add_new_direct_edge(src, dst);
+        } else if class_analysis::is_dsl_class_type(acx.tcx, ty) {
+            // DSL class types should be treated as pointers for inter-procedural propagation
+            // In DSL semantics, class instances are heap objects that should propagate through function calls
+            debug!("add_new_direct_edges: ty={:?} is DSL class type, creating direct edge from {:?} to {:?}", ty, src, dst);
             add_new_direct_edge(src, dst);
         } else {
+            debug!("add_new_direct_edges: ty={:?} is not pointer and not DSL class, using pointer projections", ty);
             let ptr_projs = acx.get_pointer_projections(ty);
             let ptr_projs = unsafe { &*(ptr_projs as *const Vec<(ProjectionElems, Ty<'_>)>) };
             for (ptr_proj, _ptr_ty) in ptr_projs {
@@ -605,6 +613,7 @@ where
             // The source path can be a constant, we did not cache the type information for constants.
             let arg_type = arg.try_eval_path_type(acx);
             let param = PAGPath::new_parameter(callee, i + 1);
+            debug!("add_inter_procedural_edges: arg[{}]={:?} (ty={:?}) -> param={:?}", i, arg, arg_type, param);
             added_edges.extend(self.add_new_direct_edges(acx, arg, &param, arg_type));
         }
 
@@ -612,6 +621,12 @@ where
         // why use destination's type here instead of ret type?
         let ret = PAGPath::new_return_value(callee);
         let ret_type = callsite.destination.try_eval_path_type(acx);
+        // Only log for DSL class types or if it's a getter/setter call
+        let dst_str = format!("{:?}", callsite.destination.value());
+        if class_analysis::is_dsl_class_type(acx.tcx, ret_type) || 
+           dst_str.contains("local_7") || dst_str.contains("local_13") {
+            debug!("add_inter_procedural_edges: ret={:?} (ty={:?}) -> dst={:?}", ret, ret_type, callsite.destination);
+        }
         let new_edges = self.add_new_direct_edges(acx, &ret, &callsite.destination, ret_type);
         added_edges.extend(new_edges);
 

@@ -138,7 +138,59 @@ pub fn dump_pts_for<P: PAGPath>(pt_data: &DiffPTDataTy, pag: &PAG<P>, node_id: P
 }
 
 
+/// Helper function to check if a node's points-to set contains a class instance
+/// by recursively following PTS relationships.
+fn pointees_contain_class_instance<P: PAGPath>(
+    acx: &AnalysisContext,
+    pt_data: &DiffPTDataTy,
+    pag: &PAG<P>,
+    node_id: PAGNodeId,
+    visited: &mut HashSet<PAGNodeId>,
+    max_depth: usize,
+) -> bool {
+    // Avoid infinite recursion
+    if max_depth == 0 {
+        return false;
+    }
+    
+    // Avoid cycles
+    if visited.contains(&node_id) {
+        return false;
+    }
+    visited.insert(node_id);
+    
+    // Get the path for this node
+    let path = pag.node_path(node_id);
+    let path_enum = path.value();
+    
+    // First, check if the path itself is a class instance (direct check)
+    if class_analysis::is_class_instance_heap_obj(acx, path_enum) {
+        return true;
+    }
+    
+    // Check if this node's pointees contain a class instance
+    if let Some(pointees) = pt_data.get_propa_pts(node_id) {
+        for pointee_node_id in pointees.iter() {
+            // Recursively check if the pointee is or points to a class instance
+            if pointees_contain_class_instance(
+                acx,
+                pt_data,
+                pag,
+                pointee_node_id,
+                visited,
+                max_depth - 1,
+            ) {
+                return true;
+            }
+        }
+    }
+    
+    false
+}
+
 pub fn dump_ci_pts<P: PAGPath>(acx: &AnalysisContext, pt_data: &DiffPTDataTy, pag: &PAG<P>, grouped_pts_path: &String) {
+    // Build mapping from PathEnum to NodeId for efficient lookup
+    let mut path_to_node: HashMap<PathEnum, PAGNodeId> = HashMap::new();
     let mut grouped_pts: BTreeMap<FuncId, HashMap<&PathEnum, HashSet<&PathEnum>>> = BTreeMap::new();
     let pts_map = &pt_data.propa_pts_map;
     let mut pts_writer = BufWriter::new(match &grouped_pts_path[..] {
@@ -151,6 +203,8 @@ pub fn dump_ci_pts<P: PAGPath>(acx: &AnalysisContext, pt_data: &DiffPTDataTy, pa
         }
         let var = pag.node_path(*node);
         let value = var.value();
+        // Build PathEnum to NodeId mapping
+        path_to_node.insert(value.clone(), *node);
         if let Some(func_id) = path_func_id(value) {
             let pts_map = grouped_pts.entry(func_id).or_default();
             let tmp_pts = pts_map.entry(value).or_default();
@@ -164,9 +218,17 @@ pub fn dump_ci_pts<P: PAGPath>(acx: &AnalysisContext, pt_data: &DiffPTDataTy, pa
             .write_all(format!("{:?} - {:?}\n", func_id, acx.get_function_reference(func_id).to_string()).as_bytes())
             .expect("Unable to write data");
         for (pt, pts) in pts_map {
-            // Check if this pointer is a class reference (points to class instance)
+            // Check if this pointer's pointees contain a class instance
+            // (either directly or through propagation)
+            let mut visited = HashSet::new();
             let is_class_ref = pts.iter().any(|pointee| {
-                class_analysis::is_class_instance_heap_obj(acx, pointee)
+                if let Some(pointee_node_id) = path_to_node.get(pointee) {
+                    visited.clear();
+                    pointees_contain_class_instance(acx, pt_data, pag, *pointee_node_id, &mut visited, 10)
+                } else {
+                    // Fallback: check path structure if node_id not found
+                    class_analysis::is_class_instance_heap_obj(acx, pointee)
+                }
             });
             
             let pt_label = if is_class_ref {
@@ -179,7 +241,14 @@ pub fn dump_ci_pts<P: PAGPath>(acx: &AnalysisContext, pt_data: &DiffPTDataTy, pa
                 .write_all(format!("\t{} ({:?}) ==> {{ ", pt_label, pts.len()).as_bytes())
                 .expect("Unable to write data");
             for pointee in pts {
-                let pointee_label = if class_analysis::is_class_instance_heap_obj(acx, pointee) {
+                let is_class_instance = if let Some(pointee_node_id) = path_to_node.get(pointee) {
+                    let mut visited = HashSet::new();
+                    pointees_contain_class_instance(acx, pt_data, pag, *pointee_node_id, &mut visited, 10)
+                } else {
+                    // Fallback: check path structure if node_id not found
+                    class_analysis::is_class_instance_heap_obj(acx, pointee)
+                };
+                let pointee_label = if is_class_instance {
                     format!("{:?} [CLASS_INSTANCE]", pointee)
                 } else {
                     format!("{:?}", pointee)

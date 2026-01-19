@@ -33,7 +33,7 @@ use crate::mir::call_site::CallSite;
 use crate::mir::function::{FuncId, FunctionReference};
 use crate::mir::analysis_context::AnalysisContext;
 use crate::mir::path::{Path, PathEnum, PathSelector, PathSupport, ProjectionElems};
-use crate::util::{self, type_util};
+use crate::util::{self, class_analysis, type_util};
 
 use super::substs_specializer::SubstsSpecializer;
 
@@ -216,7 +216,10 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
         // contain pointer type fields. 
         // The lh type maybe a opaque type, we need to determine the actual type 
         // according to the rh type.
-        if !lh_type.is_any_ptr() && self.acx.get_pointer_projections(lh_type).is_empty() {
+        // Exception: DSL class types should be treated as pointers for propagation purposes
+        if !lh_type.is_any_ptr() 
+            && !crate::util::class_analysis::is_dsl_class_type(self.tcx(), lh_type)
+            && self.acx.get_pointer_projections(lh_type).is_empty() {
             return;
         }
 
@@ -584,7 +587,10 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
             .acx
             .get_path_rustc_type(&lh_path)
             .expect("Unresolved lh type.");
-        if !lh_type.is_any_ptr() && self.acx.get_pointer_projections(lh_type).is_empty() {
+        // Exception: DSL class types should be treated as pointers for propagation purposes
+        if !lh_type.is_any_ptr() 
+            && !class_analysis::is_dsl_class_type(self.tcx(), lh_type)
+            && self.acx.get_pointer_projections(lh_type).is_empty() {
             return;
         }
         let rh_path = self.visit_const_operand(const_op);
@@ -1160,6 +1166,15 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
         let destination = self.get_path_for_place(destination);
         debug!("Call func {:?}, generic_args: {:?}", callee_def_id, gen_args);
 
+        // Check if this is a getter/setter method call
+        let callee_func_id = self.acx.get_func_id(*callee_def_id, gen_args);
+        let func_ref = self.acx.get_function_reference(callee_func_id);
+        if let Some(gs) = class_analysis::identify_getter_setter(&func_ref) {
+            // Handle getter/setter as class field access
+            self.handle_getter_setter(&gs, &args, &destination, location);
+            // Continue with normal call handling to build call graph
+        }
+
         if special_function_handler::handled_as_special_function_call(
             self,
             callee_def_id,
@@ -1458,6 +1473,10 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
     ) {
         if type_util::equal_types(self.tcx(), src_type, dst_type) {
             if src_type.is_any_ptr() {
+                self.add_edge_between_ptrs(src_path, dst_path);
+            } else if class_analysis::is_dsl_class_type(self.tcx(), src_type) {
+                // DSL class types should be treated as pointers for propagation purposes
+                // In DSL semantics, class instances are heap objects that should propagate through assignments
                 self.add_edge_between_ptrs(src_path, dst_path);
             } else {
                 let ptr_projs = unsafe {
@@ -1959,6 +1978,123 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
         destination: Rc<Path>,
     ) -> Rc<CallSite> {
         Rc::new(CallSite::new(func_id, location, args, destination))
+    }
+
+    /// Handles getter/setter method calls by building class field paths and establishing Load/Store edges.
+    /// 
+    /// For getter: `_p3 = _c1.get_point()` -> Load edge: `_c1.point --Load(point)--> _p3`
+    /// For setter: `_c1.set_point(_p1)` -> Store edge: `_p1 --Store(point)--> _c1.point`
+    fn handle_getter_setter(
+        &mut self,
+        gs: &class_analysis::GetterSetter,
+        args: &[Rc<Path>],
+        destination: &Rc<Path>,
+        _location: mir::Location,
+    ) {
+        if args.is_empty() {
+            warn!("Getter/Setter method call has no arguments: {:?}", gs);
+            return;
+        }
+
+        let self_path = args[0].clone(); // self parameter
+        let field_path = self.build_class_field_path(self_path, &gs.field_name);
+
+        if gs.is_getter {
+            // Getter: Load edge from field to return value
+            // Format: (*self).0.field_name --Load(field)--> destination
+            self.add_load_edge(field_path.clone(), destination.clone());
+            debug!("Getter call: {:?} -> {:?} (field: {})", field_path, destination, gs.field_name);
+        } else {
+            // Setter: Store edge from value argument to field
+            // Format: value_arg --Store(field)--> (*self).0.field_name
+            if args.len() < 2 {
+                warn!("Setter method call has insufficient arguments: {:?}", gs);
+                return;
+            }
+            let value_path = args[1].clone();
+            self.add_store_edge(value_path.clone(), field_path.clone());
+            debug!("Setter call: {:?} -> {:?} (field: {})", value_path, field_path, gs.field_name);
+        }
+
+        // Mark the field path as a class field
+        self.acx.class_field_paths.insert(field_path);
+    }
+
+    /// Builds a path to a class field from a self parameter.
+    /// 
+    /// Given `self` parameter (type `&Container`) and field name "point",
+    /// builds the path `(*self).0.point` where:
+    /// - `*self` dereferences the reference
+    /// - `.0` accesses the wrapper's internal field (repr(transparent))
+    /// - `.point` accesses the actual field in the data struct
+    fn build_class_field_path(&mut self, self_path: Rc<Path>, field_name: &str) -> Rc<Path> {
+        // Step 1: Dereference self: (*self)
+        let self_path_clone = self_path.clone();
+        let deref_self = Path::new_qualified(
+            self_path_clone,
+            vec![PathSelector::Deref]
+        );
+
+        // Step 2: Access wrapper field: (*self).0
+        // DSL classes use repr(transparent), so the first field (index 0) is the data
+        let data_path = Path::new_field(deref_self, 0);
+
+        // Step 3: Get field index from field name
+        // This requires type information to map field name to index
+        let field_index = self.get_field_index_from_name(&data_path, field_name);
+
+        // Step 4: Access actual field: (*self).0.field_name
+        let field_path = Path::new_field(data_path, field_index);
+
+        // Set type information for the field path if available
+        if self.acx.get_path_rustc_type(&field_path).is_none() {
+            if let Some(base_ty) = self.acx.get_path_rustc_type(&self_path) {
+                // Try to infer field type from self type
+                // Get type of field 0 (data wrapper)
+                let deref_ty = type_util::get_dereferenced_type(base_ty);
+                let data_ty = type_util::get_field_type(self.tcx(), deref_ty, 0);
+                // Get type of the actual field
+                let field_ty = type_util::get_field_type(self.tcx(), data_ty, field_index);
+                self.acx.set_path_rustc_type(field_path.clone(), field_ty);
+            }
+        }
+
+        field_path
+    }
+
+    /// Gets the field index from field name by examining the type structure.
+    /// Returns 0 if not found (fallback).
+    fn get_field_index_from_name(&mut self, base_path: &Rc<Path>, field_name: &str) -> usize {
+        // Try to get type from path
+        let base_ty = if let Some(ty) = self.acx.get_path_rustc_type(base_path) {
+            ty
+        } else {
+            // Try to evaluate path type using type_util
+            if let Some(ty) = type_util::try_eval_path_type(self.acx, base_path) {
+                self.acx.set_path_rustc_type(base_path.clone(), ty);
+                ty
+            } else {
+                warn!("Cannot determine type for path {:?}, using field index 0", base_path);
+                return 0; // Fallback
+            }
+        };
+
+        // Look up field index from type
+        if let TyKind::Adt(def, _args) = base_ty.kind() {
+            if def.is_struct() || def.is_union() {
+                let variant = def.variants().iter().next();
+                if let Some(variant) = variant {
+                    for (i, field) in variant.fields.iter().enumerate() {
+                        if field.name.as_str() == field_name {
+                            return i;
+                        }
+                    }
+                }
+            }
+        }
+
+        warn!("Field '{}' not found in type {:?}, using index 0", field_name, base_ty);
+        0 // Fallback
     }
 
 }

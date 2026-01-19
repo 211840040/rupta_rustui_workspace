@@ -21,7 +21,7 @@ use crate::mir::path::{PathEnum, PathSelector};
 use crate::pta::strategies::stack_filtering::{SFReachable, StackFilter};
 use crate::pta::*;
 use crate::pts_set::points_to::PointsToSet;
-use crate::util::{self, chunked_queue, type_util};
+use crate::util::{self, chunked_queue, type_util, class_analysis};
 
 /// Propagating the points-to information along the PAG edges.
 pub struct Propagator<'pta, 'tcx, 'compilation, F, P: PAGPath> {
@@ -335,53 +335,126 @@ where
 
     /// Process the given load edge.
     /// src --load--> dst:  node \in pts(src) ==> node --direct-->dst
+    /// 
+    /// This function recursively processes pointees of pointees, because in RUPTA's unified
+    /// path model, pointees can be pointers themselves (unlike other frameworks that separate
+    /// heap objects and pointers). This ensures that Load operations propagate through the
+    /// full transitive closure of points-to relationships.
     fn process_load(&mut self, load_edge: EdgeId, base_pts: &PointsTo<NodeId>) {
-        let (_src, dst) = self.pag.graph().edge_endpoints(load_edge).unwrap();
+        let (src, dst) = self.pag.graph().edge_endpoints(load_edge).unwrap();
         let PAGEdgeEnum::LoadPAGEdge(load_proj) = self.pag.get_edge(load_edge).kind.clone() else {
             unreachable!()
         };
 
         let stack_filter_pred = Self::stack_filter_pred(load_edge);
-
+        let src_path = self.pag.node_path(src).clone();
         let dst_path = self.pag.node_path(dst).clone();
-        for pointee in base_pts {
+        
+        debug!("process_load: src={:?}, dst={:?}, load_proj={:?}, base_pts.count()={}", 
+               src_path, dst_path, load_proj, base_pts.count());
+        
+        // Use a worklist to recursively process pointees of pointees
+        let mut processed = HashSet::new();
+        let mut worklist: Vec<NodeId> = base_pts.into_iter().collect();
+        
+        while let Some(pointee) = worklist.pop() {
+            if processed.contains(&pointee) {
+                continue;
+            }
+            processed.insert(pointee);
+            
             let pointee_path = self.pag.node_path(pointee).clone();
-            let src_path = pointee_path.append_projection(&load_proj);
 
             if stack_filter_pred(self.acx, self.stack_filter.as_deref(), &pointee_path) {
+                debug!("process_load: stack filtered pointee={:?}", pointee_path);
                 continue;
             }
 
+            let src_path = pointee_path.append_projection(&load_proj);
+            debug!("process_load: pointee={:?}, src_path={:?}, dst_path={:?}", 
+                   pointee_path, src_path, dst_path);
+
+            // Check if src_path has points-to set
+            let src_node_id = self.pag.get_or_insert_node(&src_path);
+            let src_pts = self.pt_data.get_propa_pts(src_node_id);
+            debug!("process_load: src_path={:?}, src_pts={:?}", src_path, 
+                   src_pts.map(|pts| format!("{} pointees", pts.count())));
+
             if let Some(edge_id) = self.add_direct_edge(&src_path, &dst_path) {
+                debug!("process_load: created direct edge from {:?} to {:?}", src_path, dst_path);
                 self.new_edge_from_store_or_load(edge_id, load_edge);
                 self.propagate(edge_id, false);
+            } else {
+                debug!("process_load: direct edge already exists or failed from {:?} to {:?}", src_path, dst_path);
+            }
+            
+            // Recursively process pointees of this pointee
+            if let Some(pointee_pts) = self.pt_data.get_propa_pts(pointee) {
+                for nested_pointee in pointee_pts {
+                    if !processed.contains(&nested_pointee) {
+                        worklist.push(nested_pointee);
+                    }
+                }
             }
         }
     }
 
     /// Process the given store edge.
     /// src --store--> dst:  node \in pts(dst) ==> src --direct--> node
+    /// 
+    /// This function recursively processes pointees of pointees, because in RUPTA's unified
+    /// path model, pointees can be pointers themselves (unlike other frameworks that separate
+    /// heap objects and pointers). This ensures that Store operations propagate through the
+    /// full transitive closure of points-to relationships.
     fn process_store(&mut self, store_edge: EdgeId, base_pts: &PointsTo<NodeId>) {
-        let (src, _dst) = self.pag.graph().edge_endpoints(store_edge).unwrap();
+        let (src, dst) = self.pag.graph().edge_endpoints(store_edge).unwrap();
         let PAGEdgeEnum::StorePAGEdge(store_proj) = self.pag.get_edge(store_edge).kind.clone() else {
             unreachable!()
         };
 
         let stack_filter_pred = Self::stack_filter_pred(store_edge);
-
         let src_path = self.pag.node_path(src).clone();
-        for pointee in base_pts {
+        let dst_path = self.pag.node_path(dst).clone();
+        
+        debug!("process_store: src={:?}, dst={:?}, store_proj={:?}, base_pts.count()={}", 
+               src_path, dst_path, store_proj, base_pts.count());
+        
+        // Use a worklist to recursively process pointees of pointees
+        let mut processed = HashSet::new();
+        let mut worklist: Vec<NodeId> = base_pts.into_iter().collect();
+        
+        while let Some(pointee) = worklist.pop() {
+            if processed.contains(&pointee) {
+                continue;
+            }
+            processed.insert(pointee);
+            
             let pointee_path = self.pag.node_path(pointee).clone();
 
             if stack_filter_pred(self.acx, self.stack_filter.as_deref(), &pointee_path) {
+                debug!("process_store: stack filtered pointee={:?}", pointee_path);
                 continue;
             }
 
             let dst_path = pointee_path.append_projection(&store_proj);
+            debug!("process_store: pointee={:?}, src_path={:?}, dst_path={:?}", 
+                   pointee_path, src_path, dst_path);
 
             if let Some(edge_id) = self.add_direct_edge(&src_path, &dst_path) {
+                debug!("process_store: created direct edge from {:?} to {:?}", src_path, dst_path);
                 self.new_edge_from_store_or_load(edge_id, store_edge);
                 self.propagate(edge_id, false);
+            } else {
+                debug!("process_store: direct edge already exists or failed from {:?} to {:?}", src_path, dst_path);
+            }
+            
+            // Recursively process pointees of this pointee
+            if let Some(pointee_pts) = self.pt_data.get_propa_pts(pointee) {
+                for nested_pointee in pointee_pts {
+                    if !processed.contains(&nested_pointee) {
+                        worklist.push(nested_pointee);
+                    }
+                }
             }
         }
     }
@@ -722,7 +795,13 @@ where
         let mut changed = false;
         let (src, dst) = self.pag.graph().edge_endpoints(direct_edge).unwrap();
         // If src is a pointer or a reference.
-        if self.get_propa_pts(src).is_some() || self.get_diff_pts(src).is_some() {
+        let src_has_pts = self.get_propa_pts(src).is_some() || self.get_diff_pts(src).is_some();
+        if !src_has_pts {
+            let (src_path, _) = self.node_path_and_ty(src);
+            let (dst_path, _) = self.node_path_and_ty(dst);
+            debug!("propagate: SKIPPED - src {:?} has no points-to set, dst={:?}", src_path, dst_path);
+        }
+        if src_has_pts {
             // check the type of src and dst
             let (src_path, src_type) = self.node_path_and_ty(src);
             let (dst_path, dst_type) = self.node_path_and_ty(dst);
@@ -731,9 +810,50 @@ where
             let type_filter_pred = Self::type_filter_pred();
             let stack_filter_pred = Self::stack_filter_pred(direct_edge);
 
-            if !type_util::equivalent_ptr_types(self.tcx(), src_type, dst_type) {
+            // Check if types are equivalent for propagation
+            // For DSL class types, treat them as equivalent even if they're not pointers
+            let types_equivalent = if type_util::equivalent_ptr_types(self.tcx(), src_type, dst_type) {
+                true
+            } else if class_analysis::is_dsl_class_type(self.tcx(), src_type) 
+                && class_analysis::is_dsl_class_type(self.tcx(), dst_type) {
+                // DSL class types should be treated as equivalent for propagation
+                type_util::equal_types(self.tcx(), src_type, dst_type)
+            } else if class_analysis::is_dsl_class_type(self.tcx(), src_type) {
+                // src is a DSL class type, check if dst contains the same DSL class type
+                // after unwrapping wrappers (ManuallyDrop, Rc, Dyn, etc.)
                 debug!(
-                    "Filtering propagating from {:?}({:?}) to {:?}({:?})",
+                    "propagate: checking if dst {:?} contains DSL class type {:?}",
+                    dst_type, src_type
+                );
+                if let Some(dst_inner_class) = class_analysis::extract_dsl_class_from_wrapper(self.tcx(), dst_type) {
+                    // Check if the extracted DSL class type matches src_type
+                    let matches = type_util::equal_types(self.tcx(), src_type, dst_inner_class);
+                    if matches {
+                        debug!(
+                            "propagate: DSL class type match after unwrapping - src={:?}, dst={:?}, unwrapped={:?}",
+                            src_type, dst_type, dst_inner_class
+                        );
+                    } else {
+                        debug!(
+                            "propagate: DSL class type mismatch - src={:?}, unwrapped={:?}",
+                            src_type, dst_inner_class
+                        );
+                    }
+                    matches
+                } else {
+                    debug!(
+                        "propagate: no DSL class type found in dst {:?}",
+                        dst_type
+                    );
+                    false
+                }
+            } else {
+                false
+            };
+
+            if !types_equivalent {
+                debug!(
+                    "propagate: TYPE FILTERED - from {:?}({:?}) to {:?}({:?})",
                     src_path, src_type, dst_path, dst_type
                 );
                 return;
@@ -741,6 +861,8 @@ where
 
             let src_deref_type = type_util::get_dereferenced_type(src_type);
             let dst_deref_type = type_util::get_dereferenced_type(dst_type);
+            let mut propagated_count = 0;
+            
             if let Some(diff) = self.pt_data.get_diff_pts(src) {
                 for pointee in &diff.clone() {
                     let (pointee_path, pointee_type) = self.node_path_and_ty(pointee);
@@ -752,7 +874,10 @@ where
                         continue;
                     }
 
-                    changed |= self.add_pts(dst, pointee);
+                    if self.add_pts(dst, pointee) {
+                        changed = true;
+                        propagated_count += 1;
+                    }
                 }
             }
 
@@ -768,9 +893,17 @@ where
                             continue;
                         }
 
-                        changed |= self.add_pts(dst, pointee);
+                        if self.add_pts(dst, pointee) {
+                            changed = true;
+                            propagated_count += 1;
+                        }
                     }
                 }
+            }
+            
+            if propagated_count > 0 {
+                debug!("propagate: propagated {} pointees from {:?} to {:?}", 
+                       propagated_count, src_path, dst_path);
             }
 
             if changed {
