@@ -7583,7 +7583,7 @@ fn std::alloc::alloc_zeroed(_1: std::alloc::Layout) -> *mut u8 {
     let mut _5: usize;
     let mut _6: &std::alloc::Layout;
     scope 1 (inlined std::ptr::read_volatile::<u8>) {
-        debug src => const {alloc8: *const u8};
+        debug src => const {alloc72: *const u8};
         let _7: ();
         let mut _8: *const ();
         scope 2 (inlined core::ub_checks::check_language_ub) {
@@ -7659,7 +7659,7 @@ fn std::alloc::alloc_zeroed(_1: std::alloc::Layout) -> *mut u8 {
 
     bb3: {
         StorageLive(_8);
-        _8 = const {alloc8: *const u8} as *const () (PtrToPtr);
+        _8 = const {alloc72: *const u8} as *const () (PtrToPtr);
         _7 = std::ptr::read_volatile::precondition_check(move _8, const 1_usize, const <u8 as std::mem::SizedTypeProperties>::IS_ZST) -> [return: bb4, unwind unreachable];
     }
 
@@ -7669,11 +7669,11 @@ fn std::alloc::alloc_zeroed(_1: std::alloc::Layout) -> *mut u8 {
     }
 
     bb5: {
-        _2 = std::intrinsics::volatile_load::<u8>(const {alloc8: *const u8}) -> [return: bb2, unwind unreachable];
+        _2 = std::intrinsics::volatile_load::<u8>(const {alloc72: *const u8}) -> [return: bb2, unwind unreachable];
     }
 }
 
-alloc8 (extern static: alloc::alloc::__rust_no_alloc_shim_is_unstable)
+alloc72 (extern static: alloc::alloc::__rust_no_alloc_shim_is_unstable)
 
 [FuncId(220) - "alloc::alloc::alloc"]
 // WARNING: This output format is intended for human consumers only
@@ -7688,7 +7688,7 @@ fn std::alloc::alloc(_1: std::alloc::Layout) -> *mut u8 {
     let mut _5: usize;
     let mut _6: &std::alloc::Layout;
     scope 1 (inlined std::ptr::read_volatile::<u8>) {
-        debug src => const {alloc8: *const u8};
+        debug src => const {alloc72: *const u8};
         let _7: ();
         let mut _8: *const ();
         scope 2 (inlined core::ub_checks::check_language_ub) {
@@ -7764,7 +7764,7 @@ fn std::alloc::alloc(_1: std::alloc::Layout) -> *mut u8 {
 
     bb3: {
         StorageLive(_8);
-        _8 = const {alloc8: *const u8} as *const () (PtrToPtr);
+        _8 = const {alloc72: *const u8} as *const () (PtrToPtr);
         _7 = std::ptr::read_volatile::precondition_check(move _8, const 1_usize, const <u8 as std::mem::SizedTypeProperties>::IS_ZST) -> [return: bb4, unwind unreachable];
     }
 
@@ -7774,11 +7774,11 @@ fn std::alloc::alloc(_1: std::alloc::Layout) -> *mut u8 {
     }
 
     bb5: {
-        _2 = std::intrinsics::volatile_load::<u8>(const {alloc8: *const u8}) -> [return: bb2, unwind unreachable];
+        _2 = std::intrinsics::volatile_load::<u8>(const {alloc72: *const u8}) -> [return: bb2, unwind unreachable];
     }
 }
 
-alloc8 (extern static: alloc::alloc::__rust_no_alloc_shim_is_unstable)
+alloc72 (extern static: alloc::alloc::__rust_no_alloc_shim_is_unstable)
 
 [FuncId(221) - "alloc::rc::data_offset<std::mem::MaybeUninit<classes::ptr::Dyn<classes::object::_Object::data::Object>>>"]
 // WARNING: This output format is intended for human consumers only
