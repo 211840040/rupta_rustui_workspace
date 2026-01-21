@@ -1,0 +1,33 @@
+digraph ClassCallGraph {
+  rankdir=LR;
+  node [shape=box];
+
+  "main::" [label="main\n"];
+  "Container::get_point_sum" [label="Container\nget_point_sum"];
+  "Container::distance_to" [label="Container\ndistance_to"];
+  "Container::get_internal_point" [label="Container\nget_internal_point"];
+  "Point::sum_coords" [label="Point\nsum_coords"];
+  "Point::distance_squared" [label="Point\ndistance_squared"];
+
+  "main::" -> "Point::sum_coords";
+  "main::" -> "Container::distance_to";
+  "main::" -> "Container::get_point_sum";
+  "main::" -> "Container::get_internal_point";
+  "main::" -> "Point::distance_squared";
+}
+
+
+Class Call Graph:
+================
+
+Class: main
+  main::
+    -> Container::distance_to
+    -> Container::get_internal_point
+    -> Container::get_point_sum
+    -> Point::distance_squared
+    -> Point::sum_coords
+
+
+
+ClassCallGraph Stats: 6 methods, 1 callers, 5 edges

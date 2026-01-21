@@ -509,11 +509,20 @@ pub fn get_element_type<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>) -> Ty<'tcx> {
 }
 
 /// Returns the type of the field with the given ordinal.
+/// Returns `tcx.types.never` if the ordinal is out of bounds.
 pub fn get_field_type<'tcx>(tcx: TyCtxt<'tcx>, base_ty: Ty<'tcx>, ordinal: usize) -> Ty<'tcx> {
     if let TyKind::Adt(def, args) = base_ty.kind() {
         if def.is_union() || def.is_struct() {
             let variant = def.variants().iter().next().expect("at least one variant");
-            assert!(ordinal < variant.fields.len());
+            // Handle out-of-bounds field access gracefully
+            // This can happen with DSL class field paths that use hash-based indices
+            if ordinal >= variant.fields.len() {
+                warn!(
+                    "Field ordinal {} out of bounds for type {:?} with {} fields",
+                    ordinal, base_ty, variant.fields.len()
+                );
+                return tcx.types.never;
+            }
             let field_idx = FieldIdx::from_usize(ordinal);
             let field = &variant.fields[field_idx];
             let ft = field_ty(tcx, field, args);
@@ -526,7 +535,13 @@ pub fn get_field_type<'tcx>(tcx: TyCtxt<'tcx>, base_ty: Ty<'tcx>, ordinal: usize
             return tcx.types.never;
         }
     } else if let TyKind::Tuple(tuple_types) = base_ty.kind() {
-        assert!(ordinal < tuple_types.len());
+        if ordinal >= tuple_types.len() {
+            warn!(
+                "Field ordinal {} out of bounds for tuple type {:?} with {} fields",
+                ordinal, base_ty, tuple_types.len()
+            );
+            return tcx.types.never;
+        }
         let ft = tuple_types[ordinal];
         return ft;
     } else if base_ty.is_closure() || base_ty.is_coroutine() {

@@ -16,12 +16,13 @@ use crate::mir::call_site::{BaseCallSite, CallType};
 use crate::mir::context::{Context, ContextId};
 use crate::mir::function::FuncId;
 use crate::mir::analysis_context::AnalysisContext;
-use crate::mir::path::PathEnum;
+use crate::mir::path::{Path, PathEnum};
 use crate::pta::DiffPTDataTy;
 use crate::pta::strategies::context_strategy::ContextStrategy;
 use crate::pts_set::points_to::PointsToSet;
 use crate::util;
-use crate::util::class_analysis;
+use crate::util::class;
+use crate::util::class::{ClassCallGraph, ClassTypeSystem, ClassPtrSystem};
 
 pub fn dump_results<P: PAGPath, F, S>(
     acx: &AnalysisContext, 
@@ -71,6 +72,24 @@ pub fn dump_results<P: PAGPath, F, S>(
     if let Some(class_info_output) = &acx.analysis_options.class_info_output {
         info!("Dumping class-level information...");
         dump_class_info(acx, call_graph, class_info_output);
+    }
+
+    // dump class call graph
+    if let Some(class_call_graph_output) = &acx.analysis_options.class_call_graph_output {
+        info!("Dumping class call graph...");
+        dump_class_call_graph(&acx.class_call_graph, class_call_graph_output);
+    }
+
+    // dump class type system
+    if let Some(class_type_system_output) = &acx.analysis_options.class_type_system_output {
+        info!("Dumping class type system...");
+        dump_class_type_system(acx, &acx.class_type_system, class_type_system_output);
+    }
+    
+    // dump class pointer system
+    if let Some(class_ptr_system_output) = &acx.analysis_options.class_ptr_system_output {
+        info!("Dumping class pointer system...");
+        dump_class_ptr_system(&acx.class_ptr_system, class_ptr_system_output);
     }
 }
 
@@ -164,7 +183,7 @@ fn pointees_contain_class_instance<P: PAGPath>(
     let path_enum = path.value();
     
     // First, check if the path itself is a class instance (direct check)
-    if class_analysis::is_class_instance_heap_obj(acx, path_enum) {
+    if class::analysis::is_class_instance_heap_obj(acx, path_enum) {
         return true;
     }
     
@@ -227,7 +246,7 @@ pub fn dump_ci_pts<P: PAGPath>(acx: &AnalysisContext, pt_data: &DiffPTDataTy, pa
                     pointees_contain_class_instance(acx, pt_data, pag, *pointee_node_id, &mut visited, 10)
                 } else {
                     // Fallback: check path structure if node_id not found
-                    class_analysis::is_class_instance_heap_obj(acx, pointee)
+                    class::analysis::is_class_instance_heap_obj(acx, pointee)
                 }
             });
             
@@ -246,7 +265,7 @@ pub fn dump_ci_pts<P: PAGPath>(acx: &AnalysisContext, pt_data: &DiffPTDataTy, pa
                     pointees_contain_class_instance(acx, pt_data, pag, *pointee_node_id, &mut visited, 10)
                 } else {
                     // Fallback: check path structure if node_id not found
-                    class_analysis::is_class_instance_heap_obj(acx, pointee)
+                    class::analysis::is_class_instance_heap_obj(acx, pointee)
                 };
                 let pointee_label = if is_class_instance {
                     format!("{:?} [CLASS_INSTANCE]", pointee)
@@ -532,7 +551,7 @@ pub fn dump_class_info<F: CGFunction + Into<FuncId>, S: CGCallSite>(
     });
 
     // Collect all class constructors
-    let mut class_constructors: Vec<(FuncId, class_analysis::ClassConstructor)> = Vec::new();
+    let mut class_constructors: Vec<(FuncId, class::analysis::ClassConstructor)> = Vec::new();
     let mut visited_funcs = std::collections::HashSet::new();
 
     for func in call_graph.reach_funcs_iter() {
@@ -543,7 +562,7 @@ pub fn dump_class_info<F: CGFunction + Into<FuncId>, S: CGCallSite>(
         visited_funcs.insert(func_id);
 
         let func_ref = acx.get_function_reference(func_id);
-        if let Some(constructor) = class_analysis::identify_class_constructor(&func_ref) {
+        if let Some(constructor) = class::analysis::identify_class_constructor(&func_ref) {
             class_constructors.push((func_id, constructor));
         }
     }
@@ -566,7 +585,7 @@ pub fn dump_class_info<F: CGFunction + Into<FuncId>, S: CGCallSite>(
     let total_constructors = class_constructors.len();
 
     // Group by class name
-    let mut by_class: std::collections::BTreeMap<String, Vec<(FuncId, class_analysis::ClassConstructor)>> = 
+    let mut by_class: std::collections::BTreeMap<String, Vec<(FuncId, class::analysis::ClassConstructor)>> = 
         std::collections::BTreeMap::new();
     for (func_id, constructor) in class_constructors {
         by_class.entry(constructor.class_name.clone())
@@ -603,4 +622,244 @@ pub fn dump_class_info<F: CGFunction + Into<FuncId>, S: CGCallSite>(
         .write_all(format!("\n# Total: {} class constructor(s) found\n", 
             total_constructors).as_bytes())
         .expect("Unable to write data");
+}
+
+/// Dumps class call graph (only class method calls, filters DSL internal details)
+pub fn dump_class_call_graph(
+    class_call_graph: &ClassCallGraph,
+    output_path: &String,
+) {
+    let mut writer = BufWriter::new(match &output_path[..] {
+        "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
+        _ => Box::new(File::create(output_path).expect("Unable to create file")) as Box<dyn Write>,
+    });
+
+    // Write DOT format
+    let dot_content = class_call_graph.to_dot();
+    writer.write_all(dot_content.as_bytes())
+        .expect("Unable to write class call graph");
+
+    // Also write text format for readability
+    let text_content = class_call_graph.to_text();
+    writer.write_all(b"\n\n")
+        .expect("Unable to write separator");
+    writer.write_all(text_content.as_bytes())
+        .expect("Unable to write class call graph text");
+
+    // Write statistics
+    let stats = class_call_graph.stats();
+    writer.write_all(format!("\n\n{}\n", stats).as_bytes())
+        .expect("Unable to write statistics");
+}
+
+/// Dumps class type system information
+pub fn dump_class_type_system(
+    _acx: &AnalysisContext,
+    class_type_system: &ClassTypeSystem,
+    output_path: &String,
+) {
+    use std::collections::HashMap;
+    
+    let mut writer = BufWriter::new(match &output_path[..] {
+        "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
+        _ => Box::new(File::create(output_path).expect("Unable to create file")) as Box<dyn Write>,
+    });
+
+    writer.write_all(b"Class Type System Report\n")
+        .expect("Unable to write header");
+    writer.write_all(b"=======================\n\n")
+        .expect("Unable to write separator");
+
+    // 1. Class Definitions
+    writer.write_all(b"## Class Definitions\n\n")
+        .expect("Unable to write section header");
+    
+    let mut class_names: Vec<_> = class_type_system.get_all_classes().keys().collect();
+    class_names.sort();
+    
+    for class_name in class_names {
+        let class_info = class_type_system.get_class(class_name).unwrap();
+        
+        writer.write_all(format!("### Class: {}\n", class_name).as_bytes())
+            .expect("Unable to write class name");
+        
+        // Inheritance
+        if let Some(parent) = &class_info.parent {
+            writer.write_all(format!("  Parent: {}\n", parent).as_bytes())
+                .expect("Unable to write parent");
+        }
+        if !class_info.subclasses.is_empty() {
+            let mut subclasses: Vec<_> = class_info.subclasses.iter().collect();
+            subclasses.sort();
+            writer.write_all(format!("  Subclasses: {}\n", subclasses.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(", ")).as_bytes())
+                .expect("Unable to write subclasses");
+        }
+        
+        // Fields
+        if !class_info.fields.is_empty() {
+            writer.write_all(b"  Fields:\n").expect("Unable to write fields header");
+            let mut fields: Vec<_> = class_info.fields.values().collect();
+            fields.sort_by_key(|f| f.index);
+            for field in fields {
+                let type_info = field.class_type.as_ref()
+                    .map(|t| format!(" -> {}", t))
+                    .unwrap_or_else(|| "".to_string());
+                writer.write_all(format!("    [{}] {}: index={}{}\n", 
+                    field.index, field.name, field.index, type_info).as_bytes())
+                    .expect("Unable to write field");
+            }
+        }
+        
+        // Methods
+        if !class_info.methods.is_empty() {
+            writer.write_all(b"  Methods:\n").expect("Unable to write methods header");
+            let mut methods: Vec<_> = class_info.methods.iter().collect();
+            methods.sort();
+            for method in methods {
+                writer.write_all(format!("    - {}\n", method).as_bytes())
+                    .expect("Unable to write method");
+            }
+        }
+        
+        writer.write_all(b"\n").expect("Unable to write newline");
+    }
+
+    // 2. Class Instances
+    writer.write_all(b"## Class Instances\n\n")
+        .expect("Unable to write section header");
+    
+    let instances = class_type_system.get_all_instances();
+    if instances.is_empty() {
+        writer.write_all(b"  (No class instances found)\n\n")
+            .expect("Unable to write empty message");
+    } else {
+        // Group by class name
+        let mut by_class: HashMap<String, Vec<&Rc<Path>>> = HashMap::new();
+        for (path, class_name) in instances {
+            by_class.entry(class_name.clone())
+                .or_insert_with(Vec::new)
+                .push(path);
+        }
+        
+        let mut class_names: Vec<_> = by_class.keys().collect();
+        class_names.sort();
+        
+        for class_name in class_names {
+            writer.write_all(format!("  {}:\n", class_name).as_bytes())
+                .expect("Unable to write class name");
+            let paths = &by_class[class_name];
+            for path in paths {
+                writer.write_all(format!("    - {:?}\n", path).as_bytes())
+                    .expect("Unable to write instance path");
+            }
+        }
+        writer.write_all(b"\n").expect("Unable to write newline");
+    }
+
+    // 3. Class References
+    writer.write_all(b"## Class References\n\n")
+        .expect("Unable to write section header");
+    
+    let references = class_type_system.get_all_references();
+    if references.is_empty() {
+        writer.write_all(b"  (No class references found)\n\n")
+            .expect("Unable to write empty message");
+    } else {
+        // Group by class name
+        let mut by_class: HashMap<String, Vec<(&Rc<Path>, bool)>> = HashMap::new();
+        for (path, (class_name, is_direct)) in references {
+            by_class.entry(class_name.clone())
+                .or_insert_with(Vec::new)
+                .push((path, *is_direct));
+        }
+        
+        let mut class_names: Vec<_> = by_class.keys().collect();
+        class_names.sort();
+        
+        for class_name in class_names {
+            writer.write_all(format!("  {}:\n", class_name).as_bytes())
+                .expect("Unable to write class name");
+            let refs = &by_class[class_name];
+            for (path, is_direct) in refs {
+                let ref_type = if *is_direct { "direct" } else { "indirect" };
+                writer.write_all(format!("    - {:?} ({})\n", path, ref_type).as_bytes())
+                    .expect("Unable to write reference path");
+            }
+        }
+        writer.write_all(b"\n").expect("Unable to write newline");
+    }
+
+    // 4. Statistics
+    writer.write_all(b"## Statistics\n\n")
+        .expect("Unable to write section header");
+    let stats = class_type_system.stats();
+    writer.write_all(format!("{}\n", stats).as_bytes())
+        .expect("Unable to write statistics");
+}
+
+pub fn dump_class_ptr_system(class_ptr_system: &ClassPtrSystem, output_path: &str) {
+    let mut writer = BufWriter::new(match output_path {
+        "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
+        _ => Box::new(File::create(output_path).expect("Unable to create file")) as Box<dyn Write>,
+    });
+    
+    writer.write_all(b"# Class Pointer System\n\n")
+        .expect("Unable to write header");
+    
+    // 1. All Pointers
+    writer.write_all(b"## All Pointers\n\n")
+        .expect("Unable to write section header");
+    let ptrs = class_ptr_system.get_all_ptrs();
+    if ptrs.is_empty() {
+        writer.write_all(b"  (No pointers found)\n\n")
+            .expect("Unable to write empty message");
+    } else {
+        for ptr in ptrs {
+            writer.write_all(format!("  - {}\n", ptr).as_bytes())
+                .expect("Unable to write pointer");
+        }
+        writer.write_all(b"\n").expect("Unable to write newline");
+    }
+    
+    // 2. All Objects
+    writer.write_all(b"## All Objects\n\n")
+        .expect("Unable to write section header");
+    let objs = class_ptr_system.get_all_objs();
+    if objs.is_empty() {
+        writer.write_all(b"  (No objects found)\n\n")
+            .expect("Unable to write empty message");
+    } else {
+        for obj in objs {
+            writer.write_all(format!("  - {}\n", obj).as_bytes())
+                .expect("Unable to write object");
+        }
+        writer.write_all(b"\n").expect("Unable to write newline");
+    }
+    
+    // 3. Points-to Relationships
+    writer.write_all(b"## Points-to Relationships\n\n")
+        .expect("Unable to write section header");
+    let pts = class_ptr_system.get_all_points_to();
+    if pts.is_empty() {
+        writer.write_all(b"  (No points-to relationships found)\n\n")
+            .expect("Unable to write empty message");
+    } else {
+        for (ptr, objs) in pts {
+            writer.write_all(format!("  {} -> {{\n", ptr).as_bytes())
+                .expect("Unable to write pointer");
+            for obj in objs {
+                writer.write_all(format!("    {}\n", obj).as_bytes())
+                    .expect("Unable to write object");
+            }
+            writer.write_all(b"  }\n").expect("Unable to write closing brace");
+        }
+        writer.write_all(b"\n").expect("Unable to write newline");
+    }
+    
+    // 4. Statistics
+    writer.write_all(b"## Statistics\n\n")
+        .expect("Unable to write section header");
+    let stats = class_ptr_system.stats();
+    writer.write_all(format!("{}\n", stats).as_bytes())
+        .expect("Unable to write statistics");
 }

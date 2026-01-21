@@ -102,6 +102,18 @@ fn make_options_parser() -> Command<'static> {
             .long("dump-class-info")
             .takes_value(true)
             .help("Dump class-level information (constructors, instances, etc.) to the output file."))
+        .arg(Arg::new("class-call-graph-output")
+            .long("dump-class-call-graph")
+            .takes_value(true)
+            .help("Dump class call graph (only class method calls, filters DSL internal details) to the output file."))
+        .arg(Arg::new("class-type-system-output")
+            .long("dump-class-type-system")
+            .takes_value(true)
+            .help("Dump class type system information (classes, fields, methods, instances, references) to the output file."))
+        .arg(Arg::new("class-ptr-system-output")
+            .long("dump-class-ptr-system")
+            .takes_value(true)
+            .help("Dump class pointer system (independent pointer/object abstraction) to the output file."))
         .arg(Arg::new("INPUT")
             .multiple(true)
             .help("The input file to be analyzed.")
@@ -131,7 +143,10 @@ pub struct AnalysisOptions {
     
     // Class-level analysis options
     pub class_level_mode: bool,
-    pub class_info_output: Option<String>, 
+    pub class_info_output: Option<String>,
+    pub class_type_system_output: Option<String>,
+    pub class_call_graph_output: Option<String>,
+    pub class_ptr_system_output: Option<String>, 
 }
 
 impl Default for AnalysisOptions {
@@ -153,6 +168,9 @@ impl Default for AnalysisOptions {
             func_ctxts_output: None,
             class_level_mode: false,
             class_info_output: None,
+            class_call_graph_output: None,
+            class_type_system_output: None,
+            class_ptr_system_output: None,
         }
     }
 }
@@ -241,6 +259,9 @@ impl AnalysisOptions {
         // Class-level analysis options
         self.class_level_mode = matches.contains_id("class-level-mode");
         self.class_info_output = matches.get_one::<String>("class-info-output").cloned();
+        self.class_call_graph_output = matches.get_one::<String>("class-call-graph-output").cloned();
+        self.class_type_system_output = matches.get_one::<String>("class-type-system-output").cloned();
+        self.class_ptr_system_output = matches.get_one::<String>("class-ptr-system-output").cloned();
 
         // If the user provide the input source code file path before the `--` token, 
         // add it to the rustc arguments.

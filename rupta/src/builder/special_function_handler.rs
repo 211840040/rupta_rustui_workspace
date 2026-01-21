@@ -20,7 +20,7 @@ use crate::mir::analysis_context::AnalysisContext;
 use crate::mir::known_names::KnownNames;
 use crate::mir::path::{Path, PathEnum, PathSelector};
 use crate::util::type_util;
-use crate::util::class_analysis;
+use crate::util::class::analysis as class_analysis;
 
 lazy_static! {
     static ref SPECIALLY_HANDLED_FUNCTIONS: HashSet<KnownNames> = {
@@ -537,13 +537,20 @@ fn is_class_constructor<'tcx>(
 /// For `let p = Point::new(10, 20);`:
 /// - Creates a HeapObj node representing the Point instance
 /// - Establishes that `p` (or the pointer inside `p`) points to this HeapObj
+/// - Registers the class type and marks instance/reference in the type system
 fn handle_class_constructor<'tcx>(
     fpb: &mut FuncPAGBuilder<'_, 'tcx, '_>,
-    _callee_def_id: &DefId,
-    _gen_args: &GenericArgsRef<'tcx>,
+    callee_def_id: &DefId,
+    gen_args: &GenericArgsRef<'tcx>,
     destination: &Rc<Path>,
     location: mir::Location,
 ) {
+    // Get class name from the constructor
+    let func_id = fpb.acx.get_func_id(*callee_def_id, *gen_args);
+    let func_ref = fpb.acx.get_function_reference(func_id);
+    let class_name = class_analysis::identify_class_constructor(&func_ref)
+        .map(|c| c.class_name)
+        .unwrap_or_else(|| "Unknown".to_string());
     
     // Get the return type of the constructor (e.g., Point<RcDyn<Point>>)
     let return_ty = fpb.acx.get_path_rustc_type(destination)
@@ -564,18 +571,48 @@ fn handle_class_constructor<'tcx>(
         .concretized_heap_objs
         .insert(heap_object_path.clone(), return_ty);
     
-    // Mark this HeapObj as a class instance
+    // Mark this HeapObj as a class instance (legacy)
     fpb.acx
         .class_instance_heap_objs
         .insert(heap_object_path.clone());
     
+    // ===== Class Type System Integration =====
+    // Register the class type in our simplified type system
+    fpb.acx.class_type_system.register_class(&class_name);
+    
+    // Mark the heap object as an instance of this class
+    fpb.acx.class_type_system.mark_class_instance(heap_object_path.clone(), &class_name);
+    
+    // Mark the destination as a reference to this class
+    fpb.acx.class_type_system.mark_class_reference(destination.clone(), &class_name, true);
+    // ==========================================
+    
+    // ===== Class Pointer System Integration =====
+    // Get function name for ClassPtr ID generation
+    let func_ref = fpb.acx.get_function_reference(fpb.fpag.func_id);
+    let func_name = func_ref.to_string();
+    let alloc_location = format!("{}:{:?}", func_name, location);
+    
+    // Create ClassObj for the heap allocation
+    let obj_id = fpb.acx.class_ptr_system.create_obj(class_name.clone(), alloc_location);
+    
+    // Create ClassPtr for the destination
+            use crate::util::class::ptr_system::{ClassPtr, path_to_class_ptr_id};
+    let ptr_id = path_to_class_ptr_id(&destination, Some(&func_name));
+    let class_ptr = ClassPtr::new_local(ptr_id.clone(), class_name.clone());
+    fpb.acx.class_ptr_system.get_or_create_ptr(class_ptr);
+    
+    // Establish points-to: ptr -> obj
+    fpb.acx.class_ptr_system.add_points_to(&ptr_id, &obj_id);
+    // ============================================
+    
     // Establish that the destination points to the heap object
     // Use add_addr_edge because the constructor returns a pointer/reference to the heap object
     // This creates: destination -> (address of) -> HeapObj
-    fpb.add_addr_edge(heap_object_path, destination.clone());
+    fpb.add_addr_edge(heap_object_path.clone(), destination.clone());
     
     debug!(
-        "Class constructor: created HeapObj at {:?} for type {:?}, destination: {:?}",
-        location, return_ty, destination
+        "Class constructor [{}]: created HeapObj {:?} for type {:?}, destination: {:?}",
+        class_name, heap_object_path, return_ty, destination
     );
 }

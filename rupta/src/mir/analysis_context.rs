@@ -46,6 +46,9 @@ use crate::mir::path::{PathEnum, ProjectionElems};
 use crate::util;
 use crate::util::options::AnalysisOptions;
 use crate::util::type_util::{self, FieldByteOffsetCache, PathCastCache, PointerProjectionsCache, TypeCache};
+use crate::util::class::ClassTypeSystem;
+use crate::util::class::ClassCallGraph;
+use crate::util::class::ClassPtrSystem;
 
 /// Global information of the analysis
 pub struct AnalysisContext<'tcx, 'compilation> {
@@ -99,6 +102,22 @@ pub struct AnalysisContext<'tcx, 'compilation> {
 
     /// Paths that represent class fields (accessed via getter/setter methods).
     pub class_field_paths: HashSet<Rc<Path>>,
+
+    /// Maps class field names to sequential indices for getter/setter handling.
+    /// This ensures consistent field indices across all functions.
+    pub class_field_name_to_index: HashMap<String, usize>,
+    /// Counter for assigning sequential indices to class fields.
+    pub class_field_index_counter: usize,
+
+    /// Class Type System for tracking DSL class types independently of rustc's type system.
+    /// This provides a simplified view of class types, instances, references, and field types.
+    pub class_type_system: ClassTypeSystem,
+    
+    /// Class call graph that only tracks class method calls (filters out DSL internal details)
+    pub class_call_graph: ClassCallGraph,
+    
+    /// Class-level pointer and object abstraction system (independent of Path abstraction)
+    pub class_ptr_system: ClassPtrSystem,
 
     /// Record the max index of the auxiliary local variable for each function instance.
     pub(crate) aux_local_indexer: HashMap<FuncId, usize>,
@@ -173,6 +192,11 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
                 concretized_heap_objs: HashMap::new(),
                 class_instance_heap_objs: HashSet::new(),
                 class_field_paths: HashSet::new(),
+                class_field_name_to_index: HashMap::new(),
+                class_field_index_counter: 0,
+                class_type_system: ClassTypeSystem::new(),
+                class_call_graph: ClassCallGraph::new(),
+                class_ptr_system: ClassPtrSystem::new(),
                 known_names_cache: KnownNamesCache::create_cache_from_language_items(),
             })
         } else {
@@ -205,6 +229,19 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
             return Some(*ty);
         }
         None
+    }
+
+    /// Gets or assigns a sequential index for a class field name.
+    /// Returns the same index for the same field name (ensures setter/getter consistency).
+    /// Indices start from 0 and increment for each new field name encountered.
+    pub fn get_or_assign_class_field_index(&mut self, field_name: &str) -> usize {
+        if let Some(&index) = self.class_field_name_to_index.get(field_name) {
+            return index;
+        }
+        let index = self.class_field_index_counter;
+        self.class_field_name_to_index.insert(field_name.to_string(), index);
+        self.class_field_index_counter += 1;
+        index
     }
 
     /// Records the size of `path``.

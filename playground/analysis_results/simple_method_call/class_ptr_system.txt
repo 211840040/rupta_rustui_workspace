@@ -1,0 +1,79 @@
+# Class Pointer System
+
+## All Pointers
+
+  - classes::ptr::{impl#25}::into_raw<_classes::_Container::Container<classes::class::ClassMarker, classes::class::Virtual>>::local_30:Container
+  - classes::ptr::{impl#25}::into_raw<_classes::_Point::Point<classes::class::ClassMarker, classes::class::Virtual>>::local_30:Point
+  - simple_method_call::_classes::_Container::data::{impl#0}::new::local_6:Point
+  - simple_method_call::_classes::_Container::{impl#0}::new::local_1:Container
+  - simple_method_call::_classes::_Point::{impl#0}::new::local_3:Point
+  - simple_method_call::main::local_1:Point
+  - simple_method_call::main::local_11.point:Point
+  - simple_method_call::main::local_12:Point
+  - simple_method_call::main::local_13:Container
+  - simple_method_call::main::local_2:Point
+  - simple_method_call::main::local_21.point:Point
+  - simple_method_call::main::local_22:Point
+  - simple_method_call::main::local_24:Container
+  - simple_method_call::main::local_26:Container
+  - simple_method_call::main::local_28:Container
+  - simple_method_call::main::local_8:Container
+  - simple_method_call::main::local_9:Container
+
+## All Objects
+
+  - obj_0:Point@simple_method_call::main:bb0[6]
+  - obj_1:Point@simple_method_call::main:bb1[0]
+  - obj_2:Container@simple_method_call::main:bb4[0]
+  - obj_3:Container@simple_method_call::main:bb5[1]
+  - obj_4:Point@simple_method_call::_classes::_Point::{impl#0}::new:bb0[0]
+  - obj_5:Container@simple_method_call::_classes::_Container::{impl#0}::new:bb0[0]
+  - obj_6:Point@simple_method_call::_classes::_Container::data::{impl#0}::new:bb1[2]
+  - obj_7:Point@classes::ptr::{impl#25}::into_raw<_classes::_Point::Point<classes::class::ClassMarker, classes::class::Virtual>>:bb8[2]
+  - obj_8:Container@classes::ptr::{impl#25}::into_raw<_classes::_Container::Container<classes::class::ClassMarker, classes::class::Virtual>>:bb8[2]
+
+## Points-to Relationships
+
+  classes::ptr::{impl#25}::into_raw<_classes::_Container::Container<classes::class::ClassMarker, classes::class::Virtual>>::local_30:Container -> {
+    obj_8:Container@classes::ptr::{impl#25}::into_raw<_classes::_Container::Container<classes::class::ClassMarker, classes::class::Virtual>>:bb8[2]
+  }
+  classes::ptr::{impl#25}::into_raw<_classes::_Point::Point<classes::class::ClassMarker, classes::class::Virtual>>::local_30:Point -> {
+    obj_7:Point@classes::ptr::{impl#25}::into_raw<_classes::_Point::Point<classes::class::ClassMarker, classes::class::Virtual>>:bb8[2]
+  }
+  simple_method_call::_classes::_Container::data::{impl#0}::new::local_6:Point -> {
+    obj_6:Point@simple_method_call::_classes::_Container::data::{impl#0}::new:bb1[2]
+  }
+  simple_method_call::_classes::_Container::{impl#0}::new::local_1:Container -> {
+    obj_5:Container@simple_method_call::_classes::_Container::{impl#0}::new:bb0[0]
+  }
+  simple_method_call::_classes::_Point::{impl#0}::new::local_3:Point -> {
+    obj_4:Point@simple_method_call::_classes::_Point::{impl#0}::new:bb0[0]
+  }
+  simple_method_call::main::local_1:Point -> {
+    obj_0:Point@simple_method_call::main:bb0[6]
+  }
+  simple_method_call::main::local_12:Point -> {
+    obj_0:Point@simple_method_call::main:bb0[6]
+  }
+  simple_method_call::main::local_2:Point -> {
+    obj_1:Point@simple_method_call::main:bb1[0]
+  }
+  simple_method_call::main::local_22:Point -> {
+    obj_1:Point@simple_method_call::main:bb1[0]
+  }
+  simple_method_call::main::local_26:Container -> {
+    obj_2:Container@simple_method_call::main:bb4[0]
+  }
+  simple_method_call::main::local_28:Container -> {
+    obj_3:Container@simple_method_call::main:bb5[1]
+  }
+  simple_method_call::main::local_8:Container -> {
+    obj_2:Container@simple_method_call::main:bb4[0]
+  }
+  simple_method_call::main::local_9:Container -> {
+    obj_3:Container@simple_method_call::main:bb5[1]
+  }
+
+## Statistics
+
+ClassPtrSystem Stats: 17 pointers, 9 objects, 15 points-to relationships (15 pointers have targets)

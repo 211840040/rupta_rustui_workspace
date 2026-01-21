@@ -28,9 +28,17 @@ name = "simple_load_store"
 path = "src/bin/simple_load_store.rs"
 
 [[bin]]
+name = "simple_method_call"
+path = "src/bin/simple_method_call.rs"
+
+[[bin]]
 name = "example1"
 path = "src/bin/example1.rs"
 
 [[bin]]
 name = "simple_load_store_expanded"
 path = "expanded/simple_load_store_expanded.rs"
+
+[[bin]]
+name = "simple_method_call_expanded"
+path = "expanded/simple_method_call_expanded.rs"
