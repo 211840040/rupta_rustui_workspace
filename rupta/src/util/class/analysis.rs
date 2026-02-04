@@ -66,6 +66,70 @@ pub fn is_class_related(func_ref: &Rc<FunctionReference>) -> bool {
     func_name.contains("_classes::_")
 }
 
+/// Whether the **caller** is a "source-level allocation context" for rcpta.
+/// Only when this is true should we create a ClassObj in ClassPAG for a class constructor Call.
+/// Author: Yan Wang, Date: 2026-02-02
+///
+/// Returns false (do not create rcpta ClassObj) when the call is from:
+/// - A class constructor body (caller name contains `_classes::_` and `::new`) — internal Call
+/// - DSL internal helpers (e.g. `classes::ptr::` / `into_raw`) — not user-visible allocation
+pub fn is_source_level_allocation_caller(caller_func_name: &str) -> bool {
+    if caller_func_name.contains("_classes::_") && caller_func_name.contains("::new") {
+        return false; // inside a class constructor
+    }
+    if caller_func_name.contains("classes::ptr::") || caller_func_name.contains("::into_raw") {
+        return false; // DSL internal (into_raw etc.)
+    }
+    true
+}
+
+/// Whether the **caller** is a "source-level cast context" for rcpta.
+/// Only when this is true should we add Cast edge and ClassPtr in ClassPAG for a class cast Call.
+/// Author: Yan Wang, Date: 2026-02-02
+///
+/// Returns false (do not add rcpta Cast/ClassPtr) when the call is from:
+/// - A cast method implementation (caller name contains into_superclass, try_into_subtype, cast_mixin)
+/// - DSL internal (e.g. classes::ptr::, _delegate_ctor) — not user-visible cast
+pub fn is_source_level_cast_caller(caller_func_name: &str) -> bool {
+    if caller_func_name.contains("into_superclass")
+        || caller_func_name.contains("try_into_subtype")
+        || caller_func_name.contains("cast_mixin")
+    {
+        return false; // inside a cast method implementation
+    }
+    if caller_func_name.contains("classes::ptr::") || caller_func_name.contains("_delegate_ctor") {
+        return false; // DSL internal
+    }
+    true
+}
+
+/// Whether the callee is a source-level class cast method (same object, different type view).
+/// rcpta: add Assign edge receiver → destination. Author: Yan Wang, Date: 2026-02-02
+///
+/// Recognized: into_superclass, try_into_subtype, cast_mixin (classes crate / _classes).
+pub fn identify_class_cast_method(func_ref: &Rc<FunctionReference>) -> bool {
+    let name = func_ref.to_string();
+    let is_cast_name = name.contains("into_superclass")
+        || name.contains("try_into_subtype")
+        || name.contains("cast_mixin");
+    let is_classes = name.contains("classes::ptr") || name.contains("_classes::_");
+    is_cast_name && is_classes
+}
+
+/// Class name string for a DSL class type (e.g. "Dog", "Animal").
+/// Returns None if `ty` is not a DSL class type (path contains `_classes::_`).
+pub fn class_name_of_dsl_type<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>) -> Option<String> {
+    if let TyKind::Adt(adt_def, _) = ty.kind() {
+        let path = tcx.def_path_str(adt_def.did());
+        if let Some(start) = path.find("_classes::_") {
+            let after = &path[start + 11..];
+            let end = after.find("::").unwrap_or(after.len());
+            return Some(after[..end].to_string());
+        }
+    }
+    None
+}
+
 /// Information about a getter or setter method
 #[derive(Debug, Clone)]
 pub struct GetterSetter {

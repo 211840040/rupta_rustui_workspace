@@ -1,0 +1,3 @@
+[submodule "taie"]
+	path = taie
+	url = https://github.com/pascal-lab/Tai-e.git

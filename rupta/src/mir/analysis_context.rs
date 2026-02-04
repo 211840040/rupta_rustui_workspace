@@ -46,9 +46,10 @@ use crate::mir::path::{PathEnum, ProjectionElems};
 use crate::util;
 use crate::util::options::AnalysisOptions;
 use crate::util::type_util::{self, FieldByteOffsetCache, PathCastCache, PointerProjectionsCache, TypeCache};
-use crate::util::class::ClassTypeSystem;
+use crate::rcpta::ClassPAG;
 use crate::util::class::ClassCallGraph;
 use crate::util::class::ClassPtrSystem;
+use crate::util::class::ClassTypeSystem;
 
 /// Global information of the analysis
 pub struct AnalysisContext<'tcx, 'compilation> {
@@ -118,6 +119,9 @@ pub struct AnalysisContext<'tcx, 'compilation> {
     
     /// Class-level pointer and object abstraction system (independent of Path abstraction)
     pub class_ptr_system: ClassPtrSystem,
+
+    /// rcpta: class-level pointer flow graph (Assign / Alloc / Load / Store / Call edges). Author: Yan Wang, Date: 2026-02-02
+    pub class_pag: ClassPAG,
 
     /// Record the max index of the auxiliary local variable for each function instance.
     pub(crate) aux_local_indexer: HashMap<FuncId, usize>,
@@ -197,6 +201,7 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
                 class_type_system: ClassTypeSystem::new(),
                 class_call_graph: ClassCallGraph::new(),
                 class_ptr_system: ClassPtrSystem::new(),
+                class_pag: ClassPAG::new(),
                 known_names_cache: KnownNamesCache::create_cache_from_language_items(),
             })
         } else {

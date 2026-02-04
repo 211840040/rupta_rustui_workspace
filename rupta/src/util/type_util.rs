@@ -769,6 +769,20 @@ pub fn function_return_type<'tcx>(
     substs_specializer.specialize_generic_argument_type(ret_type)
 }
 
+/// First parameter type of a function (substituted with gen_args). For use in class cast receiver type.
+pub fn function_first_arg_type<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    def_id: DefId,
+    gen_args: GenericArgsRef<'tcx>,
+) -> Option<Ty<'tcx>> {
+    let fn_sig = tcx.fn_sig(def_id);
+    let i_o = fn_sig.skip_binder().inputs_and_output().skip_binder();
+    let first_ty = *i_o.first()?;
+    let generic_args = gen_args.iter().map(|t| GenericArgE::from(&t)).collect();
+    let substs_specializer = SubstsSpecializer::new(tcx, generic_args);
+    Some(substs_specializer.specialize_generic_argument_type(first_ty))
+}
+
 pub fn closure_return_type<'tcx>(
     tcx: TyCtxt<'tcx>,
     _def_id: DefId,

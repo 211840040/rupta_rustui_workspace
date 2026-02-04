@@ -114,6 +114,10 @@ fn make_options_parser() -> Command<'static> {
             .long("dump-class-ptr-system")
             .takes_value(true)
             .help("Dump class pointer system (independent pointer/object abstraction) to the output file."))
+        .arg(Arg::new("class-pag-output")
+            .long("dump-class-pag")
+            .takes_value(true)
+            .help("Dump rcpta class-level PAG (ClassPAG: ptrs, objs, assign/alloc/load/store/call edges) to the output file."))
         .arg(Arg::new("INPUT")
             .multiple(true)
             .help("The input file to be analyzed.")
@@ -146,7 +150,9 @@ pub struct AnalysisOptions {
     pub class_info_output: Option<String>,
     pub class_type_system_output: Option<String>,
     pub class_call_graph_output: Option<String>,
-    pub class_ptr_system_output: Option<String>, 
+    pub class_ptr_system_output: Option<String>,
+    /// rcpta: dump ClassPAG (class-level pointer flow graph). Author: Yan Wang, Date: 2026-02-02
+    pub class_pag_output: Option<String>,
 }
 
 impl Default for AnalysisOptions {
@@ -171,6 +177,7 @@ impl Default for AnalysisOptions {
             class_call_graph_output: None,
             class_type_system_output: None,
             class_ptr_system_output: None,
+            class_pag_output: None,
         }
     }
 }
@@ -262,6 +269,7 @@ impl AnalysisOptions {
         self.class_call_graph_output = matches.get_one::<String>("class-call-graph-output").cloned();
         self.class_type_system_output = matches.get_one::<String>("class-type-system-output").cloned();
         self.class_ptr_system_output = matches.get_one::<String>("class-ptr-system-output").cloned();
+        self.class_pag_output = matches.get_one::<String>("class-pag-output").cloned();
 
         // If the user provide the input source code file path before the `--` token, 
         // add it to the rustc arguments.

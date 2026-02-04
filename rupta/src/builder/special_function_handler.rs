@@ -592,18 +592,31 @@ fn handle_class_constructor<'tcx>(
     let func_ref = fpb.acx.get_function_reference(fpb.fpag.func_id);
     let func_name = func_ref.to_string();
     let alloc_location = format!("{}:{:?}", func_name, location);
-    
+
     // Create ClassObj for the heap allocation
     let obj_id = fpb.acx.class_ptr_system.create_obj(class_name.clone(), alloc_location);
-    
+
     // Create ClassPtr for the destination
-            use crate::util::class::ptr_system::{ClassPtr, path_to_class_ptr_id};
+    use crate::util::class::ptr_system::{path_to_class_ptr_id, ClassPtr as UtilClassPtr};
     let ptr_id = path_to_class_ptr_id(&destination, Some(&func_name));
-    let class_ptr = ClassPtr::new_local(ptr_id.clone(), class_name.clone());
+    let class_ptr = UtilClassPtr::new_local(ptr_id.clone(), class_name.clone());
     fpb.acx.class_ptr_system.get_or_create_ptr(class_ptr);
-    
+
     // Establish points-to: ptr -> obj
     fpb.acx.class_ptr_system.add_points_to(&ptr_id, &obj_id);
+    // ============================================
+
+    // ===== rcpta ClassPAG Alloc (source-level only). Author: Yan Wang, Date: 2026-02-02 =====
+    // Only create ClassObj when the *caller* is source-level (user code), not inside a class
+    // constructor or DSL internal (e.g. into_raw). So "3 new() in source" -> 3 objs.
+    if class_analysis::is_source_level_allocation_caller(&func_name) {
+        use crate::rcpta::{AllocSite, ClassPtr};
+        let alloc_site = AllocSite::new(&func_name, format!("{:?}", location));
+        let obj_id_rcpta = fpb.acx.class_pag.create_obj(class_name.clone(), alloc_site);
+        let cptr = ClassPtr::new_local(ptr_id.clone(), class_name.clone());
+        fpb.acx.class_pag.get_or_create_ptr(cptr);
+        fpb.acx.class_pag.add_alloc(&ptr_id, &obj_id_rcpta);
+    }
     // ============================================
     
     // Establish that the destination points to the heap object
@@ -614,5 +627,78 @@ fn handle_class_constructor<'tcx>(
     debug!(
         "Class constructor [{}]: created HeapObj {:?} for type {:?}, destination: {:?}",
         class_name, heap_object_path, return_ty, destination
+    );
+}
+
+/// Handles class cast calls (into_superclass, try_into_subtype, cast_mixin): same object, different type view.
+/// rcpta: create ClassPtr for receiver and destination, add Assign edge receiver → destination. Author: Yan Wang, Date: 2026-02-02
+pub fn handle_class_cast_call<'tcx>(
+    fpb: &mut FuncPAGBuilder<'_, 'tcx, '_>,
+    callee_def_id: &DefId,
+    gen_args: &GenericArgsRef<'tcx>,
+    args: &[Rc<Path>],
+    destination: &Rc<Path>,
+    _location: mir::Location,
+) {
+    if args.is_empty() {
+        return;
+    }
+    let tcx = fpb.acx.tcx;
+    let receiver_path = &args[0];
+
+    // Types from callee signature (substituted)
+    let return_ty = match type_util::function_return_type(tcx, *callee_def_id, *gen_args) {
+        ty if !ty.is_unit() => ty,
+        _ => return,
+    };
+    let receiver_ty = match type_util::function_first_arg_type(tcx, *callee_def_id, *gen_args) {
+        Some(ty) => ty,
+        None => return,
+    };
+
+    let receiver_class_ty = match class_analysis::extract_dsl_class_from_wrapper(tcx, receiver_ty, None) {
+        Some(ty) => ty,
+        None => return,
+    };
+    let dest_class_ty = match class_analysis::extract_dsl_class_from_wrapper(tcx, return_ty, None) {
+        Some(ty) => ty,
+        None => return,
+    };
+    let receiver_class = match class_analysis::class_name_of_dsl_type(tcx, receiver_class_ty) {
+        Some(s) => s,
+        None => return,
+    };
+    let dest_class = match class_analysis::class_name_of_dsl_type(tcx, dest_class_ty) {
+        Some(s) => s,
+        None => return,
+    };
+
+    let func_ref = fpb.acx.get_function_reference(fpb.fpag.func_id);
+    let func_name = func_ref.to_string();
+    use crate::util::class::ptr_system::{path_to_class_ptr_id, ClassPtr as UtilClassPtr};
+
+    let receiver_ptr_id = path_to_class_ptr_id(receiver_path, Some(&func_name));
+    let dest_ptr_id = path_to_class_ptr_id(destination, Some(&func_name));
+
+    // Legacy: class_ptr_system
+    let receiver_ptr = UtilClassPtr::new_local(receiver_ptr_id.clone(), receiver_class.clone());
+    let dest_ptr = UtilClassPtr::new_local(dest_ptr_id.clone(), dest_class.clone());
+    fpb.acx.class_ptr_system.get_or_create_ptr(receiver_ptr);
+    fpb.acx.class_ptr_system.get_or_create_ptr(dest_ptr);
+    fpb.acx.class_ptr_system.propagate_points_to(&receiver_ptr_id, &dest_ptr_id);
+
+    // rcpta: ClassPAG Cast edge only when caller is source-level (user code), not inside cast impl or DSL internal
+    if class_analysis::is_source_level_cast_caller(&func_name) {
+        use crate::rcpta::ClassPtr;
+        let receiver_cptr = ClassPtr::new_local(receiver_ptr_id.clone(), receiver_class);
+        let dest_cptr = ClassPtr::new_local(dest_ptr_id.clone(), dest_class);
+        fpb.acx.class_pag.get_or_create_ptr(receiver_cptr);
+        fpb.acx.class_pag.get_or_create_ptr(dest_cptr);
+        fpb.acx.class_pag.add_cast(&receiver_ptr_id, &dest_ptr_id);
+    }
+
+    debug!(
+        "Class cast: {} -> {} (receiver: {:?}, dest: {:?})",
+        receiver_ptr_id, dest_ptr_id, receiver_path, destination
     );
 }

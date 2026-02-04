@@ -23,6 +23,7 @@ use crate::pts_set::points_to::PointsToSet;
 use crate::util;
 use crate::util::class;
 use crate::util::class::{ClassCallGraph, ClassTypeSystem, ClassPtrSystem};
+use crate::rcpta::ClassPAG;
 
 pub fn dump_results<P: PAGPath, F, S>(
     acx: &AnalysisContext, 
@@ -90,6 +91,12 @@ pub fn dump_results<P: PAGPath, F, S>(
     if let Some(class_ptr_system_output) = &acx.analysis_options.class_ptr_system_output {
         info!("Dumping class pointer system...");
         dump_class_ptr_system(&acx.class_ptr_system, class_ptr_system_output);
+    }
+
+    // dump rcpta ClassPAG (class-level pointer flow graph). Author: Yan Wang, Date: 2026-02-02
+    if let Some(class_pag_output) = &acx.analysis_options.class_pag_output {
+        info!("Dumping rcpta ClassPAG...");
+        dump_class_pag(&acx.class_pag, class_pag_output);
     }
 }
 
@@ -861,5 +868,183 @@ pub fn dump_class_ptr_system(class_ptr_system: &ClassPtrSystem, output_path: &st
         .expect("Unable to write section header");
     let stats = class_ptr_system.stats();
     writer.write_all(format!("{}\n", stats).as_bytes())
+        .expect("Unable to write statistics");
+}
+
+/// Dumps rcpta ClassPAG (class-level pointer flow graph): ptrs, objs, assign/alloc/load/store/call edges.
+/// Author: Yan Wang, Date: 2026-02-02
+pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str) {
+    let mut writer = BufWriter::new(match output_path {
+        "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
+        _ => Box::new(File::create(output_path).expect("Unable to create file")) as Box<dyn Write>,
+    });
+
+    writer.write_all(b"# rcpta ClassPAG (Class-level Pointer Assignment Graph)\n\n")
+        .expect("Unable to write header");
+
+    // 1. Pointers
+    writer.write_all(b"## Pointers\n\n").expect("Unable to write section header");
+    let mut ptr_ids: Vec<_> = class_pag.ptr_ids().cloned().collect();
+    ptr_ids.sort();
+    if ptr_ids.is_empty() {
+        writer.write_all(b"  (none)\n\n").expect("Unable to write");
+    } else {
+        for id in &ptr_ids {
+            if let Some(ptr) = class_pag.get_ptr(id) {
+                writer.write_all(format!("  {}  [{}]\n", ptr.id, ptr.class_type).as_bytes())
+                    .expect("Unable to write pointer");
+            }
+        }
+        writer.write_all(b"\n").expect("Unable to write newline");
+    }
+
+    // 2. Objects
+    writer.write_all(b"## Objects\n\n").expect("Unable to write section header");
+    let mut obj_ids: Vec<_> = class_pag.obj_ids().cloned().collect();
+    obj_ids.sort();
+    if obj_ids.is_empty() {
+        writer.write_all(b"  (none)\n\n").expect("Unable to write");
+    } else {
+        for id in &obj_ids {
+            if let Some(obj) = class_pag.get_obj(id) {
+                writer
+                    .write_all(format!("  {}  {}  @{}\n", obj.id, obj.class_type, obj.alloc_site).as_bytes())
+                    .expect("Unable to write object");
+            }
+        }
+        writer.write_all(b"\n").expect("Unable to write newline");
+    }
+
+    // 3. Assign edges (src -> dst) — copy/move
+    writer.write_all(b"## Assign edges (src -> dst)\n\n").expect("Unable to write section header");
+    let mut assign_edges: Vec<_> = class_pag.iter_assign_edges().collect();
+    assign_edges.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
+    if assign_edges.is_empty() {
+        writer.write_all(b"  (none)\n\n").expect("Unable to write");
+    } else {
+        for (src, dst) in &assign_edges {
+            writer.write_all(format!("  {} -> {}\n", src, dst).as_bytes())
+                .expect("Unable to write assign edge");
+        }
+        writer.write_all(b"\n").expect("Unable to write newline");
+    }
+
+    // 4. Cast edges (src -> dst) — same obj, different type view
+    writer.write_all(b"## Cast edges (src -> dst)\n\n").expect("Unable to write section header");
+    let mut cast_edges: Vec<_> = class_pag.iter_cast_edges().collect();
+    cast_edges.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
+    if cast_edges.is_empty() {
+        writer.write_all(b"  (none)\n\n").expect("Unable to write");
+    } else {
+        for (src, dst) in &cast_edges {
+            writer.write_all(format!("  {} -> {}  [cast]\n", src, dst).as_bytes())
+                .expect("Unable to write cast edge");
+        }
+        writer.write_all(b"\n").expect("Unable to write newline");
+    }
+
+    // 5. Alloc edges (ptr -> obj)
+    writer.write_all(b"## Alloc edges (ptr -> obj)\n\n").expect("Unable to write section header");
+    let mut alloc_edges: Vec<_> = class_pag.iter_alloc_edges().collect();
+    alloc_edges.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
+    if alloc_edges.is_empty() {
+        writer.write_all(b"  (none)\n\n").expect("Unable to write");
+    } else {
+        for (ptr_id, obj_id) in &alloc_edges {
+            writer.write_all(format!("  {} -> {}\n", ptr_id, obj_id).as_bytes())
+                .expect("Unable to write alloc edge");
+        }
+        writer.write_all(b"\n").expect("Unable to write newline");
+    }
+
+    // 6. Load edges (base.field -> dst)
+    writer.write_all(b"## Load edges (base.field -> dst)\n\n").expect("Unable to write section header");
+    let mut load_edges: Vec<_> = class_pag.iter_load_edges().collect();
+    load_edges.sort_by(|a, b| {
+        a.base_ptr_id.cmp(&b.base_ptr_id)
+            .then_with(|| a.field.cmp(&b.field))
+            .then_with(|| a.dst_ptr_id.cmp(&b.dst_ptr_id))
+    });
+    if load_edges.is_empty() {
+        writer.write_all(b"  (none)\n\n").expect("Unable to write");
+    } else {
+        for e in &load_edges {
+            writer
+                .write_all(format!("  {}.{} -> {}\n", e.base_ptr_id, e.field, e.dst_ptr_id).as_bytes())
+                .expect("Unable to write load edge");
+        }
+        writer.write_all(b"\n").expect("Unable to write newline");
+    }
+
+    // 7. Store edges (base.field <- src)
+    writer.write_all(b"## Store edges (base.field <- src)\n\n").expect("Unable to write section header");
+    let mut store_edges: Vec<_> = class_pag.iter_store_edges().collect();
+    store_edges.sort_by(|a, b| {
+        a.base_ptr_id.cmp(&b.base_ptr_id)
+            .then_with(|| a.field.cmp(&b.field))
+            .then_with(|| a.src_ptr_id.cmp(&b.src_ptr_id))
+    });
+    if store_edges.is_empty() {
+        writer.write_all(b"  (none)\n\n").expect("Unable to write");
+    } else {
+        for e in &store_edges {
+            writer
+                .write_all(format!("  {}.{} <- {}\n", e.base_ptr_id, e.field, e.src_ptr_id).as_bytes())
+                .expect("Unable to write store edge");
+        }
+        writer.write_all(b"\n").expect("Unable to write newline");
+    }
+
+    // 8. CallArg edges
+    writer.write_all(b"## CallArg edges (call_site, arg_idx: actual -> formal)\n\n")
+        .expect("Unable to write section header");
+    let call_arg = class_pag.call_arg_edges();
+    if call_arg.is_empty() {
+        writer.write_all(b"  (none)\n\n").expect("Unable to write");
+    } else {
+        for e in call_arg {
+            writer
+                .write_all(
+                    format!("  {} [arg {}] {} -> {}\n", e.call_site, e.arg_idx, e.actual_ptr_id, e.formal_ptr_id)
+                        .as_bytes(),
+                )
+                .expect("Unable to write call arg edge");
+        }
+        writer.write_all(b"\n").expect("Unable to write newline");
+    }
+
+    // 9. CallRet edges
+    writer.write_all(b"## CallRet edges (call_site: formal_ret -> actual_ret)\n\n")
+        .expect("Unable to write section header");
+    let call_ret = class_pag.call_ret_edges();
+    if call_ret.is_empty() {
+        writer.write_all(b"  (none)\n\n").expect("Unable to write");
+    } else {
+        for e in call_ret {
+            writer
+                .write_all(format!("  {}  {} -> {}\n", e.call_site, e.formal_ret_ptr_id, e.actual_ret_ptr_id).as_bytes())
+                .expect("Unable to write call ret edge");
+        }
+        writer.write_all(b"\n").expect("Unable to write newline");
+    }
+
+    // 10. Statistics
+    writer.write_all(b"## Statistics\n\n").expect("Unable to write section header");
+    writer
+        .write_all(
+            format!(
+                "  ptrs: {}  objs: {}  assign: {}  cast: {}  alloc: {}  load: {}  store: {}  call_arg: {}  call_ret: {}\n",
+                class_pag.num_ptrs(),
+                class_pag.num_objs(),
+                assign_edges.len(),
+                cast_edges.len(),
+                alloc_edges.len(),
+                load_edges.len(),
+                store_edges.len(),
+                call_arg.len(),
+                call_ret.len(),
+            )
+            .as_bytes(),
+        )
         .expect("Unable to write statistics");
 }

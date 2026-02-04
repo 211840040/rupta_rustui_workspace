@@ -583,25 +583,32 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
         
         // ===== Class Pointer System Integration =====
         // Propagate class pointer points-to relationships during assignment
-        if analysis::is_dsl_class_type(self.tcx(), rh_type) 
-            && analysis::is_dsl_class_type(self.tcx(), lh_type) {
+        if analysis::is_dsl_class_type(self.tcx(), rh_type)
+            && analysis::is_dsl_class_type(self.tcx(), lh_type)
+        {
             let func_ref = self.acx.get_function_reference(self.fpag.func_id);
             let func_name = func_ref.to_string();
-            use crate::util::class::ptr_system::{ClassPtr, path_to_class_ptr_id};
-            
+            use crate::util::class::ptr_system::{path_to_class_ptr_id, ClassPtr as UtilClassPtr};
+
             let src_ptr_id = path_to_class_ptr_id(&rh_path, Some(&func_name));
             let dst_ptr_id = path_to_class_ptr_id(&lh_path, Some(&func_name));
-            
+
             // Get class type from type system
             if let Some(class_type) = self.acx.class_type_system.get_path_class_type(&rh_path) {
-                // Create/get pointers
-                let src_ptr = ClassPtr::new_local(src_ptr_id.clone(), class_type.clone());
-                let dst_ptr = ClassPtr::new_local(dst_ptr_id.clone(), class_type.clone());
+                // Legacy: util class_ptr_system (propagate points-to)
+                let src_ptr = UtilClassPtr::new_local(src_ptr_id.clone(), class_type.clone());
+                let dst_ptr = UtilClassPtr::new_local(dst_ptr_id.clone(), class_type.clone());
                 self.acx.class_ptr_system.get_or_create_ptr(src_ptr);
                 self.acx.class_ptr_system.get_or_create_ptr(dst_ptr);
-                
-                // Propagate points-to
                 self.acx.class_ptr_system.propagate_points_to(&src_ptr_id, &dst_ptr_id);
+
+                // rcpta: ClassPAG Assign edge (Tai-e Copy -> LOCAL_ASSIGN). Author: Yan Wang, Date: 2026-02-02
+                use crate::rcpta::ClassPtr;
+                let src_cptr = ClassPtr::new_local(src_ptr_id.clone(), class_type.clone());
+                let dst_cptr = ClassPtr::new_local(dst_ptr_id.clone(), class_type.clone());
+                self.acx.class_pag.get_or_create_ptr(src_cptr);
+                self.acx.class_pag.get_or_create_ptr(dst_cptr);
+                self.acx.class_pag.add_assign(&src_ptr_id, &dst_ptr_id);
             }
         }
         // ============================================
@@ -1265,6 +1272,18 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
             debug!("Class method call: {}.{} at {:?}", 
                    class_method.class_name, class_method.method_name, location);
             // Continue with normal call handling to build call graph
+        }
+
+        // rcpta: class cast (into_superclass, try_into_subtype, cast_mixin) → Assign receiver → destination. Author: Yan Wang, Date: 2026-02-02
+        if analysis::identify_class_cast_method(&func_ref) {
+            special_function_handler::handle_class_cast_call(
+                self,
+                callee_def_id,
+                &gen_args,
+                &args,
+                &destination,
+                location,
+            );
         }
 
         if special_function_handler::handled_as_special_function_call(
