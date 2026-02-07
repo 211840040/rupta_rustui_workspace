@@ -1,4 +1,4 @@
+# Use the same toolchain as rupta for consistent MIR analysis
 [toolchain]
-#channel = "1.88.0"
 channel = "nightly-2025-05-09"
-targets = ["aarch64-linux-android"]
+components = ["rust-src", "rustc-dev", "llvm-tools-preview"]

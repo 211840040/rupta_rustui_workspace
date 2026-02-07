@@ -101,6 +101,7 @@ impl PTACallbacks {
             pta.analyze();
         } else {
             error!("AnalysisContext Initialization Failed");
+            eprintln!("[rupta] AnalysisContext init failed (entry not found): no class_pag will be written");
         }
 
         mem_watcher.stop();

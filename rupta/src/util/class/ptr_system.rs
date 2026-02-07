@@ -278,9 +278,11 @@ impl fmt::Display for ClassPtrSystemStats {
 // ==================== Helper Functions ====================
 
 /// Generate a simplified string representation of a Path for ClassPtrSystem
-/// This creates a human-readable identifier independent of RUPTA's Path abstraction
+/// This creates a human-readable identifier independent of RUPTA's Path abstraction.
+/// For Option::Some.0 (path = base + [Downcast(1), Field(0)]), returns the base's id so the
+/// Option-holder local (e.g. downcast_to_eagle) is used consistently instead of base.as_variant#1.0.
 pub fn path_to_class_ptr_id(path: &crate::mir::path::Path, func_name: Option<&str>) -> String {
-    use crate::mir::path::PathEnum;
+    use crate::mir::path::{PathEnum, PathSelector};
     
     match &path.value {
         PathEnum::LocalVariable { func_id: _, ordinal } => {
@@ -308,6 +310,14 @@ pub fn path_to_class_ptr_id(path: &crate::mir::path::Path, func_name: Option<&st
             format!("heap_{:?}", location)
         }
         PathEnum::QualifiedPath { base, projection } => {
+            // Option<CRc<T>>.Some.0: use the Option-holder local as the pointer id for consistency.
+            if projection.len() == 2 {
+                if let PathSelector::Downcast(1) = projection[0] {
+                    if let PathSelector::Field(0) = projection[1] {
+                        return path_to_class_ptr_id(base, func_name);
+                    }
+                }
+            }
             let base_id = path_to_class_ptr_id(base, func_name);
             // Simplify projection to field name if possible
             let proj_str = projection.iter()

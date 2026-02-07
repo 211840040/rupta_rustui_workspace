@@ -36,8 +36,11 @@ pub struct ClassTypeInfo {
     pub name: String,
     /// Fields: field_name -> ClassField
     pub fields: HashMap<String, ClassField>,
-    /// Methods: method_name -> HashSet of FuncId (for tracking which implementations exist)
+    /// Method names (for quick lookup)
     pub methods: HashSet<String>,
+    /// Method implementation: method_name -> func_name (full name for dispatch)
+    /// Used for polymorphic resolution: given concrete type + method_name, get the callee func.
+    pub method_impls: HashMap<String, String>,
     /// Parent class name (for inheritance)
     pub parent: Option<String>,
     /// All known subclasses
@@ -50,6 +53,7 @@ impl ClassTypeInfo {
             name,
             fields: HashMap::new(),
             methods: HashSet::new(),
+            method_impls: HashMap::new(),
             parent: None,
             subclasses: HashSet::new(),
         }
@@ -82,6 +86,12 @@ impl ClassTypeInfo {
     /// Checks if this class has a method
     pub fn has_method(&self, method_name: &str) -> bool {
         self.methods.contains(method_name)
+    }
+
+    /// Registers the implementing function for a method (for polymorphic dispatch).
+    pub fn add_method_impl(&mut self, method_name: String, func_name: String) {
+        self.methods.insert(method_name.clone());
+        self.method_impls.insert(method_name, func_name);
     }
 }
 
@@ -374,6 +384,30 @@ impl ClassTypeSystem {
             class_info.add_method(method_name.to_string());
             debug!("ClassTypeSystem: Registered method '{}.{}'", class_name, method_name);
         }
+    }
+
+    /// Registers the implementing function for (class_name, method_name). Used to build the
+    /// dispatch table for polymorphic resolution: given concrete type + method_name, resolve to callee.
+    pub fn register_method_impl(&mut self, class_name: &str, method_name: &str, func_name: String) {
+        self.register_class(class_name);
+        if let Some(class_info) = self.classes.get_mut(class_name) {
+            debug!("ClassTypeSystem: Registered method impl '{}.{}' -> {}", class_name, method_name, func_name);
+            class_info.add_method_impl(method_name.to_string(), func_name);
+        }
+    }
+
+    /// Resolves the callee for a (concrete_type, method_name) using the class hierarchy.
+    /// Walks up the parent chain until an implementation is found (same as Tai-e's dispatch).
+    /// Returns the func_name (full name) of the method that would be invoked.
+    pub fn dispatch(&self, concrete_type: &str, method_name: &str) -> Option<String> {
+        let class_info = self.classes.get(concrete_type)?;
+        if let Some(func_name) = class_info.method_impls.get(method_name) {
+            return Some(func_name.clone());
+        }
+        if let Some(ref parent) = class_info.parent {
+            return self.dispatch(parent, method_name);
+        }
+        None
     }
 
     /// Checks if a class has a method

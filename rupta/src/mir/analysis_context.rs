@@ -123,6 +123,15 @@ pub struct AnalysisContext<'tcx, 'compilation> {
     /// rcpta: class-level pointer flow graph (Assign / Alloc / Load / Store / Call edges). Author: Yan Wang, Date: 2026-02-02
     pub class_pag: ClassPAG,
 
+    /// rcpta: per-function alias map (dst_ptr_id -> canonical_ptr_id) so we don't create redundant ClassPtr for Assign dst. Cleared at start of each function build.
+    pub rcpta_alias_map: HashMap<String, String>,
+
+    /// rcpta: ref_ptr_id -> base_path (Rc<Path>) so Option::unwrap receiver &opt can resolve to opt's base path for Option.Some.0. Cleared at start of each function build.
+    pub rcpta_ref_ptr_to_base_path: HashMap<String, Rc<Path>>,
+
+    /// rcpta: option_copy_ptr_id -> base_path (Rc<Path>) so when unwrap() receiver is a move/copy of Option<CRc<T>> (e.g. _tmp = move downcast_to_eagle), we resolve receiver to the original Option holder and use base.Some.0 as assign source. Cleared at start of each function build.
+    pub rcpta_option_copy_to_base_path: HashMap<String, Rc<Path>>,
+
     /// Record the max index of the auxiliary local variable for each function instance.
     pub(crate) aux_local_indexer: HashMap<FuncId, usize>,
 
@@ -202,6 +211,9 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
                 class_call_graph: ClassCallGraph::new(),
                 class_ptr_system: ClassPtrSystem::new(),
                 class_pag: ClassPAG::new(),
+                rcpta_alias_map: HashMap::new(),
+                rcpta_ref_ptr_to_base_path: HashMap::new(),
+                rcpta_option_copy_to_base_path: HashMap::new(),
                 known_names_cache: KnownNamesCache::create_cache_from_language_items(),
             })
         } else {
@@ -234,6 +246,15 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
             return Some(*ty);
         }
         None
+    }
+
+    /// rcpta: resolve ptr_id to canonical ptr (follow alias chain from Assign dst -> src). Used so one source variable (e.g. dog) maps to one ClassPtr.
+    pub fn get_canonical_rcpta_ptr(&self, ptr_id: &str) -> String {
+        let mut id = ptr_id.to_string();
+        while let Some(canonical) = self.rcpta_alias_map.get(&id) {
+            id = canonical.clone();
+        }
+        id
     }
 
     /// Gets or assigns a sequential index for a class field name.

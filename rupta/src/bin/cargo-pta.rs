@@ -84,6 +84,12 @@ fn call_cargo() {
         return;
     }
 
+    // If a test target is specified, analyze this test only (do not run cargo for every target).
+    if let Some(target) = get_arg_flag_value("--test") {
+        call_cargo_on_target(&target, "test");
+        return;
+    }
+
     if let Some(root) = metadata.root_package() {
         call_cargo_on_each_package_target(root);
         return;

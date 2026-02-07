@@ -607,9 +607,9 @@ fn handle_class_constructor<'tcx>(
     // ============================================
 
     // ===== rcpta ClassPAG Alloc (source-level only). Author: Yan Wang, Date: 2026-02-02 =====
-    // Only create ClassObj when the *caller* is source-level (user code), not inside a class
-    // constructor or DSL internal (e.g. into_raw). So "3 new() in source" -> 3 objs.
-    if class_analysis::is_source_level_allocation_caller(&func_name) {
+    // Only create ClassObj when the *caller* is source-level (user code), not inside core/std/alloc/classes
+    // or class ctor/DSL internal. Use is_source_level_context so we don't create ptrs/objs in DSL runtime.
+    if class_analysis::is_source_level_context(&func_name) {
         use crate::rcpta::{AllocSite, ClassPtr};
         let alloc_site = AllocSite::new(&func_name, format!("{:?}", location));
         let obj_id_rcpta = fpb.acx.class_pag.create_obj(class_name.clone(), alloc_site);
@@ -677,8 +677,28 @@ pub fn handle_class_cast_call<'tcx>(
     let func_name = func_ref.to_string();
     use crate::util::class::ptr_system::{path_to_class_ptr_id, ClassPtr as UtilClassPtr};
 
+    // When return type is Option<CRc<T>> (e.g. try_into_subtype), the cast result is stored
+    // in Option.Some.0; use that path as cast dest so later unwrap() can Assign(option_inner -> lhs).
+    let is_option_return = if let TyKind::Adt(def, _) = return_ty.kind() {
+        let path = tcx.def_path_str(def.did());
+        path.contains("option::Option") || path.contains("core::option") || path.contains("std::option")
+    } else {
+        false
+    };
+    let (effective_dest, dest_ptr_id) = if is_option_return {
+        let option_some_inner = Path::new_qualified(
+            destination.clone(),
+            vec![PathSelector::Downcast(1), PathSelector::Field(0)],
+        );
+        fpb.acx.set_path_rustc_type(option_some_inner.clone(), dest_class_ty);
+        let ptr_id = path_to_class_ptr_id(&option_some_inner, Some(&func_name));
+        (option_some_inner, ptr_id)
+    } else {
+        let ptr_id = path_to_class_ptr_id(destination, Some(&func_name));
+        (destination.clone(), ptr_id)
+    };
+
     let receiver_ptr_id = path_to_class_ptr_id(receiver_path, Some(&func_name));
-    let dest_ptr_id = path_to_class_ptr_id(destination, Some(&func_name));
 
     // Legacy: class_ptr_system
     let receiver_ptr = UtilClassPtr::new_local(receiver_ptr_id.clone(), receiver_class.clone());
@@ -687,18 +707,19 @@ pub fn handle_class_cast_call<'tcx>(
     fpb.acx.class_ptr_system.get_or_create_ptr(dest_ptr);
     fpb.acx.class_ptr_system.propagate_points_to(&receiver_ptr_id, &dest_ptr_id);
 
-    // rcpta: ClassPAG Cast edge only when caller is source-level (user code), not inside cast impl or DSL internal
-    if class_analysis::is_source_level_cast_caller(&func_name) {
+    // rcpta: ClassPAG — cast source = canonical(receiver).
+    if class_analysis::is_source_level_context(&func_name) {
         use crate::rcpta::ClassPtr;
-        let receiver_cptr = ClassPtr::new_local(receiver_ptr_id.clone(), receiver_class);
+        let canonical_receiver = fpb.acx.get_canonical_rcpta_ptr(&receiver_ptr_id);
+        let receiver_cptr = ClassPtr::new_local(canonical_receiver.clone(), receiver_class);
         let dest_cptr = ClassPtr::new_local(dest_ptr_id.clone(), dest_class);
         fpb.acx.class_pag.get_or_create_ptr(receiver_cptr);
         fpb.acx.class_pag.get_or_create_ptr(dest_cptr);
-        fpb.acx.class_pag.add_cast(&receiver_ptr_id, &dest_ptr_id);
+        fpb.acx.class_pag.add_cast(&canonical_receiver, &dest_ptr_id);
     }
 
     debug!(
         "Class cast: {} -> {} (receiver: {:?}, dest: {:?})",
-        receiver_ptr_id, dest_ptr_id, receiver_path, destination
+        receiver_ptr_id, dest_ptr_id, receiver_path, effective_dest
     );
 }

@@ -10,6 +10,15 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::rc::Rc;
 
+/// Ensures the parent directory of the given file path exists before creating the file.
+/// Avoids "No such file or directory" when output path is e.g. analysis_results/rcpta/.../file.txt
+/// and cargo-pta runs with a different cwd.
+fn ensure_parent_dir(file_path: &str) {
+    if let Some(parent) = std::path::Path::new(file_path).parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+}
+
 use crate::graph::pag::{PAGNodeId, PAG, PAGPath};
 use crate::graph::call_graph::{CallGraph, CGFunction, CGCallSite, CSCallGraph};
 use crate::mir::call_site::{BaseCallSite, CallType};
@@ -114,6 +123,9 @@ pub fn dump_call_graph<F, S>(
 }
 
 pub fn dump_type_index(acx: &AnalysisContext, index_path: &std::path::Path) {
+    if let Some(parent) = index_path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
     let mut output = String::new();
     for (i, ty) in acx.type_cache.type_list().iter().enumerate() {
         output.push_str(&format!("{}: {:?}\n", i, ty));
@@ -128,7 +140,10 @@ pub fn dump_pts<P: PAGPath>(pt_data: &DiffPTDataTy, pag: &PAG<P>, pts_path: &Str
     let pts_map = &pt_data.propa_pts_map;
     let mut pts_writer = BufWriter::new(match &pts_path[..] {
         "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
-        _ => Box::new(File::create(pts_path).expect("Unable to create file")) as Box<dyn Write>,
+        _ => {
+            ensure_parent_dir(pts_path);
+            Box::new(File::create(pts_path).expect("Unable to create file")) as Box<dyn Write>
+        }
     });
     for (node, pts) in pts_map {
         if pts.is_empty() {
@@ -221,7 +236,10 @@ pub fn dump_ci_pts<P: PAGPath>(acx: &AnalysisContext, pt_data: &DiffPTDataTy, pa
     let pts_map = &pt_data.propa_pts_map;
     let mut pts_writer = BufWriter::new(match &grouped_pts_path[..] {
         "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
-        _ => Box::new(File::create(grouped_pts_path).expect("Unable to create file")) as Box<dyn Write>,
+        _ => {
+            ensure_parent_dir(grouped_pts_path);
+            Box::new(File::create(grouped_pts_path).expect("Unable to create file")) as Box<dyn Write>
+        }
     });
     for (node, pts) in pts_map {
         if pts.is_empty() {
@@ -298,7 +316,10 @@ pub fn dump_mir<F: CGFunction + Into<FuncId>, S: CGCallSite>(
     // let mut mir_writer = Box::new(File::create(mir_path).expect("Unable to create file")) as Box<dyn Write>;
     let mut mir_writer = match &mir_path[..] {
         "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
-        _ => Box::new(File::create(mir_path).expect("Unable to create file")) as Box<dyn Write>,
+        _ => {
+            ensure_parent_dir(mir_path);
+            Box::new(File::create(mir_path).expect("Unable to create file")) as Box<dyn Write>
+        }
     };
     let mut visited_func = HashSet::new();
     for func in call_graph.reach_funcs_iter() {
@@ -377,7 +398,10 @@ fn dump_dyn_calls_(
 ) {
     let mut dyn_calls_writer = BufWriter::new(match &dyn_calls_path[..] {
         "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
-        _ => Box::new(File::create(dyn_calls_path).expect("Unable to create file")) as Box<dyn Write>,
+        _ => {
+            ensure_parent_dir(dyn_calls_path);
+            Box::new(File::create(dyn_calls_path).expect("Unable to create file")) as Box<dyn Write>
+        }
     });
 
     dyn_calls_writer
@@ -448,7 +472,10 @@ fn dump_dyn_calls_(
 pub fn dump_func_contexts(acx: &AnalysisContext, call_graph: &CSCallGraph, ctx_strategy: &impl ContextStrategy, func_ctxts_path: &String) {
     let mut func_ctxts_writer = BufWriter::new(match &func_ctxts_path[..] {
         "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
-        _ => Box::new(File::create(func_ctxts_path).expect("Unable to create file")) as Box<dyn Write>,
+        _ => {
+            ensure_parent_dir(func_ctxts_path);
+            Box::new(File::create(func_ctxts_path).expect("Unable to create file")) as Box<dyn Write>
+        }
     });
 
     let mut func_ctxts_map: HashMap<FuncId, HashSet<ContextId>> = HashMap::new();
@@ -554,7 +581,10 @@ pub fn dump_class_info<F: CGFunction + Into<FuncId>, S: CGCallSite>(
 ) {
     let mut class_info_writer = BufWriter::new(match &class_info_path[..] {
         "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
-        _ => Box::new(File::create(class_info_path).expect("Unable to create file")) as Box<dyn Write>,
+        _ => {
+            ensure_parent_dir(class_info_path);
+            Box::new(File::create(class_info_path).expect("Unable to create file")) as Box<dyn Write>
+        }
     });
 
     // Collect all class constructors
@@ -638,7 +668,10 @@ pub fn dump_class_call_graph(
 ) {
     let mut writer = BufWriter::new(match &output_path[..] {
         "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
-        _ => Box::new(File::create(output_path).expect("Unable to create file")) as Box<dyn Write>,
+        _ => {
+            ensure_parent_dir(output_path);
+            Box::new(File::create(output_path).expect("Unable to create file")) as Box<dyn Write>
+        }
     });
 
     // Write DOT format
@@ -669,7 +702,10 @@ pub fn dump_class_type_system(
     
     let mut writer = BufWriter::new(match &output_path[..] {
         "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
-        _ => Box::new(File::create(output_path).expect("Unable to create file")) as Box<dyn Write>,
+        _ => {
+            ensure_parent_dir(output_path);
+            Box::new(File::create(output_path).expect("Unable to create file")) as Box<dyn Write>
+        }
     });
 
     writer.write_all(b"Class Type System Report\n")
@@ -807,7 +843,10 @@ pub fn dump_class_type_system(
 pub fn dump_class_ptr_system(class_ptr_system: &ClassPtrSystem, output_path: &str) {
     let mut writer = BufWriter::new(match output_path {
         "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
-        _ => Box::new(File::create(output_path).expect("Unable to create file")) as Box<dyn Write>,
+        _ => {
+            ensure_parent_dir(output_path);
+            Box::new(File::create(output_path).expect("Unable to create file")) as Box<dyn Write>
+        }
     });
     
     writer.write_all(b"# Class Pointer System\n\n")
@@ -871,12 +910,89 @@ pub fn dump_class_ptr_system(class_ptr_system: &ClassPtrSystem, output_path: &st
         .expect("Unable to write statistics");
 }
 
+/// Whether to hide this function from "Edges by function" output.
+/// Internal DSL trait methods (e.g. downgrade_from implementing into_superclass) are not user-facing class methods.
+fn is_internal_dsl_trait_method(func_name: &str) -> bool {
+    func_name.contains("downgrade_from") || func_name.contains("upgrade_from")
+}
+
+/// Normalizes a function path to a key for grouping: strip leading crate segment so that
+/// `rcpta_full_hierarchy::entry_complex_call_chain_demo` and `entry_complex_call_chain_demo` become the same key.
+fn normalize_func_key(name: &str) -> String {
+    if let Some(i) = name.find("::") {
+        name[i + 2..].to_string()
+    } else {
+        name.to_string()
+    }
+}
+
+/// Extracts the function scope from a pointer id (e.g. `main::local_1` -> `main`, `Holder::get_and_wrap::param_1` -> `Holder::get_and_wrap`).
+/// Used to group edges by the function body they belong to.
+/// Result is normalized (leading crate stripped) so it matches caller_from_call_site and all edges for one function land in one section.
+fn func_scope_from_ptr_id(ptr_id: &str) -> String {
+    let base = ptr_id.split('.').next().unwrap_or(ptr_id);
+    let scope = if let Some(i) = base.rfind("::param_") {
+        base[..i].to_string()
+    } else if let Some(i) = base.rfind("::ret") {
+        let after = base.get(i + 5..).unwrap_or("");
+        if after.is_empty() || !after.chars().next().map_or(false, |c| c.is_ascii_alphanumeric() || c == '_') {
+            base[..i].to_string()
+        } else {
+            base.to_string()
+        }
+    } else if let Some(i) = base.rfind("::local_") {
+        base[..i].to_string()
+    } else {
+        base.to_string()
+    };
+    normalize_func_key(&scope)
+}
+
+/// Extracts the caller function from a call_site id.
+/// Format is `[crate::]func_name:bbN[M]` (e.g. `rcpta_full_hierarchy::entry_complex_call_chain_demo:bb8[1]`).
+/// Returns the function name normalized (leading crate stripped) so it matches func_scope_from_ptr_id and all edges land in one section.
+fn caller_from_call_site(call_site: &str) -> String {
+    let before_bb = if let Some(i) = call_site.rfind(':') {
+        &call_site[..i]
+    } else {
+        call_site
+    };
+    normalize_func_key(before_bb)
+}
+
+/// Shortens ClassPAG pointer/call_site ids for human-readable output.
+/// - Strips leading crate (first path segment).
+/// - Collapses _classes::_Entity -> Entity, {impl#0} -> removed, ::data:: -> ::
+fn short_class_pag_name(id: &str) -> String {
+    let mut s = id.to_string();
+    // Strip crate prefix: "crate::rest" -> "rest"
+    if let Some(i) = s.find("::") {
+        s = s[i + 2..].to_string();
+    }
+    // _classes::_ClassName -> ClassName
+    s = s.replace("::_classes::_", "");
+    while let Some(off) = s.find("::_") {
+        let rest = &s[off + 3..];
+        if rest.starts_with(|c: char| c.is_ascii_uppercase()) {
+            s = format!("{}::{}", &s[..off + 2], rest);
+        } else {
+            break;
+        }
+    }
+    s = s.replace("::{impl#0}::", "::");
+    s = s.replace("::data::", "::");
+    s
+}
+
 /// Dumps rcpta ClassPAG (class-level pointer flow graph): ptrs, objs, assign/alloc/load/store/call edges.
 /// Author: Yan Wang, Date: 2026-02-02
 pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str) {
     let mut writer = BufWriter::new(match output_path {
         "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
-        _ => Box::new(File::create(output_path).expect("Unable to create file")) as Box<dyn Write>,
+        _ => {
+            ensure_parent_dir(output_path);
+            Box::new(File::create(output_path).expect("Unable to create file")) as Box<dyn Write>
+        }
     });
 
     writer.write_all(b"# rcpta ClassPAG (Class-level Pointer Assignment Graph)\n\n")
@@ -891,7 +1007,8 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str) {
     } else {
         for id in &ptr_ids {
             if let Some(ptr) = class_pag.get_ptr(id) {
-                writer.write_all(format!("  {}  [{}]\n", ptr.id, ptr.class_type).as_bytes())
+                let short = short_class_pag_name(&ptr.id);
+                writer.write_all(format!("  {}  [{}]\n", short, ptr.class_type).as_bytes())
                     .expect("Unable to write pointer");
             }
         }
@@ -907,128 +1024,162 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str) {
     } else {
         for id in &obj_ids {
             if let Some(obj) = class_pag.get_obj(id) {
+                let short_site = short_class_pag_name(&obj.alloc_site.to_string());
                 writer
-                    .write_all(format!("  {}  {}  @{}\n", obj.id, obj.class_type, obj.alloc_site).as_bytes())
+                    .write_all(format!("  {}  {}  @{}\n", obj.id, obj.class_type, short_site).as_bytes())
                     .expect("Unable to write object");
             }
         }
         writer.write_all(b"\n").expect("Unable to write newline");
     }
 
-    // 3. Assign edges (src -> dst) — copy/move
-    writer.write_all(b"## Assign edges (src -> dst)\n\n").expect("Unable to write section header");
-    let mut assign_edges: Vec<_> = class_pag.iter_assign_edges().collect();
-    assign_edges.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
-    if assign_edges.is_empty() {
-        writer.write_all(b"  (none)\n\n").expect("Unable to write");
-    } else {
-        for (src, dst) in &assign_edges {
-            writer.write_all(format!("  {} -> {}\n", src, dst).as_bytes())
-                .expect("Unable to write assign edge");
-        }
-        writer.write_all(b"\n").expect("Unable to write newline");
-    }
+    // 3. Group edges by function body (same func -> same section)
+    use crate::rcpta::{LoadEdge, StoreEdge};
+    type FuncEdges = (
+        Vec<(String, String)>,
+        Vec<(String, String)>,
+        Vec<(String, String)>,
+        Vec<LoadEdge>,
+        Vec<StoreEdge>,
+        Vec<(String, usize, String, String)>,
+        Vec<(String, String, String)>,
+    );
+    let mut by_func: BTreeMap<String, FuncEdges> = BTreeMap::new();
+    let empty_edges = || (Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new());
 
-    // 4. Cast edges (src -> dst) — same obj, different type view
-    writer.write_all(b"## Cast edges (src -> dst)\n\n").expect("Unable to write section header");
-    let mut cast_edges: Vec<_> = class_pag.iter_cast_edges().collect();
-    cast_edges.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
-    if cast_edges.is_empty() {
-        writer.write_all(b"  (none)\n\n").expect("Unable to write");
-    } else {
-        for (src, dst) in &cast_edges {
-            writer.write_all(format!("  {} -> {}  [cast]\n", src, dst).as_bytes())
-                .expect("Unable to write cast edge");
-        }
-        writer.write_all(b"\n").expect("Unable to write newline");
+    for (src, dst) in class_pag.iter_assign_edges() {
+        let func = func_scope_from_ptr_id(&dst);
+        by_func.entry(func).or_insert_with(empty_edges).0.push((src, dst));
     }
-
-    // 5. Alloc edges (ptr -> obj)
-    writer.write_all(b"## Alloc edges (ptr -> obj)\n\n").expect("Unable to write section header");
-    let mut alloc_edges: Vec<_> = class_pag.iter_alloc_edges().collect();
-    alloc_edges.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
-    if alloc_edges.is_empty() {
-        writer.write_all(b"  (none)\n\n").expect("Unable to write");
-    } else {
-        for (ptr_id, obj_id) in &alloc_edges {
-            writer.write_all(format!("  {} -> {}\n", ptr_id, obj_id).as_bytes())
-                .expect("Unable to write alloc edge");
-        }
-        writer.write_all(b"\n").expect("Unable to write newline");
+    for (src, dst) in class_pag.iter_cast_edges() {
+        let func = func_scope_from_ptr_id(&dst);
+        by_func.entry(func).or_insert_with(empty_edges).1.push((src, dst));
     }
-
-    // 6. Load edges (base.field -> dst)
-    writer.write_all(b"## Load edges (base.field -> dst)\n\n").expect("Unable to write section header");
-    let mut load_edges: Vec<_> = class_pag.iter_load_edges().collect();
-    load_edges.sort_by(|a, b| {
-        a.base_ptr_id.cmp(&b.base_ptr_id)
-            .then_with(|| a.field.cmp(&b.field))
-            .then_with(|| a.dst_ptr_id.cmp(&b.dst_ptr_id))
-    });
-    if load_edges.is_empty() {
-        writer.write_all(b"  (none)\n\n").expect("Unable to write");
-    } else {
-        for e in &load_edges {
-            writer
-                .write_all(format!("  {}.{} -> {}\n", e.base_ptr_id, e.field, e.dst_ptr_id).as_bytes())
-                .expect("Unable to write load edge");
-        }
-        writer.write_all(b"\n").expect("Unable to write newline");
+    for (ptr_id, obj_id) in class_pag.iter_alloc_edges() {
+        let func = func_scope_from_ptr_id(&ptr_id);
+        by_func.entry(func).or_insert_with(empty_edges).2.push((ptr_id, obj_id));
     }
-
-    // 7. Store edges (base.field <- src)
-    writer.write_all(b"## Store edges (base.field <- src)\n\n").expect("Unable to write section header");
-    let mut store_edges: Vec<_> = class_pag.iter_store_edges().collect();
-    store_edges.sort_by(|a, b| {
-        a.base_ptr_id.cmp(&b.base_ptr_id)
-            .then_with(|| a.field.cmp(&b.field))
-            .then_with(|| a.src_ptr_id.cmp(&b.src_ptr_id))
-    });
-    if store_edges.is_empty() {
-        writer.write_all(b"  (none)\n\n").expect("Unable to write");
-    } else {
-        for e in &store_edges {
-            writer
-                .write_all(format!("  {}.{} <- {}\n", e.base_ptr_id, e.field, e.src_ptr_id).as_bytes())
-                .expect("Unable to write store edge");
-        }
-        writer.write_all(b"\n").expect("Unable to write newline");
+    for e in class_pag.iter_load_edges() {
+        let func = func_scope_from_ptr_id(&e.dst_ptr_id);
+        by_func.entry(func).or_insert_with(empty_edges).3.push(e);
     }
-
-    // 8. CallArg edges
-    writer.write_all(b"## CallArg edges (call_site, arg_idx: actual -> formal)\n\n")
-        .expect("Unable to write section header");
+    for e in class_pag.iter_store_edges() {
+        let func = func_scope_from_ptr_id(&e.base_ptr_id);
+        by_func.entry(func).or_insert_with(empty_edges).4.push(e);
+    }
     let call_arg = class_pag.call_arg_edges();
-    if call_arg.is_empty() {
-        writer.write_all(b"  (none)\n\n").expect("Unable to write");
-    } else {
-        for e in call_arg {
-            writer
-                .write_all(
-                    format!("  {} [arg {}] {} -> {}\n", e.call_site, e.arg_idx, e.actual_ptr_id, e.formal_ptr_id)
-                        .as_bytes(),
-                )
-                .expect("Unable to write call arg edge");
-        }
-        writer.write_all(b"\n").expect("Unable to write newline");
+    for e in call_arg.iter() {
+        let func = caller_from_call_site(&e.call_site);
+        by_func.entry(func).or_insert_with(empty_edges).5.push((e.call_site.clone(), e.arg_idx, e.actual_ptr_id.clone(), e.formal_ptr_id.clone()));
     }
-
-    // 9. CallRet edges
-    writer.write_all(b"## CallRet edges (call_site: formal_ret -> actual_ret)\n\n")
-        .expect("Unable to write section header");
     let call_ret = class_pag.call_ret_edges();
-    if call_ret.is_empty() {
-        writer.write_all(b"  (none)\n\n").expect("Unable to write");
-    } else {
-        for e in call_ret {
-            writer
-                .write_all(format!("  {}  {} -> {}\n", e.call_site, e.formal_ret_ptr_id, e.actual_ret_ptr_id).as_bytes())
-                .expect("Unable to write call ret edge");
+    for e in call_ret.iter() {
+        let func = caller_from_call_site(&e.call_site);
+        by_func.entry(func).or_insert_with(empty_edges).6.push((e.call_site.clone(), e.formal_ret_ptr_id.clone(), e.actual_ret_ptr_id.clone()));
+    }
+
+    // Sort edge lists within each function for stable output
+    for (_, (assign, cast, alloc, load, store, _, _)) in by_func.iter_mut() {
+        assign.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
+        cast.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
+        alloc.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
+        load.sort_by(|a, b| {
+            a.base_ptr_id.cmp(&b.base_ptr_id)
+                .then_with(|| a.field.cmp(&b.field))
+                .then_with(|| a.dst_ptr_id.cmp(&b.dst_ptr_id))
+        });
+        store.sort_by(|a, b| {
+            a.base_ptr_id.cmp(&b.base_ptr_id)
+                .then_with(|| a.field.cmp(&b.field))
+                .then_with(|| a.src_ptr_id.cmp(&b.src_ptr_id))
+        });
+    }
+
+    let mut total_assign = 0usize;
+    let mut total_cast = 0usize;
+    let mut total_alloc = 0usize;
+    let mut total_load = 0usize;
+    let mut total_store = 0usize;
+    let total_call_arg = call_arg.len();
+    let total_call_ret = call_ret.len();
+
+    // 4. Per-function sections: assign, cast, alloc, load, store, call_arg, call_ret
+    writer.write_all(b"## Edges by function\n\n").expect("Unable to write section header");
+    for (func_name, (assign, cast, alloc, load, store, call_arg_f, call_ret_f)) in &by_func {
+        total_assign += assign.len();
+        total_cast += cast.len();
+        total_alloc += alloc.len();
+        total_load += load.len();
+        total_store += store.len();
+
+        // Skip internal DSL trait methods (e.g. downgrade_from for into_superclass); not user-facing class methods.
+        if is_internal_dsl_trait_method(func_name) {
+            continue;
+        }
+
+        let short_func = short_class_pag_name(func_name);
+        writer.write_all(format!("### {}\n\n", short_func).as_bytes()).expect("Unable to write func header");
+
+        writer.write_all(b"  Assign (src -> dst):\n").expect("Unable to write");
+        if assign.is_empty() {
+            writer.write_all(b"    (none)\n").expect("Unable to write");
+        } else {
+            for (src, dst) in assign {
+                writer.write_all(format!("    {} -> {}\n", short_class_pag_name(src), short_class_pag_name(dst)).as_bytes()).expect("Unable to write assign edge");
+            }
+        }
+        writer.write_all(b"  Cast (src -> dst):\n").expect("Unable to write");
+        if cast.is_empty() {
+            writer.write_all(b"    (none)\n").expect("Unable to write");
+        } else {
+            for (src, dst) in cast {
+                writer.write_all(format!("    {} -> {}  [cast]\n", short_class_pag_name(src), short_class_pag_name(dst)).as_bytes()).expect("Unable to write cast edge");
+            }
+        }
+        writer.write_all(b"  Alloc (ptr -> obj):\n").expect("Unable to write");
+        if alloc.is_empty() {
+            writer.write_all(b"    (none)\n").expect("Unable to write");
+        } else {
+            for (ptr_id, obj_id) in alloc {
+                writer.write_all(format!("    {} -> {}\n", short_class_pag_name(ptr_id), obj_id).as_bytes()).expect("Unable to write alloc edge");
+            }
+        }
+        writer.write_all(b"  Load (base.field -> dst):\n").expect("Unable to write");
+        if load.is_empty() {
+            writer.write_all(b"    (none)\n").expect("Unable to write");
+        } else {
+            for e in load {
+                writer.write_all(format!("    {}.{} -> {}\n", short_class_pag_name(&e.base_ptr_id), e.field, short_class_pag_name(&e.dst_ptr_id)).as_bytes()).expect("Unable to write load edge");
+            }
+        }
+        writer.write_all(b"  Store (base.field <- src):\n").expect("Unable to write");
+        if store.is_empty() {
+            writer.write_all(b"    (none)\n").expect("Unable to write");
+        } else {
+            for e in store {
+                writer.write_all(format!("    {}.{} <- {}\n", short_class_pag_name(&e.base_ptr_id), e.field, short_class_pag_name(&e.src_ptr_id)).as_bytes()).expect("Unable to write store edge");
+            }
+        }
+        writer.write_all(b"  CallArg (call_site [arg idx] actual -> formal):\n").expect("Unable to write");
+        if call_arg_f.is_empty() {
+            writer.write_all(b"    (none)\n").expect("Unable to write");
+        } else {
+            for (call_site, arg_idx, actual, formal) in call_arg_f {
+                writer.write_all(format!("    {} [arg {}] {} -> {}\n", short_class_pag_name(call_site), arg_idx, short_class_pag_name(actual), short_class_pag_name(formal)).as_bytes()).expect("Unable to write call arg edge");
+            }
+        }
+        writer.write_all(b"  CallRet (call_site: formal_ret -> actual_ret):\n").expect("Unable to write");
+        if call_ret_f.is_empty() {
+            writer.write_all(b"    (none)\n").expect("Unable to write");
+        } else {
+            for (call_site, formal_ret, actual_ret) in call_ret_f {
+                writer.write_all(format!("    {}  {} -> {}\n", short_class_pag_name(call_site), short_class_pag_name(formal_ret), short_class_pag_name(actual_ret)).as_bytes()).expect("Unable to write call ret edge");
+            }
         }
         writer.write_all(b"\n").expect("Unable to write newline");
     }
 
-    // 10. Statistics
+    // 5. Statistics
     writer.write_all(b"## Statistics\n\n").expect("Unable to write section header");
     writer
         .write_all(
@@ -1036,13 +1187,13 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str) {
                 "  ptrs: {}  objs: {}  assign: {}  cast: {}  alloc: {}  load: {}  store: {}  call_arg: {}  call_ret: {}\n",
                 class_pag.num_ptrs(),
                 class_pag.num_objs(),
-                assign_edges.len(),
-                cast_edges.len(),
-                alloc_edges.len(),
-                load_edges.len(),
-                store_edges.len(),
-                call_arg.len(),
-                call_ret.len(),
+                total_assign,
+                total_cast,
+                total_alloc,
+                total_load,
+                total_store,
+                total_call_arg,
+                total_call_ret,
             )
             .as_bytes(),
         )

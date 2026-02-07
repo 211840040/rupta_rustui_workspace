@@ -46,6 +46,19 @@ fn main() {
     let pta_flags = env::var("PTA_FLAGS").unwrap_or_default();
     let pta_args: Vec<String> = serde_json::from_str(&pta_flags).unwrap_or_default();
     let rustc_args = options.parse_from_args(&pta_args[..], true);
+    if options.class_pag_output.is_some() {
+        eprintln!("[rupta] PTA_FLAGS: will dump class_pag to {:?}", options.class_pag_output);
+    }
+    // Debug: write to temp file so we can see pta ran even when stderr is captured by Cargo
+    let debug_log = std::env::temp_dir().join("rupta_wrapper_debug.log");
+    let _ = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&debug_log)
+        .and_then(|mut f| {
+            use std::io::Write;
+            writeln!(f, "[rupta] pta main() running, entry_func={:?}, class_pag_output={:?}", options.entry_func, options.class_pag_output)
+        });
 
     // Let arguments supplied on the command line override the environment variable.
     let mut args = env::args_os()

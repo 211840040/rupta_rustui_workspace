@@ -9,6 +9,7 @@
 //! in programs that use the classes DSL macro.
 
 use std::rc::Rc;
+use rustc_hir::def_id::DefId;
 use rustc_middle::ty::{Ty, TyCtxt, TyKind};
 use log::*;
 use crate::mir::function::FunctionReference;
@@ -103,6 +104,70 @@ pub fn is_source_level_cast_caller(caller_func_name: &str) -> bool {
     true
 }
 
+/// Whether the **caller** is "source-level context" (user code, not DSL internal).
+/// Use for rcpta ClassPAG when we only want to record edges/pointers from user-visible code
+/// (e.g. Assign: only record when not inside ctor body, cast impl, classes::ptr::, etc.).
+///
+/// Currently we exclude core/std/alloc and only DSL-internal paths under classes
+/// (classes::ptr::, classes::vtable::, classes::class::) so we don't create ptrs or edges
+/// inside DSL runtime. User code in the classes crate (e.g. tests, impls like get_and_wrap)
+/// is included so that callee bodies get Load/Cast/Assign edges in ClassPAG.
+pub fn is_source_level_context(caller_func_name: &str) -> bool {
+    if caller_func_name.starts_with("core::")
+        || caller_func_name.starts_with("std::")
+        || caller_func_name.starts_with("alloc::")
+    {
+        return false;
+    }
+    // Exclude only DSL runtime internals, not the whole classes crate (so callee bodies are analyzed).
+    if caller_func_name.starts_with("classes::ptr::")
+        || caller_func_name.starts_with("classes::vtable::")
+        || caller_func_name.starts_with("classes::vtable")
+        || caller_func_name.starts_with("classes::class::")
+    {
+        return false;
+    }
+    is_source_level_allocation_caller(caller_func_name) && is_source_level_cast_caller(caller_func_name)
+}
+
+/// Whether the callee is an implementation of `core::clone::Clone::clone` (trait method).
+/// Returns true for both the trait method in core and any impl in other crates (e.g. DSL's
+/// `impl Clone for RcDyn<C>` in classes). Used so rcpta recognizes DSL-extended clone as Assign.
+pub fn is_impl_of_core_clone_trait<'tcx>(tcx: TyCtxt<'tcx>, def_id: DefId) -> bool {
+    let Some(trait_did) = tcx.trait_of_item(def_id) else {
+        return false;
+    };
+    let crate_name = tcx.crate_name(trait_did.krate).to_string();
+    let path = tcx.def_path_str(trait_did);
+    (crate_name == "core" || crate_name == "std") && path.contains("Clone")
+}
+
+/// Whether the callee is Option::unwrap (core::option::Option::unwrap or std::option::Option::unwrap).
+/// Used for Class PAG: unwrap() on Option<CRc<T>> should add Assign(option_inner_ptr, lhs_ptr).
+pub fn is_option_unwrap<'tcx>(tcx: TyCtxt<'tcx>, callee_def_id: DefId) -> bool {
+    let path = tcx.def_path_str(callee_def_id);
+    (path.contains("option::Option") || path.contains("core::option") || path.contains("std::option"))
+        && path.contains("unwrap")
+}
+
+/// Whether the type is Option<T> where T contains a DSL class (e.g. Option<CRc<Eagle>>).
+/// Used for rcpta: when we see dst = move src with this type, record dst -> src so unwrap() can
+/// resolve receiver (a copy of the Option) to the original Option holder and find Option.Some.0.
+pub fn type_is_option_containing_dsl_class<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>) -> bool {
+    use rustc_middle::ty::GenericArgKind;
+    if let TyKind::Adt(def, args) = ty.kind() {
+        let path_str = tcx.def_path_str(def.did());
+        if (path_str.contains("option::Option") || path_str.contains("core::option") || path_str.contains("std::option"))
+            && !args.is_empty()
+        {
+            if let Some(GenericArgKind::Type(inner_ty)) = args.get(0).map(|arg| arg.unpack()) {
+                return extract_dsl_class_from_wrapper(tcx, inner_ty, None).is_some();
+            }
+        }
+    }
+    false
+}
+
 /// Whether the callee is a source-level class cast method (same object, different type view).
 /// rcpta: add Assign edge receiver → destination. Author: Yan Wang, Date: 2026-02-02
 ///
@@ -156,7 +221,13 @@ pub struct GetterSetter {
 /// - "simple_method_call::_classes::_Container::{impl#0}::get_point_sum" -> None (not a getter, has underscore in field name)
 pub fn identify_getter_setter(func_ref: &Rc<FunctionReference>) -> Option<GetterSetter> {
     let func_name = func_ref.to_string();
-    
+
+    // Only user-crate getters/setters; exclude DSL runtime (e.g. GetSet::cell_option_get/set).
+    // Those live in classes:: and would otherwise be mis-identified via _classes::_ in generic args.
+    if func_name.starts_with("classes::") {
+        return None;
+    }
+
     // Pattern: _classes::_ClassName::{impl#N}::get_field_name or set_field_name
     if let Some(class_name) = extract_class_name_from_func(&func_name) {
         // Check for get_ prefix
