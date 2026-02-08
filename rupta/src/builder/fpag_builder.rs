@@ -119,6 +119,11 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
         self.acx.tcx.is_static(self.def_id())
     }
 
+    /// Canonical function name for rcpta ClassPAG: same for impl wrapper and method body so we have one param/ret set per method.
+    fn rcpta_canonical_func_name(&self) -> String {
+        analysis::canonical_class_method_name(&self.acx.get_function_reference(self.fpag.func_id).to_string())
+    }
+
     /// Returns true if this function corresponds to an initialization procedure 
     /// for a const item.
     #[inline]
@@ -128,6 +133,12 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
 
     /// Builds the PAG. 
     pub fn build(&mut self) {
+        let func_name = self.acx.get_function_reference(self.fpag.func_id).to_string();
+        let canonical = self.rcpta_canonical_func_name();
+        info!("rcpta: building PAG for func={}", func_name);
+        if func_name.contains("get_and_wrap") || canonical.contains("get_and_wrap") {
+            info!("rcpta: [dedup] func raw={} canonical={}", func_name, canonical);
+        }
         // build common functions' PAG first
         self.visit_body();
 
@@ -593,12 +604,11 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
         let lh_has_dsl = analysis::is_dsl_class_type(self.tcx(), lh_type)
             || analysis::extract_dsl_class_from_wrapper(self.tcx(), lh_type, None).is_some();
         if rh_has_dsl && lh_has_dsl {
-            let func_ref = self.acx.get_function_reference(self.fpag.func_id);
-            let func_name = func_ref.to_string();
+            let func_name = self.rcpta_canonical_func_name();
             use crate::util::class::ptr_system::{path_to_class_ptr_id, ClassPtr as UtilClassPtr};
 
-            let src_ptr_id = path_to_class_ptr_id(&rh_path, Some(&func_name));
-            let dst_ptr_id = path_to_class_ptr_id(&lh_path, Some(&func_name));
+            let src_ptr_id = path_to_class_ptr_id(&rh_path, Some(&func_name), None);
+            let dst_ptr_id = path_to_class_ptr_id(&lh_path, Some(&func_name), None);
 
             // Legacy: only when type system has path
             if analysis::is_dsl_class_type(self.tcx(), rh_type) && analysis::is_dsl_class_type(self.tcx(), lh_type) {
@@ -625,14 +635,45 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                 self.acx.rcpta_alias_map.insert(dst_ptr_id.clone(), canonical_src.clone());
             }
         }
+        // rcpta: return place = move(expr) — add ClassPAG Assign from expr to ret so call-ret flow is complete.
+        // e.g. get_and_wrap: ret_place = move local_3 (entity) → Assign local_3 -> ret.
+        // Only for source-level methods (class CG / entry); skip internal funcs (_into_inner, convert::from, etc.).
+        use crate::mir::path::PathEnum;
+        use crate::util::class::ptr_system::path_to_class_ptr_id;
+        if let PathEnum::ReturnValue { func_id } = &lh_path.value {
+            if *func_id == self.fpag.func_id
+                && analysis::extract_dsl_class_from_wrapper(self.tcx(), rh_type, None).is_some()
+            {
+                let func_name = self.rcpta_canonical_func_name();
+                if analysis::is_source_level_context(&func_name) {
+                    let param_slots = Some(1 + self.mir.arg_count);
+                    let src_ptr_id = path_to_class_ptr_id(&rh_path, Some(&func_name), param_slots);
+                    let ret_ptr_id = path_to_class_ptr_id(&lh_path, Some(&func_name), param_slots);
+                    if let Some(inner_ty) = analysis::extract_dsl_class_from_wrapper(self.tcx(), rh_type, None) {
+                        if let Some(class_name) = analysis::class_name_of_dsl_type(self.tcx(), inner_ty) {
+                            use crate::rcpta::ClassPtr;
+                            self.acx.class_pag.get_or_create_ptr(ClassPtr::new_local(
+                                src_ptr_id.clone(),
+                                class_name.clone(),
+                            ));
+                            self.acx.class_pag.get_or_create_ptr(ClassPtr::new_local(
+                                ret_ptr_id.clone(),
+                                class_name,
+                            ));
+                            self.acx.class_pag.add_assign(&src_ptr_id, &ret_ptr_id);
+                        }
+                    }
+                }
+            }
+        }
+
         // rcpta: dst = move option_holder (Option<CRc<T>>) — map copy to base so unwrap() can resolve
         // receiver to the original Option holder and find Option.Some.0 (try_into_subtype's dest).
         if analysis::type_is_option_containing_dsl_class(self.tcx(), lh_type) {
-            let func_ref = self.acx.get_function_reference(self.fpag.func_id);
-            let func_name = func_ref.to_string();
+            let func_name = self.rcpta_canonical_func_name();
             if analysis::is_source_level_context(&func_name) {
                 use crate::util::class::ptr_system::path_to_class_ptr_id;
-                let copy_ptr_id = path_to_class_ptr_id(&lh_path, Some(&func_name));
+                let copy_ptr_id = path_to_class_ptr_id(&lh_path, Some(&func_name), None);
                 self.acx.rcpta_option_copy_to_base_path.insert(copy_ptr_id, rh_path.clone());
             }
         }
@@ -870,12 +911,11 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
             let lh_has_dsl = analysis::extract_dsl_class_from_wrapper(self.tcx(), lh_ty, None).is_some();
             let rh_has_dsl = analysis::extract_dsl_class_from_wrapper(self.tcx(), rh_ty, None).is_some();
             if lh_has_dsl && rh_has_dsl {
-                let func_ref = self.acx.get_function_reference(self.fpag.func_id);
-                let func_name = func_ref.to_string();
+                let func_name = self.rcpta_canonical_func_name();
                 if analysis::is_source_level_context(&func_name) {
                     use crate::util::class::ptr_system::path_to_class_ptr_id;
-                    let ref_ptr_id = path_to_class_ptr_id(&lh_path, Some(&func_name));
-                    let base_ptr_id = path_to_class_ptr_id(&rh_path, Some(&func_name));
+                    let ref_ptr_id = path_to_class_ptr_id(&lh_path, Some(&func_name), None);
+                    let base_ptr_id = path_to_class_ptr_id(&rh_path, Some(&func_name), None);
                     let canonical_base = self.acx.get_canonical_rcpta_ptr(&base_ptr_id);
                     self.acx.rcpta_alias_map.insert(ref_ptr_id.clone(), canonical_base);
                     self.acx.rcpta_ref_ptr_to_base_path.insert(ref_ptr_id, rh_path.clone());
@@ -885,11 +925,10 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
         // rcpta: Ref assignment _tmp = &downcast_to_bird — always map ref to base so Option::unwrap() can
         // resolve receiver &opt to base path (downcast_to_bird) and then Option.Some.0. Without this, unwrap
         // would not find option_inner_path (LHS/RHS are Option<CRc<T>>, not DSL class), so no assign edge.
-        let func_ref = self.acx.get_function_reference(self.fpag.func_id);
-        let func_name = func_ref.to_string();
+        let func_name = self.rcpta_canonical_func_name();
         if analysis::is_source_level_context(&func_name) {
             use crate::util::class::ptr_system::path_to_class_ptr_id;
-            let ref_ptr_id = path_to_class_ptr_id(&lh_path, Some(&func_name));
+            let ref_ptr_id = path_to_class_ptr_id(&lh_path, Some(&func_name), None);
             self.acx.rcpta_ref_ptr_to_base_path.insert(ref_ptr_id, rh_path.clone());
         }
     }
@@ -1234,6 +1273,48 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
         self.transmute_pointers(source_path, source_ptr_type, box_ptr_field, box_ptr_type)
     }
 
+    /// If callee is a DSL class method, push one (caller, callee) edge to pending_class_cg_edges.
+    /// Used when the call was resolved via static dispatch or devirtualization (not vtable blob).
+    fn push_class_cg_edge_if_class_method(&mut self, callee_func_id: crate::mir::function::FuncId) {
+        let caller_name = self.acx.get_function_reference(self.func_id).to_string();
+        let callee_func_ref = self.acx.get_function_reference(callee_func_id);
+        let callee_name = callee_func_ref.to_string();
+        let Some(class_method) = analysis::identify_class_method_with_type_system(
+            &callee_func_ref,
+            &self.acx.class_type_system,
+        ) else {
+            if caller_name.contains("entry_complex_call_chain_demo") || callee_name.contains("get_and_wrap") || callee_name.contains("get_id") {
+                info!(
+                    "rcpta class CG: skip (not identified as class method) caller={} callee={}",
+                    caller_name, callee_name
+                );
+            }
+            return;
+        };
+        let caller_func_ref = self.acx.get_function_reference(self.func_id);
+        let (caller_class, caller_method) = if let Some(caller_cm) =
+            analysis::identify_class_method_with_type_system(&caller_func_ref, &self.acx.class_type_system)
+        {
+            (caller_cm.class_name.clone(), caller_cm.method_name.clone())
+        } else {
+            let n = caller_func_ref.to_string();
+            let simple = if let Some(i) = n.rfind("::") { n[i + 2..].to_string() } else { n };
+            (simple, String::new())
+        };
+        self.acx.pending_class_cg_edges.push((
+            caller_class.clone(),
+            caller_method.clone(),
+            class_method.class_name.clone(),
+            class_method.method_name.clone(),
+            callee_func_id,
+        ));
+        if caller_name.contains("entry_complex_call_chain_demo") {
+            info!(
+                "rcpta class CG: push edge {}::{} -> {}::{}",
+                caller_class, caller_method, class_method.class_name, class_method.method_name
+            );
+        }
+    }
 
     /// Try to resolve a function calls. 
     fn resolve_call(
@@ -1252,17 +1333,299 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
         let destination = self.get_path_for_place(destination);
         debug!("Call func {:?}, generic_args: {:?}", callee_def_id, gen_args);
 
-        // Check if this is a getter/setter method call
+        let caller_name = self.acx.get_function_reference(self.fpag.func_id).to_string();
         let callee_func_id = self.acx.get_func_id(*callee_def_id, gen_args);
+        let callee_name = self.acx.get_function_reference(callee_func_id).to_string();
+        // rcpta diagnostic: log every resolve_call from entry to see which callees we see and which branch we take
+        let from_entry = caller_name.contains("entry_complex_call_chain_demo");
+        if from_entry {
+            let def_path_str = self.tcx().def_path_str(*callee_def_id);
+            let is_vtable = analysis::is_dsl_vtable_call(self.tcx(), *callee_def_id);
+            let is_trait = util::is_trait_method(self.tcx(), *callee_def_id);
+            let devirt = call_graph_builder::try_to_devirtualize(self.tcx(), *callee_def_id, gen_args);
+            info!(
+                "rcpta resolve_call [entry]: callee_func={} def_path={} vtable={} is_trait={} devirt={}",
+                callee_name, def_path_str, is_vtable, is_trait, devirt.is_some()
+            );
+        }
+
+        // Check if this is a getter/setter method call (only when the class actually has that field).
+        // e.g. Entity::get_id is a normal method, not a getter for field "id" — Entity has entity_id, not id.
         let func_ref = self.acx.get_function_reference(callee_func_id);
+        
+        // DEBUG: trace apply_twice resolution
+        if func_ref.to_string().contains("apply_twice") {
+             eprintln!("[rcpta] resolve_call seeing apply_twice: {}", func_ref.to_string());
+             if let Some(cm) = analysis::identify_class_method_with_type_system(&func_ref, &self.acx.class_type_system) {
+                 eprintln!("[rcpta] Identified as class method: {:?}", cm);
+             } else {
+                 eprintln!("[rcpta] NOT identified as class method");
+             }
+        }
+
         if let Some(gs) = analysis::identify_getter_setter(&func_ref) {
-            // Handle getter/setter as class field access
-            self.handle_getter_setter(&gs, &args, &destination, location);
-            // Continue with normal call handling to build call graph
+            // ROBUST CHECK: Generalizable logic to differentiate Field Access (Load/Store) from Method Call.
+            // A getter/setter pattern (get_X/set_X) is only a Field Access if the class actually has field X.
+            let mut is_actual_field = false;
+
+            // 1. Try generic check via TypeSystem (if registered)
+            if self.acx.class_type_system.get_field_index(&gs.class_name, &gs.field_name).is_some() {
+                is_actual_field = true;
+            }
+
+            // 2. Fallback: Check ADT definition of the receiver (The "Universal" way)
+            if !is_actual_field && !args.is_empty() {
+                 let receiver_ty = args[0].try_eval_path_type(self.acx);
+                 // Unwrap references and wrappers to find the underlying DSL class struct
+                 let effective_ty = match receiver_ty.kind() {
+                     TyKind::Ref(_, inner, _) => *inner,
+                     _ => receiver_ty,
+                 };
+                 
+                 let class_ty = if let Some(inner) = analysis::extract_dsl_class_from_wrapper(self.tcx(), effective_ty, None) {
+                     inner
+                 } else {
+                     effective_ty
+                 };
+
+                 // Do NOT set is_actual_field=true or register_field just because receiver class matches:
+                 // that would treat get_and_wrap (field "and_wrap") and get_id (field "id") as getters and
+                 // skip adding them to the class CG. Only set is_actual_field when the ADT actually has that field.
+
+                 if !is_actual_field {
+                     if let Some(adt_def) = class_ty.ty_adt_def() {
+                         // Check if any field matches gs.field_name (or _field_name)
+                         is_actual_field = adt_def.all_fields().any(|f| {
+                             let fname = f.name.as_str();
+                             fname == gs.field_name || fname == format!("_{}", gs.field_name)
+                         });
+                         // 2b. Wrapper peeling: DSL wrapper structs often have tuple-like fields ("0", "1").
+                         // The real field (e.g. "item") lives in the inner Data type. Check field 0's type.
+                         if !is_actual_field && adt_def.is_struct() {
+                             let variant = adt_def.variants().iter().next();
+                             if let Some(v) = variant {
+                                 let tuple_like = v.fields.len() <= 5
+                                     && v.fields.iter().all(|f| {
+                                         let n = f.name.as_str();
+                                         !n.is_empty() && n.chars().all(|c| c.is_ascii_digit())
+                                     });
+                                 if tuple_like && !v.fields.is_empty() {
+                                     let field_0_ty = type_util::get_field_type(self.tcx(), class_ty, 0);
+                                     if let Some(inner_ty) = analysis::extract_dsl_class_from_wrapper(self.tcx(), field_0_ty, None) {
+                                         if let TyKind::Adt(inner_adt, _) = inner_ty.kind() {
+                                             is_actual_field = inner_adt.all_fields().any(|f| {
+                                                 let fname = f.name.as_str();
+                                                 fname == gs.field_name || fname == format!("_{}", gs.field_name)
+                                             });
+                                         }
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                 }
+            }
+            
+            if is_actual_field {
+                self.handle_getter_setter(&gs, &args, &destination, location);
+                // Return early so we DON'T add a static dispatch edge or treat it as a method call
+                return;
+            }
+            // If not actual field (e.g. get_id() but no field id), fall through to standard class method handling.
+            if (caller_name.contains("get_and_wrap") || caller_name.contains("chain_with")) && gs.field_name == "item" {
+                info!(
+                    "rcpta getter NOT treated as field (is_actual_field=false): caller={} callee getter {}.{}",
+                    caller_name, gs.class_name, gs.field_name
+                );
+            }
+        }
+
+        // rcpta: GetSet::cell_option_set / cell_option_get (DSL late field store/load in callee body).
+        // set_item body calls cell_option_set(cell_ref, value); get_item body calls cell_option_get(cell_ref).
+        // Extract (base_path, field_index) from cell path and add ClassPAG Store/Load.
+        // Use canonical name so ptr ids (e.g. get_and_wrap::local_2) match visit_assign and avoid duplicate Pointers.
+        let func_ref_caller = self.acx.get_function_reference(self.fpag.func_id);
+        let func_name = analysis::canonical_class_method_name(&func_ref_caller.to_string());
+        let param_slots = Some(1 + self.mir.arg_count);
+        if analysis::is_getset_cell_option_set(self.tcx(), *callee_def_id) && args.len() >= 2
+            && analysis::is_source_level_context(&func_name)
+        {
+            let cell_path = &args[0];
+            let value_path = &args[1];
+            // Resolve ref: in set_item, first arg is local _4 = &((*_5).1); resolve to base path for projection.
+            use crate::util::class::ptr_system::path_to_class_ptr_id as path_to_ptr_id;
+            let cell_ptr_id = path_to_ptr_id(cell_path, Some(&func_name), param_slots);
+            let path_to_use = self.acx.rcpta_ref_ptr_to_base_path.get(&cell_ptr_id).cloned().unwrap_or_else(|| cell_path.clone());
+            if let PathEnum::QualifiedPath { base: _, projection } = &path_to_use.value {
+                if let Some(PathSelector::Field(field_index)) = projection.last() {
+                    let base_path = Path::truncate_projection_elems(&path_to_use, projection.len() - 1);
+                    let base_ty = base_path.try_eval_path_type(self.acx);
+                    let effective_ty = match base_ty.kind() {
+                        TyKind::Ref(_, inner, _) => *inner,
+                        _ => base_ty,
+                    };
+                    if let Some(class_name) = analysis::class_name_of_dsl_type(self.tcx(), effective_ty) {
+                        // Register real field when we're inside the setter body (e.g. set_item) so Holder::item exists without ever registering Entity::id.
+                        if let Some(gs) = analysis::identify_getter_setter(&func_ref_caller) {
+                            if gs.class_name == class_name {
+                                self.acx.class_type_system.register_field_with_index(
+                                    &class_name,
+                                    &gs.field_name,
+                                    *field_index,
+                                    None,
+                                );
+                            }
+                        }
+                        if let Some(field_name) = self.acx.class_type_system.get_field_name_by_index(&class_name, *field_index) {
+                            let base_ptr_id = path_to_ptr_id(&base_path, Some(&func_name), param_slots);
+                            let value_ptr_id = path_to_ptr_id(value_path, Some(&func_name), param_slots);
+                            let field_class = self.acx.class_type_system.get_field_class_type(&class_name, &field_name).unwrap_or_else(|| class_name.clone());
+                            self.acx.class_pag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(base_ptr_id.clone(), class_name.clone()));
+                            self.acx.class_pag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(value_ptr_id.clone(), field_class.clone()));
+                            // Store recorded as constraint (base, field, src); obj-level store edges materialized during PTS solve
+                            self.acx.class_pag.add_store(&base_ptr_id, &field_name, &value_ptr_id);
+                            info!(
+                                "rcpta ClassPAG: add_store (cell_option_set) func={} base={} field={}",
+                                func_name, base_ptr_id, field_name
+                            );
+                        }
+                    }
+                }
+            }
+        } else if analysis::is_getset_cell_option_get(self.tcx(), *callee_def_id) && !args.is_empty()
+            && analysis::is_source_level_context(&func_name)
+        {
+            let cell_path = &args[0];
+            if let PathEnum::QualifiedPath { base: _, projection } = &cell_path.value {
+                if let Some(PathSelector::Field(field_index)) = projection.last() {
+                    let base_path = Path::truncate_projection_elems(cell_path, projection.len() - 1);
+                    let base_ty = base_path.try_eval_path_type(self.acx);
+                    let effective_ty = match base_ty.kind() {
+                        TyKind::Ref(_, inner, _) => *inner,
+                        _ => base_ty,
+                    };
+                    if let Some(class_name) = analysis::class_name_of_dsl_type(self.tcx(), effective_ty) {
+                        // Register real field when we're inside the getter body (e.g. get_item) so Holder::item exists.
+                        if let Some(gs) = analysis::identify_getter_setter(&func_ref_caller) {
+                            if gs.class_name == class_name {
+                                self.acx.class_type_system.register_field_with_index(
+                                    &class_name,
+                                    &gs.field_name,
+                                    *field_index,
+                                    None,
+                                );
+                            }
+                        }
+                        if let Some(field_name) = self.acx.class_type_system.get_field_name_by_index(&class_name, *field_index) {
+                            use crate::util::class::ptr_system::path_to_class_ptr_id;
+                            let base_ptr_id = path_to_class_ptr_id(&base_path, Some(&func_name), param_slots);
+                            let dst_ptr_id = path_to_class_ptr_id(&destination, Some(&func_name), param_slots);
+                            let dst_class = self.acx.class_type_system.get_field_class_type(&class_name, &field_name).unwrap_or_else(|| class_name.clone());
+                            self.acx.class_pag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(base_ptr_id.clone(), class_name.clone()));
+                            self.acx.class_pag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(dst_ptr_id.clone(), dst_class.clone()));
+                            // Load recorded as constraint (base, field, dst); obj-level load edges materialized during PTS solve
+                            self.acx.class_pag.add_load(&base_ptr_id, &field_name, &dst_ptr_id);
+                            info!(
+                                "rcpta ClassPAG: add_load (cell_option_get) func={} base={} field={}",
+                                func_name, base_ptr_id, field_name
+                            );
+                        }
+                    }
+                }
+            }
         }
         
+        // rcpta: Prioritize checking for Field Access (Getter/Setter) to correctly distinguish
+        // simple Load/Store from Method Calls (even if the method looks like a getter).
+        if let Some(gs) = analysis::identify_getter_setter(&func_ref) {
+            // ROBUST CHECK: Generalizable logic to differentiate Field Access (Load/Store) from Method Call.
+            // A getter/setter pattern (get_X/set_X) is only a Field Access if the class actually has field X.
+            let callee_str = func_ref.to_string();
+            let is_get_and_wrap_or_get_id = callee_str.contains("get_and_wrap") || callee_str.contains("get_id");
+            let mut is_actual_field = self.acx.class_type_system.get_field_index(&gs.class_name, &gs.field_name).is_some();
+            if is_get_and_wrap_or_get_id {
+                eprintln!(
+                    "[rcpta] getter branch: callee get_and_wrap/get_id class={} field={} is_actual_field(initial)={}",
+                    gs.class_name, gs.field_name, is_actual_field
+                );
+            }
+
+            // Fallback: Check ADT definition of the receiver (The "Universal" way).
+            // Do NOT pre-register field or set is_actual_field=true just because receiver class matches:
+            // that would treat get_and_wrap (field "and_wrap") and get_id (field "id") as getters and
+            // skip adding them to the class CG when the class has no such field.
+            if !is_actual_field && !args.is_empty() {
+                 let receiver_ty = args[0].try_eval_path_type(self.acx);
+                 let effective_ty = match receiver_ty.kind() {
+                     TyKind::Ref(_, inner, _) => *inner,
+                     _ => receiver_ty,
+                 };
+                 let class_ty = if let Some(inner) = analysis::extract_dsl_class_from_wrapper(self.tcx(), effective_ty, None) {
+                     inner
+                 } else {
+                     effective_ty
+                 };
+
+                 if !is_actual_field {
+                     if let Some(adt_def) = class_ty.ty_adt_def() {
+                     let fields: Vec<_> = adt_def.all_fields().map(|f| f.name.as_str().to_string()).collect();
+                     if gs.field_name == "item" || gs.field_name == "id" {
+                         eprintln!("[rcpta] Resolve GS Top: {}::{}", gs.class_name, gs.field_name);
+                         eprintln!("[rcpta]   Fields: {:?}", fields);
+                     }
+
+                     // Check direct fields
+                     is_actual_field = fields.iter().any(|fname| {
+                         fname == &gs.field_name || fname == &format!("_{}", gs.field_name)
+                     });
+
+                     // Fallback: If not found, check if it's a wrapper (has field "0" or "data")
+                     // The DSL macro expands `pub class Holder` into a wrapper struct `Holder` containing `data: ManuallyDrop<Rc<Dyn<Holder::Data>>>` (or similar).
+                     // We need to peek into this data field to find the actual user fields.
+                     if !is_actual_field && adt_def.is_struct() {
+                         // Check field "0" (tuple struct wrapper) or "data" (named struct wrapper)
+                         let candidate_idx = fields.iter().position(|f| f == "0" || f == "data");
+                         
+                         if let Some(idx) = candidate_idx {
+                             let field_ty = type_util::get_field_type(self.tcx(), class_ty, idx);
+                             // Unwrap wrappers (ManuallyDrop, Rc, Dyn, etc.) to get the inner data struct type
+                             if let Some(inner_ty) = analysis::extract_dsl_class_from_wrapper(self.tcx(), field_ty, None) {
+                                 if let Some(inner_adt) = inner_ty.ty_adt_def() {
+                                     let inner_fields: Vec<_> = inner_adt.all_fields().map(|f| f.name.as_str().to_string()).collect();
+                                     if gs.field_name == "item" || gs.field_name == "id" {
+                                         eprintln!("[rcpta]   Inner Fields (idx {}): {:?}", idx, inner_fields);
+                                     }
+                                     is_actual_field = inner_fields.iter().any(|fname| {
+                                         fname == &gs.field_name || fname == &format!("_{}", gs.field_name)
+                                     });
+                                 }
+                             }
+                         }
+                     }
+                     }
+                 }
+            }
+            
+            if is_actual_field {
+                if is_get_and_wrap_or_get_id {
+                    eprintln!(
+                        "[rcpta] getter branch: TREATING AS GETTER (returning early) class={} field={}",
+                        gs.class_name, gs.field_name
+                    );
+                }
+                if gs.field_name == "item" {
+                    eprintln!("[rcpta] Inline set_item!");
+                }
+                self.handle_getter_setter(&gs, &args, &destination, location);
+                // Return early so we DON'T add a static dispatch edge or treat it as a method call
+                return;
+            }
+            // If not actual field (e.g. get_id() but no field id), fall through to standard class method handling.
+        }
+
         // Check if this is a class method call (not getter/setter, not constructor)
-        if let Some(class_method) = analysis::identify_class_method(&func_ref) {
+        let class_method_opt = analysis::identify_class_method_with_type_system(&func_ref, &self.acx.class_type_system);
+        if let Some(class_method) = class_method_opt {
             // Register the method in the type system
             self.acx.class_type_system.register_method(
                 &class_method.class_name,
@@ -1276,36 +1639,51 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                 callee_func_name.clone(),
             );
 
-            // Record to class call graph
-            // If caller is a class method, record class method -> class method edge
-            // If caller is not a class method (e.g., main), record as "main" -> class method
-            let caller_func_ref = self.acx.get_function_reference(self.func_id);
-            if let Some(caller_class_method) = analysis::identify_class_method(&caller_func_ref) {
-                // Both caller and callee are class methods
-                self.acx.class_call_graph.add_call_edge(
-                    &caller_class_method.class_name,
-                    &caller_class_method.method_name,
-                    &class_method.class_name,
-                    &class_method.method_name,
-                );
+            // Record to class call graph only for ordinary method calls (flush after build_all_callee_pags).
+            // rcpta: use resolved (devirtualized) callee for the CG edge so we record Holder::get_and_wrap -> Entity::get_id
+            // instead of -> Identifiable::get_id (trait); flush then sees a concrete callee and the edge is preserved.
+            let (resolved_def_id, resolved_args) = match call_graph_builder::try_to_devirtualize(
+                self.tcx(), *callee_def_id, gen_args,
+            ) {
+                Some((def_id, substs)) => (def_id, substs),
+                None => (*callee_def_id, gen_args),
+            };
+            let resolved_callee_func_id = self.acx.get_func_id(resolved_def_id, resolved_args);
+            let (cg_callee_class, cg_callee_method) = if resolved_def_id != *callee_def_id {
+                analysis::identify_class_method_with_type_system(
+                    &self.acx.get_function_reference(resolved_callee_func_id),
+                    &self.acx.class_type_system,
+                )
+                .map(|cm| (cm.class_name, cm.method_name))
+                .unwrap_or_else(|| (class_method.class_name.clone(), class_method.method_name.clone()))
             } else {
-                // Caller is not a class method (e.g., main function)
-                // Use function name as caller identifier
+                (class_method.class_name.clone(), class_method.method_name.clone())
+            };
+            let caller_func_ref = self.acx.get_function_reference(self.func_id);
+            if let Some(caller_class_method) = analysis::identify_class_method_with_type_system(&caller_func_ref, &self.acx.class_type_system) {
+                self.acx.pending_class_cg_edges.push((
+                    caller_class_method.class_name.clone(),
+                    caller_class_method.method_name.clone(),
+                    cg_callee_class,
+                    cg_callee_method,
+                    resolved_callee_func_id,
+                ));
+            } else {
                 let caller_name = caller_func_ref.to_string();
-                // Extract a simple name (e.g., "main" from "simple_method_call::main")
                 let caller_simple_name = if let Some(last_colon) = caller_name.rfind("::") {
-                    &caller_name[last_colon + 2..]
+                    caller_name[last_colon + 2..].to_string()
                 } else {
-                    &caller_name
+                    caller_name.clone()
                 };
-                self.acx.class_call_graph.add_call_edge(
+                self.acx.pending_class_cg_edges.push((
                     caller_simple_name,
-                    "",  // Empty method name for non-class callers
-                    &class_method.class_name,
-                    &class_method.method_name,
-                );
+                    String::new(),
+                    cg_callee_class,
+                    cg_callee_method,
+                    resolved_callee_func_id,
+                ));
             }
-            
+
             // Mark self argument (first argument) as class reference if it's a class type
             if !args.is_empty() {
                 let self_arg = &args[0];
@@ -1333,10 +1711,28 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
             }
 
             // rcpta: ClassPAG CallArg / CallRet for cross-function pointer flow (source-level only).
-            let caller_func_name = caller_func_ref.to_string();
-            if analysis::is_source_level_context(&caller_func_name) {
+            // Use canonical name so impl wrapper and body share same ptr ids when used as caller (actual_ptr_id, call_site).
+            let caller_func_name = analysis::canonical_class_method_name(&caller_func_ref.to_string());
+            let callee_func_name = analysis::canonical_class_method_name(&func_ref.to_string());
+            // Caller class/method from the same identify_class_method logic (for robust same-method and impl->trait detection).
+            let caller_cm_opt = analysis::identify_class_method_with_type_system(&caller_func_ref, &self.acx.class_type_system);
+            let same_method_name = caller_cm_opt.as_ref().map(|c| c.method_name.as_str()) == Some(class_method.method_name.as_str());
+            // tcx.trait_of_item(callee_def_id) can be None for some trait default/impl items, so add fallback.
+            let is_trait_callee = util::is_trait_method(self.tcx(), *callee_def_id);
+            let callee_is_trait_like = is_trait_callee
+                || (same_method_name
+                    && caller_cm_opt.is_some()
+                    && caller_cm_opt.as_ref().unwrap().class_name != class_method.class_name
+                    && callee_func_name.contains("interfaces::"));
+            // Skip CallArg/CallRet when caller and callee are the same source-level method (impl wrapper -> data body).
+            if caller_func_name == callee_func_name {
+                // (no-op; skip edges for same method)
+            } else if same_method_name && callee_is_trait_like {
+                // Impl wrapper calling the trait method it overrides (e.g. Entity::{impl#0}::get_id -> Identifiable::get_id).
+                // In MIR the dynamic-dispatch impl body is "call trait::get_id"; at source level the real body is
+                // in data::get_id (self.get_entity_id()). Do not add CallArg/CallRet for this shim.
+            } else if analysis::is_source_level_context(&caller_func_name) {
                 use crate::util::class::ptr_system::path_to_class_ptr_id;
-                let callee_func_name = func_ref.to_string();
                 let call_site_id: crate::rcpta::CallSiteId = format!(
                     "{}:bb{}[{}]",
                     caller_func_name,
@@ -1363,16 +1759,16 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                     let actual_ptr_id = if arg_idx == 0 {
                         match arg_ty.kind() {
                             TyKind::Ref(..) => {
-                                let receiver_ptr_id = path_to_class_ptr_id(arg_path, Some(&caller_func_name));
+                                let receiver_ptr_id = path_to_class_ptr_id(arg_path, Some(&caller_func_name), None);
                                 self.acx.rcpta_ref_ptr_to_base_path
                                     .get(&receiver_ptr_id)
-                                    .map(|base_path| path_to_class_ptr_id(base_path, Some(&caller_func_name)))
+                                    .map(|base_path| path_to_class_ptr_id(base_path, Some(&caller_func_name), None))
                                     .unwrap_or_else(|| receiver_ptr_id)
                             }
-                            _ => path_to_class_ptr_id(arg_path, Some(&caller_func_name)),
+                            _ => path_to_class_ptr_id(arg_path, Some(&caller_func_name), None),
                         }
                     } else {
-                        path_to_class_ptr_id(arg_path, Some(&caller_func_name))
+                        path_to_class_ptr_id(arg_path, Some(&caller_func_name), None)
                     };
                     // MIR uses 1-based parameter ordinals (0 = return place, 1 = first param/self).
                     let formal_ptr_id = format!("{}::param_{}", callee_func_name, arg_idx + 1);
@@ -1383,10 +1779,14 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                     let formal_ptr = crate::rcpta::ClassPtr::new_local(formal_ptr_id.clone(), class_ty);
                     self.acx.class_pag.get_or_create_ptr(formal_ptr);
                     self.acx.class_pag.add_call_arg(&call_site_id, arg_idx, &actual_ptr_id, &formal_ptr_id);
+                    
+                    if caller_func_name.contains("apply_twice") {
+                        eprintln!("[rcpta] Added CallArg in apply_twice: {} -> {}", actual_ptr_id, formal_ptr_id);
+                    }
                 }
                 // CallRet: formal_ret → actual_ret when return type is class
                 if analysis::is_dsl_class_type(self.tcx(), dest_type) {
-                    let actual_ret_id = path_to_class_ptr_id(&destination, Some(&caller_func_name));
+                    let actual_ret_id = path_to_class_ptr_id(&destination, Some(&caller_func_name), None);
                     let formal_ret_id = format!("{}::ret", callee_func_name);
                     let ret_ptr = crate::rcpta::ClassPtr::new_local(formal_ret_id.clone(), class_method.class_name.clone());
                     self.acx.class_pag.get_or_create_ptr(ret_ptr);
@@ -1396,7 +1796,91 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
             
             debug!("Class method call: {}.{} at {:?}", 
                    class_method.class_name, class_method.method_name, location);
+            info!(
+                "rcpta: add_static_dispatch_callsite callee={}.{} func={}",
+                class_method.class_name,
+                class_method.method_name,
+                callee_func_name
+            );
+            // rcpta: Ensure callee is in call graph so its body is analyzed (Tai-e style iterative analysis).
+            // (resolved_* already computed above for pending_class_cg_edges.)
+            let callsite = self.new_callsite(self.func_id, location, args.clone(), destination.clone());
+            self.fpag.add_static_dispatch_callsite(callsite.clone(), resolved_callee_func_id);
+            // If devirtualization yielded a different def_id, also add the original callee so we try both:
+            // the resolved one (concrete impl with MIR) and the original (trait method; build_func_pag may skip if no MIR).
+            if resolved_def_id != *callee_def_id {
+                self.fpag.add_static_dispatch_callsite(callsite, callee_func_id);
+            }
+            
+            // DEBUG: track added static dispatch
+            if self.acx.get_function_reference(resolved_callee_func_id).to_string().contains("apply_twice") {
+                eprintln!("[rcpta] Added static dispatch to apply_twice in func {:?}. Total callsites: {}", self.fpag.func_id, self.fpag.static_dispatch_callsites.len());
+            }
             // Continue with normal call handling to build call graph
+        } else if let Some(gs) = analysis::identify_getter_setter(&func_ref) {
+            // Generalizable Logic: Distinguish Field Access (Load/Store) from Method Call.
+            // Check if the receiver type's struct definition actually has the field `gs.field_name`.
+            
+            let mut is_actual_field = self.acx.class_type_system.get_field_index(&gs.class_name, &gs.field_name).is_some();
+            
+            if !is_actual_field && !args.is_empty() {
+                // Fallback: Check receiver type (args[0]) for the field
+                let receiver_ty = args[0].try_eval_path_type(self.acx);
+                let effective_ty = match receiver_ty.kind() {
+                    TyKind::Ref(_, inner, _) => *inner,
+                    _ => receiver_ty,
+                };
+                // rcpta: Pre-register when receiver's DSL class matches (same as first getter block; normalize _Holder vs Holder)
+                if let Some(receiver_class) = analysis::class_name_of_dsl_type(self.tcx(), effective_ty) {
+                    if receiver_class.trim_start_matches('_') == gs.class_name.trim_start_matches('_') {
+                        self.acx.class_type_system.register_field(
+                            &gs.class_name,
+                            &gs.field_name,
+                            None,
+                        );
+                        is_actual_field = true;
+                    }
+                }
+                // If it's a wrapper (CRc<T>), extract inner
+                let class_ty = if let Some(inner) = analysis::extract_dsl_class_from_wrapper(self.tcx(), effective_ty, None) {
+                    inner
+                } else {
+                    effective_ty
+                };
+
+                // DEBUG: Trace getter/setter resolution
+                if gs.field_name == "item" || gs.field_name == "id" {
+                    eprintln!("[rcpta] Resolve GS: {}::{} (is_getter={})", gs.class_name, gs.field_name, gs.is_getter);
+                    eprintln!("[rcpta]   Receiver Type: {:?}", receiver_ty);
+                    eprintln!("[rcpta]   Effective Type: {:?}", effective_ty);
+                    eprintln!("[rcpta]   Class Type: {:?}", class_ty);
+                }
+
+                if !is_actual_field {
+                if let Some(adt_def) = class_ty.ty_adt_def() {
+                    let fields: Vec<_> = adt_def.all_fields().map(|f| f.name.as_str().to_string()).collect();
+                    if gs.field_name == "item" || gs.field_name == "id" {
+                        eprintln!("[rcpta]   AdtDef Fields: {:?}", fields);
+                    }
+
+                    // Check all fields (including _field form generated by macro)
+                    is_actual_field = fields.iter().any(|fname| {
+                        fname == &gs.field_name || fname == &format!("_{}", gs.field_name)
+                    });
+                } else if gs.field_name == "item" || gs.field_name == "id" {
+                    eprintln!("[rcpta]   No AdtDef found for class_ty!");
+                }
+                }
+            }
+
+            if gs.field_name == "item" || gs.field_name == "id" {
+                eprintln!("[rcpta]   Decision: is_actual_field = {}", is_actual_field);
+            }
+
+            if is_actual_field {
+                // Actual Field -> Inline Load/Store (no Call in PAG)
+                self.handle_getter_setter(&gs, &args, &destination, location);
+            }
         }
 
         // rcpta: ClassPAG design for clone and cast (source-code aligned, MIR-compressed):
@@ -1430,11 +1914,11 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
             if let Some(dest_class_ty) = analysis::extract_dsl_class_from_wrapper(self.tcx(), return_ty, None) {
                 if let Some(class_name) = analysis::class_name_of_dsl_type(self.tcx(), dest_class_ty) {
                     let caller_func_ref = self.acx.get_function_reference(self.func_id);
-                    let func_name = caller_func_ref.to_string();
+                    let func_name = analysis::canonical_class_method_name(&caller_func_ref.to_string());
                     if analysis::is_source_level_context(&func_name) {
                         use crate::mir::path::{Path, PathSelector};
                         use crate::util::class::ptr_system::path_to_class_ptr_id;
-                        let receiver_ptr_id = path_to_class_ptr_id(&args[0], Some(&func_name));
+                        let receiver_ptr_id = path_to_class_ptr_id(&args[0], Some(&func_name), None);
                         let receiver_ty = args[0].try_eval_path_type(self.acx);
                         // Resolve receiver to the Option holder: &opt -> opt via ref_ptr_to_base_path;
                         // opt_copy (move) -> opt via option_copy_to_base_path so we use the same Option.Some.0
@@ -1449,8 +1933,8 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                             vec![PathSelector::Downcast(1), PathSelector::Field(0)],
                         );
                         self.acx.set_path_rustc_type(option_inner_path.clone(), dest_class_ty);
-                        let source_ptr_id = path_to_class_ptr_id(&option_inner_path, Some(&func_name));
-                        let dest_ptr_id = path_to_class_ptr_id(&destination, Some(&func_name));
+                        let source_ptr_id = path_to_class_ptr_id(&option_inner_path, Some(&func_name), None);
+                        let dest_ptr_id = path_to_class_ptr_id(&destination, Some(&func_name), None);
                         let canonical_source = self.acx.get_canonical_rcpta_ptr(&source_ptr_id);
                         use crate::rcpta::ClassPtr;
                         let source_cptr = ClassPtr::new_local(canonical_source.clone(), class_name.clone());
@@ -1470,7 +1954,7 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
             || analysis::is_impl_of_core_clone_trait(self.tcx(), *callee_def_id);
         if is_clone_call && !args.is_empty() {
             let caller_func_ref = self.acx.get_function_reference(self.func_id);
-            let func_name = caller_func_ref.to_string();
+            let func_name = analysis::canonical_class_method_name(&caller_func_ref.to_string());
             if analysis::is_source_level_context(&func_name) {
                 let receiver_ty = args[0].try_eval_path_type(self.acx);
                 let dest_ty = destination.try_eval_path_type(self.acx);
@@ -1478,8 +1962,8 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                 let dest_has_dsl = analysis::extract_dsl_class_from_wrapper(self.tcx(), dest_ty, None).is_some();
                 if receiver_has_dsl && dest_has_dsl {
                     use crate::util::class::ptr_system::path_to_class_ptr_id;
-                    let receiver_ptr_id = path_to_class_ptr_id(&args[0], Some(&func_name));
-                    let dest_ptr_id = path_to_class_ptr_id(&destination, Some(&func_name));
+                    let receiver_ptr_id = path_to_class_ptr_id(&args[0], Some(&func_name), None);
+                    let dest_ptr_id = path_to_class_ptr_id(&destination, Some(&func_name), None);
                     let canonical_receiver = self.acx.get_canonical_rcpta_ptr(&receiver_ptr_id);
                     // rcpta: do NOT insert clone dest -> canonical; clone result stays as its own ptr so
                     // "eagle cast to bird" is Cast(clone_result -> bird), and "bird cast to animal" uses
@@ -1526,17 +2010,96 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
             return;
         }
 
+        // rcpta: DSL vtable call (e.g. in get_and_wrap we only see Call to vtable, not to get_item).
+        // Resolve to all methods of the class and add static_dispatch so build_all_callee_pags builds their PAG.
+        if analysis::is_dsl_vtable_call(self.tcx(), *callee_def_id) {
+            if let Some(vtable_ty) = gen_args.types().next() {
+                let class_ty = analysis::extract_dsl_class_from_wrapper(self.tcx(), vtable_ty, None).unwrap_or(vtable_ty);
+                if let Some(class_name) = analysis::class_name_of_dsl_type(self.tcx(), class_ty) {
+                    let class_name_norm = class_name.trim_start_matches('_');
+                    let (func_names, method_names): (Vec<String>, Vec<String>) = self.acx.class_type_system
+                        .get_class(class_name_norm)
+                        .or_else(|| self.acx.class_type_system.get_class(&class_name))
+                        .map(|c| (
+                            c.method_impls.values().cloned().collect(),
+                            c.methods.iter().cloned().collect(),
+                        ))
+                        .unwrap_or_default();
+                    let mut callee_ids = std::collections::HashSet::new();
+                    for func_name in &func_names {
+                        if let Some(fid) = self.acx.try_get_func_id_by_name(func_name) {
+                            callee_ids.insert(fid);
+                        }
+                    }
+                    for method_name in &method_names {
+                        for fid in self.acx.try_get_func_ids_for_class_method(class_name_norm, method_name) {
+                            callee_ids.insert(fid);
+                        }
+                    }
+                    if callee_ids.is_empty() {
+                        let path_prefix = match class_ty.kind() {
+                            TyKind::Adt(adt_def, _) => self.tcx().def_path_str(adt_def.did()),
+                            _ => String::new(),
+                        };
+                        if !path_prefix.is_empty() {
+                            for fid in self.acx.try_get_func_ids_by_prefix(&path_prefix) {
+                                callee_ids.insert(fid);
+                            }
+                        }
+                    }
+                    // rcpta: one func PAG per source-level method. Deduplicate by (class_name, method_name),
+                    // preferring the FuncId that has MIR so we only build body once.
+                    let mut canonical: std::collections::HashMap<(String, String), FuncId> = std::collections::HashMap::new();
+                    for fid in callee_ids {
+                        let name = self.acx.get_function_reference(fid).to_string();
+                        let Some(cname) = analysis::extract_class_name_from_func(&name) else { continue };
+                        let Some(mname) = analysis::extract_method_name_from_func(&name) else { continue };
+                        let key = (cname.trim_start_matches('_').to_string(), mname);
+                        let has_mir = self.tcx().is_mir_available(self.acx.get_function_reference(fid).def_id);
+                        let should_insert = match canonical.get(&key) {
+                            None => true,
+                            Some(&existing_fid) => {
+                                let existing_has_mir = self.tcx().is_mir_available(self.acx.get_function_reference(existing_fid).def_id);
+                                has_mir && !existing_has_mir
+                            }
+                        };
+                        if should_insert {
+                            canonical.insert(key, fid);
+                        }
+                    }
+                    // Do NOT push pending_class_cg_edges here: at this call site we only know it's a
+                    // vtable call to the class, not which method. Adding edges to all methods would
+                    // create false edges (e.g. describe -> apply_twice, chain_with, ...).
+                    let n_callees = canonical.len();
+                    if n_callees > 0 {
+                        let callsite = self.new_callsite(self.func_id, location, args.clone(), destination.clone());
+                        for callee_func_id in canonical.values() {
+                            self.fpag.add_static_dispatch_callsite(callsite.clone(), *callee_func_id);
+                        }
+                        info!(
+                            "rcpta vtable resolved: {} -> {} callees (class {}, deduped by method)",
+                            self.acx.get_function_reference(self.fpag.func_id).to_string(),
+                            n_callees,
+                            class_name_norm
+                        );
+                        return;
+                    }
+                }
+            }
+        }
+
         if !util::is_trait_method(self.tcx(), *callee_def_id)
         {
             // Static functions or methods or associated functions not declared on a trait.
             let callsite = self.new_callsite(self.func_id, location, args, destination);
             let callee_func_id = self.acx.get_func_id(*callee_def_id, gen_args);
-            self.fpag.add_static_dispatch_callsite(callsite, callee_func_id);
+            self.fpag.add_static_dispatch_callsite(callsite.clone(), callee_func_id);
+            self.push_class_cg_edge_if_class_method(callee_func_id);
         } else if let Some((callee_def_id, callee_substs)) =
             call_graph_builder::try_to_devirtualize(self.tcx(), *callee_def_id, gen_args)
         {
-            // Methods or associated functions declared on a trait.
-            // The called instance can be resolved at compile time.
+            // Methods or associated functions declared on a trait (e.g. Identifiable::get_id).
+            // The called instance can be resolved at compile time to a concrete impl (e.g. Entity::get_id).
             let callsite = self.new_callsite(self.func_id, location, args, destination);
             debug!(
                 "Devirtualize to func {:?}, substs: {:?}",
@@ -1544,6 +2107,7 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
             );
             let callee_func_id = self.acx.get_func_id(callee_def_id, callee_substs);
             self.fpag.add_static_dispatch_callsite(callsite, callee_func_id);
+            self.push_class_cg_edge_if_class_method(callee_func_id);
         } else if util::is_dynamic_call(self.tcx(), *callee_def_id, gen_args) {
             // trait method calls where the first argument is of dynamic type
             let receiver = args[0].clone();
@@ -2372,10 +2936,10 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
 
         // Shared for rcpta ClassPAG load/store: base pointer id (receiver)
         // Canonicalize so the same source-level holder (e.g. holder_1) gets one ptr_id (local_3) for both set_item and get_item.
-        let func_ref = self.acx.get_function_reference(self.fpag.func_id);
-        let func_name = func_ref.to_string();
+        let func_name = self.rcpta_canonical_func_name();
         let base_path_canonical = self.canonicalize_path_for_class_pag(&args[0]);
-        let base_ptr_id = crate::util::class::ptr_system::path_to_class_ptr_id(&base_path_canonical, Some(&func_name));
+        let param_slots = Some(1 + self.mir.arg_count);
+        let base_ptr_id = crate::util::class::ptr_system::path_to_class_ptr_id(&base_path_canonical, Some(&func_name), param_slots);
 
         // Get the container reference (self parameter)
         let self_ref = args[0].clone();
@@ -2407,16 +2971,15 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                 
                 // ===== Class Pointer System Integration =====
                 // Propagate points-to from field to destination (load operation)
-                let func_ref = self.acx.get_function_reference(self.fpag.func_id);
-                let func_name = func_ref.to_string();
+                let func_name = self.rcpta_canonical_func_name();
                 use crate::util::class::ptr_system::{ClassPtr, path_to_class_ptr_id};
                 
-                let field_ptr_id = path_to_class_ptr_id(&field_path, Some(&func_name));
-                let dst_ptr_id = path_to_class_ptr_id(&destination, Some(&func_name));
+                let field_ptr_id = path_to_class_ptr_id(&field_path, Some(&func_name), param_slots);
+                let dst_ptr_id = path_to_class_ptr_id(&destination, Some(&func_name), param_slots);
                 
                 // Create/get pointers
                 let field_ptr = ClassPtr::new_field(
-                    path_to_class_ptr_id(&args[0], Some(&func_name)), // base
+                    path_to_class_ptr_id(&args[0], Some(&func_name), param_slots), // base
                     gs.field_name.clone(),
                     field_class_type.clone()
                 );
@@ -2430,18 +2993,29 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
             }
 
             // rcpta ClassPAG: Load edge base.field -> dst (see TAIE InstanceLoad) — only in source-level context
-            if analysis::is_source_level_context(&func_name) {
-                let dst_ptr_id = crate::util::class::ptr_system::path_to_class_ptr_id(destination, Some(&func_name));
+            let source_level = analysis::is_source_level_context(&func_name);
+            if source_level {
+                let dst_ptr_id = crate::util::class::ptr_system::path_to_class_ptr_id(destination, Some(&func_name), param_slots);
                 let dst_class_type = self.acx.class_type_system
                     .get_class(&gs.class_name)
                     .and_then(|c| c.get_field_class_type(&gs.field_name))
                     .cloned()
                     .unwrap_or_else(|| gs.class_name.clone());
                 let base_cptr = crate::rcpta::ClassPtr::new_local(base_ptr_id.clone(), gs.class_name.clone());
-                let dst_cptr = crate::rcpta::ClassPtr::new_local(dst_ptr_id.clone(), dst_class_type);
+                let dst_cptr = crate::rcpta::ClassPtr::new_local(dst_ptr_id.clone(), dst_class_type.clone());
                 self.acx.class_pag.get_or_create_ptr(base_cptr);
                 self.acx.class_pag.get_or_create_ptr(dst_cptr);
+                // Load as constraint; obj-level edges materialized during PTS solve
                 self.acx.class_pag.add_load(&base_ptr_id, &gs.field_name, &dst_ptr_id);
+                info!(
+                    "rcpta ClassPAG: add_load in callee func={} base={} field={} dst={}",
+                    func_name, base_ptr_id, gs.field_name, dst_ptr_id
+                );
+            } else {
+                info!(
+                    "rcpta ClassPAG: skip Load (not source-level) func={}",
+                    func_name
+                );
             }
 
             debug!("Getter [{}.{}]: Load {:?} -> {:?}", 
@@ -2470,17 +3044,16 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                 
                 // ===== Class Pointer System Integration =====
                 // Propagate points-to from value to field (store operation)
-                let func_ref = self.acx.get_function_reference(self.fpag.func_id);
-                let func_name = func_ref.to_string();
+                let func_name = self.rcpta_canonical_func_name();
                 use crate::util::class::ptr_system::{ClassPtr, path_to_class_ptr_id};
                 
-                let value_ptr_id = path_to_class_ptr_id(&value_path, Some(&func_name));
-                let field_ptr_id = path_to_class_ptr_id(&field_path, Some(&func_name));
+                let value_ptr_id = path_to_class_ptr_id(&value_path, Some(&func_name), param_slots);
+                let field_ptr_id = path_to_class_ptr_id(&field_path, Some(&func_name), param_slots);
                 
                 // Create/get pointers
                 let value_ptr = ClassPtr::new_local(value_ptr_id.clone(), value_class_type.clone());
                 let field_ptr = ClassPtr::new_field(
-                    path_to_class_ptr_id(&args[0], Some(&func_name)), // base
+                    path_to_class_ptr_id(&args[0], Some(&func_name), param_slots), // base
                     gs.field_name.clone(),
                     value_class_type.clone()
                 );
@@ -2494,16 +3067,21 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
 
             // rcpta ClassPAG: Store edge src -> base.field (see TAIE InstanceStore) — only in source-level context
             if analysis::is_source_level_context(&func_name) {
-                let value_ptr_id = crate::util::class::ptr_system::path_to_class_ptr_id(&value_path_canonical, Some(&func_name));
+                let value_ptr_id = crate::util::class::ptr_system::path_to_class_ptr_id(&value_path_canonical, Some(&func_name), param_slots);
                 let value_class_type = self.acx.class_type_system
                     .get_path_class_type(&value_path)
                     .cloned()
                     .unwrap_or_else(|| gs.class_name.clone());
                 let base_cptr = crate::rcpta::ClassPtr::new_local(base_ptr_id.clone(), gs.class_name.clone());
-                let value_cptr = crate::rcpta::ClassPtr::new_local(value_ptr_id.clone(), value_class_type);
+                let value_cptr = crate::rcpta::ClassPtr::new_local(value_ptr_id.clone(), value_class_type.clone());
                 self.acx.class_pag.get_or_create_ptr(base_cptr);
                 self.acx.class_pag.get_or_create_ptr(value_cptr);
+                // Store as constraint; obj-level edges materialized during PTS solve
                 self.acx.class_pag.add_store(&base_ptr_id, &gs.field_name, &value_ptr_id);
+                info!(
+                    "rcpta ClassPAG: add_store in callee func={} base={} field={} src={}",
+                    func_name, base_ptr_id, gs.field_name, value_ptr_id
+                );
             }
 
             debug!("Setter [{}.{}]: Store {:?} -> {:?}", 

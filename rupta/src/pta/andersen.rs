@@ -38,9 +38,6 @@ pub struct AndersenPTA<'pta, 'tcx, 'compilation> {
     /// Records the functions that have been processed
     pub(crate) processed_funcs: HashSet<FuncId>,
 
-    /// Iterator for reachable functions
-    rf_iter: chunked_queue::IterCopied<FuncId>,
-
     /// Iterator for address_of edges in pag
     addr_edge_iter: chunked_queue::IterCopied<EdgeId>,
 
@@ -64,7 +61,6 @@ impl<'pta, 'compilation, 'tcx> Debug for AndersenPTA<'pta, 'compilation, 'tcx> {
 impl<'pta, 'tcx, 'compilation> AndersenPTA<'pta, 'tcx, 'compilation> {
     pub fn new(acx: &'pta mut AnalysisContext<'tcx, 'compilation>) -> Self {
         let call_graph = CallGraph::new();
-        let rf_iter = call_graph.reach_funcs_iter();
         let pag = PAG::new();
         let addr_edge_iter = pag.addr_edge_iter();
         AndersenPTA {
@@ -73,7 +69,6 @@ impl<'pta, 'tcx, 'compilation> AndersenPTA<'pta, 'tcx, 'compilation> {
             pag,
             call_graph,
             processed_funcs: HashSet::new(),
-            rf_iter,
             addr_edge_iter,
             inter_proc_edges_queue: chunked_queue::ChunkedQueue::new(),
             assoc_calls: AssocCallGroup::new(),
@@ -88,9 +83,16 @@ impl<'pta, 'tcx, 'compilation> AndersenPTA<'pta, 'tcx, 'compilation> {
     }
 
     /// Process statements in reachable functions.
+    /// Iteratively process until no new callee is discovered (Tai-e style: process all reachable method bodies).
+    /// Each pass iterates the reach_funcs queue; new callees added by process_calls_in_fpag are processed in the next pass.
     fn process_reach_funcs(&mut self) {
-        while let Some(func_id) = self.rf_iter.next() {
-            if !self.processed_funcs.contains(&func_id) {
+        loop {
+            let mut any_processed = false;
+            let func_ids: Vec<FuncId> = self.call_graph.reach_funcs_iter().collect();
+            for func_id in func_ids {
+                if self.processed_funcs.contains(&func_id) {
+                    continue;
+                }
                 let func_ref = self.acx.get_function_reference(func_id);
                 info!(
                     "Processing function {:?} {}", func_id, func_ref.to_string(),
@@ -98,7 +100,11 @@ impl<'pta, 'tcx, 'compilation> AndersenPTA<'pta, 'tcx, 'compilation> {
                 if self.pag.build_func_pag(self.acx, func_id) {
                     self.add_fpag_edges(func_id);
                     self.process_calls_in_fpag(func_id);
+                    any_processed = true;
                 }
+            }
+            if !any_processed {
+                break;
             }
         }
     }

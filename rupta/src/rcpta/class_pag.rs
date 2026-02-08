@@ -138,8 +138,26 @@ impl ClassPAG {
     /// Register or get a class pointer. Returns its id.
     pub fn get_or_create_ptr(&mut self, ptr: ClassPtr) -> String {
         let id = ptr.id.clone();
+        let is_new = !self.ptrs.contains_key(&id);
         self.ptrs.entry(id.clone()).or_insert(ptr);
+        if is_new && (id.contains("get_and_wrap::local_2") || id.contains("get_and_wrap::local_3")) {
+            eprintln!("[rcpta dedup] ClassPAG new ptr id={}", id);
+        }
         id
+    }
+
+    /// Register or get an instance-field pointer (base.field) so it appears in Pointers and participates in PTS.
+    /// Id is `{base_ptr_id}.{field}`. Call this before add_load/add_store when modeling instance field access.
+    pub fn get_or_create_field_ptr(
+        &mut self,
+        base_ptr_id: impl AsRef<str>,
+        field: impl AsRef<str>,
+        field_class_type: impl Into<String>,
+    ) -> String {
+        let base = base_ptr_id.as_ref();
+        let f = field.as_ref();
+        let ptr = ClassPtr::new_instance_field(base, f, field_class_type.into());
+        self.get_or_create_ptr(ptr)
     }
 
     /// Register or get a class object. Returns its id.

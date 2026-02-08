@@ -588,17 +588,18 @@ fn handle_class_constructor<'tcx>(
     // ==========================================
     
     // ===== Class Pointer System Integration =====
-    // Get function name for ClassPtr ID generation
+    // Use canonical name so ptr ids match visit_assign/cast (no duplicate e.g. get_and_wrap::local_2).
     let func_ref = fpb.acx.get_function_reference(fpb.fpag.func_id);
-    let func_name = func_ref.to_string();
-    let alloc_location = format!("{}:{:?}", func_name, location);
+    let func_name_raw = func_ref.to_string();
+    let func_name = class_analysis::canonical_class_method_name(&func_name_raw);
+    let alloc_location = format!("{}:{:?}", func_name_raw, location);
 
     // Create ClassObj for the heap allocation
     let obj_id = fpb.acx.class_ptr_system.create_obj(class_name.clone(), alloc_location);
 
     // Create ClassPtr for the destination
     use crate::util::class::ptr_system::{path_to_class_ptr_id, ClassPtr as UtilClassPtr};
-    let ptr_id = path_to_class_ptr_id(&destination, Some(&func_name));
+    let ptr_id = path_to_class_ptr_id(&destination, Some(&func_name), None);
     let class_ptr = UtilClassPtr::new_local(ptr_id.clone(), class_name.clone());
     fpb.acx.class_ptr_system.get_or_create_ptr(class_ptr);
 
@@ -609,9 +610,9 @@ fn handle_class_constructor<'tcx>(
     // ===== rcpta ClassPAG Alloc (source-level only). Author: Yan Wang, Date: 2026-02-02 =====
     // Only create ClassObj when the *caller* is source-level (user code), not inside core/std/alloc/classes
     // or class ctor/DSL internal. Use is_source_level_context so we don't create ptrs/objs in DSL runtime.
-    if class_analysis::is_source_level_context(&func_name) {
+    if class_analysis::is_source_level_context(&func_name_raw) {
         use crate::rcpta::{AllocSite, ClassPtr};
-        let alloc_site = AllocSite::new(&func_name, format!("{:?}", location));
+        let alloc_site = AllocSite::new(&func_name_raw, format!("{:?}", location));
         let obj_id_rcpta = fpb.acx.class_pag.create_obj(class_name.clone(), alloc_site);
         let cptr = ClassPtr::new_local(ptr_id.clone(), class_name.clone());
         fpb.acx.class_pag.get_or_create_ptr(cptr);
@@ -673,8 +674,9 @@ pub fn handle_class_cast_call<'tcx>(
         None => return,
     };
 
+    // Use canonical name so ptr ids match (no duplicate get_and_wrap::local_2/local_3 from impl vs data).
     let func_ref = fpb.acx.get_function_reference(fpb.fpag.func_id);
-    let func_name = func_ref.to_string();
+    let func_name = class_analysis::canonical_class_method_name(&func_ref.to_string());
     use crate::util::class::ptr_system::{path_to_class_ptr_id, ClassPtr as UtilClassPtr};
 
     // When return type is Option<CRc<T>> (e.g. try_into_subtype), the cast result is stored
@@ -691,14 +693,14 @@ pub fn handle_class_cast_call<'tcx>(
             vec![PathSelector::Downcast(1), PathSelector::Field(0)],
         );
         fpb.acx.set_path_rustc_type(option_some_inner.clone(), dest_class_ty);
-        let ptr_id = path_to_class_ptr_id(&option_some_inner, Some(&func_name));
+        let ptr_id = path_to_class_ptr_id(&option_some_inner, Some(&func_name), None);
         (option_some_inner, ptr_id)
     } else {
-        let ptr_id = path_to_class_ptr_id(destination, Some(&func_name));
+        let ptr_id = path_to_class_ptr_id(destination, Some(&func_name), None);
         (destination.clone(), ptr_id)
     };
 
-    let receiver_ptr_id = path_to_class_ptr_id(receiver_path, Some(&func_name));
+    let receiver_ptr_id = path_to_class_ptr_id(receiver_path, Some(&func_name), None);
 
     // Legacy: class_ptr_system
     let receiver_ptr = UtilClassPtr::new_local(receiver_ptr_id.clone(), receiver_class.clone());

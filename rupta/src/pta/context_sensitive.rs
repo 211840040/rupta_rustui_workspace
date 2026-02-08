@@ -45,9 +45,6 @@ pub struct ContextSensitivePTA<'pta, 'tcx, 'compilation, S: ContextStrategy> {
     /// Records the functions that have been processed
     pub(crate) processed_funcs: HashSet<CSFuncId>,
 
-    /// Iterator for reachable functions
-    rf_iter: chunked_queue::IterCopied<CSFuncId>,
-
     /// Iterator for address_of edges in pag
     addr_edge_iter: chunked_queue::IterCopied<EdgeId>,
 
@@ -73,7 +70,6 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> Debug for ContextSensitivePTA
 impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tcx, 'compilation, S> {
     pub fn new(acx: &'pta mut AnalysisContext<'tcx, 'compilation>, ctx_strategy: S) -> Self {
         let call_graph = CSCallGraph::new();
-        let rf_iter = call_graph.reach_funcs_iter();
         let pag = PAG::new();
         let addr_edge_iter = pag.addr_edge_iter();
         ContextSensitivePTA {
@@ -82,7 +78,6 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
             pag,
             call_graph,
             processed_funcs: HashSet::new(),
-            rf_iter,
             addr_edge_iter,
             inter_proc_edges_queue: chunked_queue::ChunkedQueue::new(),
             assoc_calls: AssocCallGroup::new(),
@@ -113,9 +108,15 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
     }
     
     /// Process statements in reachable functions.
+    /// Iteratively process until no new callee is discovered (Tai-e style).
     fn process_reach_funcs(&mut self) {
-        while let Some(func) = self.rf_iter.next() {
-            if !self.processed_funcs.contains(&func) {
+        loop {
+            let mut any_processed = false;
+            let funcs: Vec<CSFuncId> = self.call_graph.reach_funcs_iter().collect();
+            for func in funcs {
+                if self.processed_funcs.contains(&func) {
+                    continue;
+                }
                 let func_ref = self.acx.get_function_reference(func.func_id);
                 info!(
                     "Processing function {:?} {}, context: {:?}",
@@ -126,7 +127,11 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
                 if self.pag.build_func_pag(self.acx, func.func_id) {
                     self.add_fpag_edges(func);
                     self.process_calls_in_fpag(func);
+                    any_processed = true;
                 }
+            }
+            if !any_processed {
+                break;
             }
         }
     }
@@ -228,20 +233,24 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
             // borrow self (&self or &mut self)
             if util::has_self_ref_parameter(self.tcx(), callee_def_id) {
                 // the instance should be the pointed-to object of the self pointer
-                if let Some(callee_cid) = self.ctx_strategy.new_instance_call_context(callsite, None) {
-                    let cs_callee = CSFuncId::new(callee_cid, *callee);
-                    self.add_call_edge(callsite, &cs_callee);
-                }
+                let callee_cid = self.ctx_strategy.new_instance_call_context(callsite, None).unwrap_or_else(|| {
+                    // rcpta: ensure callee is always in call graph so its body is built (Load/Cast edges).
+                    // When strategy returns None (e.g. object-sensitive with no receiver), use static context.
+                    self.ctx_strategy.new_static_call_context(callsite)
+                });
+                let cs_callee = CSFuncId::new(callee_cid, *callee);
+                self.add_call_edge(callsite, &cs_callee);
                 let self_ref: &Rc<CSPath> = callsite.args.get(0).expect("invalid arguments");
                 let self_ref_id = self.pag.get_or_insert_node(self_ref);
                 self.assoc_calls.add_static_dispatch_instance_call(self_ref_id, callsite.clone(), *callee);
             } else { // move self
                 let instance = callsite.args.get(0).expect("invalid arguments");
-                if let Some(callee_cid) = self.ctx_strategy.new_instance_call_context(callsite, Some(instance)) {
-                    let cs_callee = CSFuncId::new(callee_cid, *callee);
-                    self.add_call_edge(callsite, &cs_callee);
-                }
-            } 
+                let callee_cid = self.ctx_strategy.new_instance_call_context(callsite, Some(instance)).unwrap_or_else(|| {
+                    self.ctx_strategy.new_static_call_context(callsite)
+                });
+                let cs_callee = CSFuncId::new(callee_cid, *callee);
+                self.add_call_edge(callsite, &cs_callee);
+            }
         } else {
             let callee_cid = self.ctx_strategy.new_static_call_context(callsite);
             let cs_callee = CSFuncId::new(callee_cid, *callee);
@@ -372,6 +381,11 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> PointerAnalysis<'tcx, 'compil
 
         // process statements of reachable functions
         self.process_reach_funcs();
+
+        // rcpta: ensure every callee in static_dispatch_callsites has its PAG (and ClassPAG edges) built,
+        // in case any were not added to reach_funcs (e.g. context strategy or order).
+        self.pag.build_all_callee_pags(self.acx);
+        self.acx.flush_pending_class_cg_edges();
     }
 
     /// Solve the worklist problem using Propagator.

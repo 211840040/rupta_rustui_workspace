@@ -483,11 +483,16 @@ impl<P: PAGPath> PAG<P> {
 
     pub fn build_func_pag(&mut self, acx: &mut AnalysisContext<'_, '_>, func_id: FuncId) -> bool {
         if acx.special_functions.contains(&func_id) {
+            debug!("build_func_pag skip (special): func_id {:?}", func_id);
             return false;
         }
         let def_id = acx.get_function_reference(func_id).def_id;
+        let name = acx.get_function_reference(func_id).to_string();
         if !acx.tcx.is_mir_available(def_id) {
-            warn!("Unavailable mir for def_id: {:?}", def_id);
+            info!(
+                "rcpta: build_func_pag skip (no MIR): name={} def_id={:?}",
+                name, def_id
+            );
             return false;
         }
 
@@ -504,6 +509,11 @@ impl<P: PAGPath> PAG<P> {
         // Build pag for this function.
         let mut fpag = FuncPAG::new(func_id);
         let mir = acx.tcx.optimized_mir(def_id);
+        let num_blocks = mir.basic_blocks.len();
+        info!(
+            "rcpta: build_func_pag MIR ok: name={} def_id={:?} basic_blocks={}",
+            name, def_id, num_blocks
+        );
         let mut builder = fpag_builder::FuncPAGBuilder::new(acx, func_id, mir, &mut fpag);
         builder.build();
 
@@ -522,6 +532,42 @@ impl<P: PAGPath> PAG<P> {
 
         self.func_pags.insert(func_id, fpag);
         true
+    }
+
+    /// rcpta: Build PAG for every callee in the call graph (same pointer modeling as entry).
+    /// Call after process_reach_funcs. Skip callees already in processed (do not re-push, or queue never empties).
+    pub fn build_all_callee_pags(&mut self, acx: &mut AnalysisContext<'_, '_>) {
+        let worklist: Vec<FuncId> = self.func_pags.keys().copied().collect();
+        let mut processed = std::collections::HashSet::new();
+        worklist.iter().for_each(|f| { processed.insert(*f); });
+        let mut queue = worklist;
+        while let Some(func_id) = queue.pop() {
+            let callees: Vec<FuncId> = self
+                .func_pags
+                .get(&func_id)
+                .map(|fpag| {
+                    fpag.static_dispatch_callsites
+                        .iter()
+                        .map(|(_, callee_id)| *callee_id)
+                        .collect()
+                })
+                .unwrap_or_default();
+            for callee_id in callees {
+                if processed.contains(&callee_id) {
+                    continue;
+                }
+                let callee_name = acx.get_function_reference(callee_id).to_string();
+                info!("rcpta: build_all_callee_pags trying callee={}", callee_name);
+                if self.build_func_pag(acx, callee_id) {
+                    processed.insert(callee_id);
+                    queue.push(callee_id);
+                    info!("rcpta: build_all_callee_pags built ok: callee={}", callee_name);
+                } else {
+                    processed.insert(callee_id);
+                    info!("rcpta: build_all_callee_pags build failed/skip: callee={}", callee_name);
+                }
+            }
+        }
     }
 
     ///author:wy

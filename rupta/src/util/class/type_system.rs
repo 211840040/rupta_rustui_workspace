@@ -73,6 +73,14 @@ impl ClassTypeInfo {
         self.fields.get(field_name).map(|f| f.index)
     }
 
+    /// Gets the field name by index (for rcpta: map cell path projection to field name)
+    pub fn get_field_name_by_index(&self, field_index: usize) -> Option<String> {
+        self.fields
+            .iter()
+            .find(|(_, f)| f.index == field_index)
+            .map(|(name, _)| name.clone())
+    }
+
     /// Gets the field's class type (if it's a class reference)
     pub fn get_field_class_type(&self, field_name: &str) -> Option<&String> {
         self.fields.get(field_name).and_then(|f| f.class_type.as_ref())
@@ -210,9 +218,59 @@ impl ClassTypeSystem {
         index
     }
 
+    /// Registers a field with a specific index (used when we see cell_option_set/cell_option_get in a
+    /// getter/setter body and know the MIR field index). Ensures get_field_name_by_index(class_name, index)
+    /// returns field_name. Does nothing if the field is already registered for this class at this index.
+    pub fn register_field_with_index(
+        &mut self,
+        class_name: &str,
+        field_name: &str,
+        index: usize,
+        field_class_type: Option<&str>,
+    ) {
+        self.register_class(class_name);
+        if let Some(class_info) = self.classes.get(class_name) {
+            if class_info.get_field_name_by_index(index).as_deref() == Some(field_name) {
+                return;
+            }
+        }
+        if let Some(class_info) = self.classes.get(class_name) {
+            if class_info.get_field_index(field_name).is_some() {
+                return;
+            }
+        }
+        if let Some(class_info) = self.classes.get_mut(class_name) {
+            class_info.add_field(
+                field_name.to_string(),
+                index,
+                field_class_type.map(|s| s.to_string()),
+            );
+        }
+        let counter = self.field_counters.entry(class_name.to_string()).or_insert(0);
+        if *counter <= index {
+            *counter = index + 1;
+        }
+        debug!("ClassTypeSystem: Registered field {}.{} at index {} (type: {:?})",
+               class_name, field_name, index, field_class_type);
+    }
+
     /// Gets the field index for a class field
     pub fn get_field_index(&self, class_name: &str, field_name: &str) -> Option<usize> {
         self.classes.get(class_name).and_then(|c| c.get_field_index(field_name))
+    }
+
+    /// Gets the field's class type (if it's a class reference field)
+    pub fn get_field_class_type(&self, class_name: &str, field_name: &str) -> Option<String> {
+        self.classes
+            .get(class_name)
+            .and_then(|c| c.get_field_class_type(field_name).cloned())
+    }
+
+    /// Gets the field name for a class field by index (for rcpta: cell_option_set/get base path -> class + field index -> name)
+    pub fn get_field_name_by_index(&self, class_name: &str, field_index: usize) -> Option<String> {
+        self.classes
+            .get(class_name)
+            .and_then(|c| c.get_field_name_by_index(field_index))
     }
 
     /// Builds a field path for getter/setter operations.

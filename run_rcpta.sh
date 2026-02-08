@@ -104,6 +104,7 @@ if [[ -n "$USE_LIB" ]]; then
     --pta-type cs \
     --context-depth 1 \
     --dump-class-pag "$ABS_OUTPUT_DIR/class_pag.txt" \
+    --dump-class-pts "$ABS_OUTPUT_DIR/class_pts.txt" \
     --dump-class-call-graph "$ABS_OUTPUT_DIR/class_cg.txt" \
     --dump-mir "$ABS_OUTPUT_DIR/mir.txt" \
     2>&1 | tee "$ABS_OUTPUT_DIR/analysis.log"
@@ -116,6 +117,7 @@ else
     --pta-type cs \
     --context-depth 1 \
     --dump-class-pag "$ABS_OUTPUT_DIR/class_pag.txt" \
+    --dump-class-pts "$ABS_OUTPUT_DIR/class_pts.txt" \
     --dump-class-call-graph "$ABS_OUTPUT_DIR/class_cg.txt" \
     --dump-mir "$ABS_OUTPUT_DIR/mir.txt" \
     2>&1 | tee "$ABS_OUTPUT_DIR/analysis.log"
@@ -123,5 +125,6 @@ fi
 echo "[2/2] Done."
 echo "----------------------------------------"
 echo "class_pag:      $ABS_OUTPUT_DIR/class_pag.txt"
+echo "class_pts:      $ABS_OUTPUT_DIR/class_pts.txt"
 echo "class_cg:       $ABS_OUTPUT_DIR/class_cg.txt"
 ls -la "$ABS_OUTPUT_DIR"

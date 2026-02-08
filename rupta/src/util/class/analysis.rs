@@ -14,6 +14,8 @@ use rustc_middle::ty::{Ty, TyCtxt, TyKind};
 use log::*;
 use crate::mir::function::FunctionReference;
 
+use super::type_system::ClassTypeSystem;
+
 /// Information about a class constructor call
 #[derive(Debug, Clone)]
 pub struct ClassConstructor {
@@ -61,6 +63,39 @@ pub fn extract_class_name_from_func(func_name: &str) -> Option<String> {
     None
 }
 
+/// Canonical name for a class method: strips `::{impl#N}::` and `::data::` so impl wrapper and
+/// method body (e.g. _Holder::{impl#1}::get_and_wrap vs _Holder::data::get_and_wrap) share the same prefix.
+/// Used for rcpta ClassPAG so we only have one set of param/ret pointers per source-level method (no duplicate param_1/ret).
+pub fn canonical_class_method_name(func_name: &str) -> String {
+    let mut s = func_name.to_string();
+    // Strip ::{impl#N}:: so impl wrapper and trait default share one prefix.
+    while let Some(start) = s.find("::{impl#") {
+        let after = &s[start + 8..];
+        if let Some(close) = after.find('}') {
+            if after.get(close..).map_or(false, |r| r.starts_with("}::")) {
+                s = format!("{}::{}", &s[..start], &after[close + 3..]);
+                continue;
+            }
+        }
+        break;
+    }
+    // Strip ::data:: so the concrete body (data::method) and impl wrapper share one prefix.
+    s = s.replace("::data::", "::");
+    s
+}
+
+/// Extracts the method name from a DSL function path (e.g. "crate::_classes::_Entity::{impl#0}::apply_twice" -> "apply_twice").
+/// Used for rcpta: deduplicate callees by (class_name, method_name) so we only build func PAG once per source-level method.
+pub fn extract_method_name_from_func(func_name: &str) -> Option<String> {
+    let after_last = func_name.rsplit("::").next()?;
+    let method = after_last.split('<').next()?.to_string();
+    if method.is_empty() {
+        None
+    } else {
+        Some(method)
+    }
+}
+
 /// Checks if a function is class-related (belongs to the classes DSL system)
 pub fn is_class_related(func_ref: &Rc<FunctionReference>) -> bool {
     let func_name = func_ref.to_string();
@@ -105,6 +140,12 @@ pub fn is_source_level_cast_caller(caller_func_name: &str) -> bool {
 }
 
 /// Whether the **caller** is "source-level context" (user code, not DSL internal).
+/// Internal DSL trait methods (e.g. downgrade_from implementing into_superclass) are not source-level:
+/// we should not model their params/ret or body edges in ClassPAG.
+pub fn is_internal_dsl_trait_method(func_name: &str) -> bool {
+    func_name.contains("downgrade_from") || func_name.contains("upgrade_from")
+}
+
 /// Use for rcpta ClassPAG when we only want to record edges/pointers from user-visible code
 /// (e.g. Assign: only record when not inside ctor body, cast impl, classes::ptr::, etc.).
 ///
@@ -112,6 +153,8 @@ pub fn is_source_level_cast_caller(caller_func_name: &str) -> bool {
 /// (classes::ptr::, classes::vtable::, classes::class::) so we don't create ptrs or edges
 /// inside DSL runtime. User code in the classes crate (e.g. tests, impls like get_and_wrap)
 /// is included so that callee bodies get Load/Cast/Assign edges in ClassPAG.
+/// We also exclude internal trait methods (downgrade_from, upgrade_from) so we do not model
+/// their param/ret pointers or body edges at all.
 pub fn is_source_level_context(caller_func_name: &str) -> bool {
     if caller_func_name.starts_with("core::")
         || caller_func_name.starts_with("std::")
@@ -125,6 +168,10 @@ pub fn is_source_level_context(caller_func_name: &str) -> bool {
         || caller_func_name.starts_with("classes::vtable")
         || caller_func_name.starts_with("classes::class::")
     {
+        return false;
+    }
+    // Do not model pointers/edges inside internal trait method bodies (e.g. downgrade_from).
+    if is_internal_dsl_trait_method(caller_func_name) {
         return false;
     }
     is_source_level_allocation_caller(caller_func_name) && is_source_level_cast_caller(caller_func_name)
@@ -148,6 +195,28 @@ pub fn is_option_unwrap<'tcx>(tcx: TyCtxt<'tcx>, callee_def_id: DefId) -> bool {
     let path = tcx.def_path_str(callee_def_id);
     (path.contains("option::Option") || path.contains("core::option") || path.contains("std::option"))
         && path.contains("unwrap")
+}
+
+/// Whether the callee is GetSet::cell_option_set (DSL late field write).
+/// Used for Class PAG: when building a callee body (e.g. set_item), add Store(base, field, value).
+pub fn is_getset_cell_option_set<'tcx>(tcx: TyCtxt<'tcx>, callee_def_id: DefId) -> bool {
+    let path = tcx.def_path_str(callee_def_id);
+    path.contains("get_set::GetSet") && path.contains("cell_option_set")
+}
+
+/// Whether the callee is GetSet::cell_option_get (DSL late field read).
+/// Used for Class PAG: when building a callee body, add Load(base, field, dst).
+pub fn is_getset_cell_option_get<'tcx>(tcx: TyCtxt<'tcx>, callee_def_id: DefId) -> bool {
+    let path = tcx.def_path_str(callee_def_id);
+    path.contains("get_set::GetSet") && path.contains("cell_option_get")
+}
+
+/// Whether the callee is the DSL vtable function (classes::ptr::vtable<Type>).
+/// Used for rcpta: when we see a vtable call in a callee (e.g. get_and_wrap), resolve it to all
+/// methods of the class so we add static_dispatch to get_item, into_superclass, etc., and build their PAG.
+pub fn is_dsl_vtable_call<'tcx>(tcx: TyCtxt<'tcx>, callee_def_id: DefId) -> bool {
+    let path = tcx.def_path_str(callee_def_id);
+    path.contains("vtable") && (path.contains("classes::ptr") || path.contains("classes::"))
 }
 
 /// Whether the type is Option<T> where T contains a DSL class (e.g. Option<CRc<Eagle>>).
@@ -221,6 +290,9 @@ pub struct GetterSetter {
 /// - "simple_method_call::_classes::_Container::{impl#0}::get_point_sum" -> None (not a getter, has underscore in field name)
 pub fn identify_getter_setter(func_ref: &Rc<FunctionReference>) -> Option<GetterSetter> {
     let func_name = func_ref.to_string();
+    if func_name.contains("set_item") {
+        eprintln!("[rcpta] identify_getter_setter checking: {}", func_name);
+    }
 
     // Only user-crate getters/setters; exclude DSL runtime (e.g. GetSet::cell_option_get/set).
     // Those live in classes:: and would otherwise be mis-identified via _classes::_ in generic args.
@@ -230,15 +302,16 @@ pub fn identify_getter_setter(func_ref: &Rc<FunctionReference>) -> Option<Getter
 
     // Pattern: _classes::_ClassName::{impl#N}::get_field_name or set_field_name
     if let Some(class_name) = extract_class_name_from_func(&func_name) {
-        // Check for get_ prefix
+        if func_name.contains("set_item") {
+             eprintln!("[rcpta] identify_getter_setter: class_name={}", class_name);
+        }
+        // Check for get_ prefix: get_X -> field X (allow underscores in X, e.g. get_entity_id -> entity_id).
+        // Actual field check is done in flush (get_field_index) so we don't treat get_point_sum as getter.
         if let Some(get_start) = func_name.find("::get_") {
             let after_get = &func_name[get_start + 6..]; // "::get_" is 6 chars
             let field_name_end = after_get.find("::").unwrap_or(after_get.len());
             let field_name = after_get[..field_name_end].to_string();
-            
-            // Only recognize as getter if field_name contains no underscores
-            // (i.e., it's a single-word field name like "point", not "internal_point")
-            if !field_name.contains('_') {
+            if !field_name.is_empty() {
                 return Some(GetterSetter {
                     class_name,
                     field_name,
@@ -248,14 +321,20 @@ pub fn identify_getter_setter(func_ref: &Rc<FunctionReference>) -> Option<Getter
             }
         }
         
-        // Check for set_ prefix
+        // Check for set_ prefix: set_X -> field X (allow underscores in X).
         if let Some(set_start) = func_name.find("::set_") {
+            if func_name.contains("set_item") {
+                 eprintln!("[rcpta] identify_getter_setter: found ::set_ at {}", set_start);
+            }
             let after_set = &func_name[set_start + 6..]; // "::set_" is 6 chars
             let field_name_end = after_set.find("::").unwrap_or(after_set.len());
             let field_name = after_set[..field_name_end].to_string();
             
-            // Only recognize as setter if field_name contains no underscores
-            if !field_name.contains('_') {
+            if func_name.contains("set_item") {
+                 eprintln!("[rcpta] identify_getter_setter: field_name={}", field_name);
+            }
+
+            if !field_name.is_empty() {
                 return Some(GetterSetter {
                     class_name,
                     field_name,
@@ -291,48 +370,136 @@ pub struct ClassMethod {
 /// - "simple_method_call::_classes::_Container::{impl#0}::get_point" -> None (getter)
 /// - "simple_method_call::_classes::_Container::{impl#0}::set_point" -> None (setter)
 pub fn identify_class_method(func_ref: &Rc<FunctionReference>) -> Option<ClassMethod> {
+    identify_class_method_impl(func_ref, None)
+}
+
+/// Like identify_class_method but only treats get_/set_ as getter/setter when the class has that field.
+/// e.g. Entity::get_id is a normal method (Entity has entity_id, not id); Container::get_point is a getter.
+pub fn identify_class_method_with_type_system(
+    func_ref: &Rc<FunctionReference>,
+    type_system: &ClassTypeSystem,
+) -> Option<ClassMethod> {
+    identify_class_method_impl(func_ref, Some(type_system))
+}
+
+fn identify_class_method_impl(
+    func_ref: &Rc<FunctionReference>,
+    type_system: Option<&ClassTypeSystem>,
+) -> Option<ClassMethod> {
     let func_name = func_ref.to_string();
-    
+    let is_target = func_name.contains("get_and_wrap") || func_name.contains("get_id");
+
     // Must be in _classes::_ namespace
-    if let Some(class_name) = extract_class_name_from_func(&func_name) {
-        // Must be a wrapper method (not data::)
-        if func_name.contains("::data::") {
-            return None;
-        }
-        
-        // Must not be a constructor
-        if func_name.contains("::new") {
-            return None;
-        }
-        
-        // Must not be a getter or setter
-        // Use identify_getter_setter to accurately identify getters/setters
-        // This avoids false positives for methods like get_internal_point or get_point_sum
-        if identify_getter_setter(func_ref).is_some() {
-            return None;
-        }
-        
-        // Extract method name: _classes::_ClassName::{impl#N}::method_name
-        // Pattern: find the last "::" before the end
-        if let Some(impl_start) = func_name.find("::{impl#") {
-            let after_impl = &func_name[impl_start + 7..]; // "::{impl#" is 7 chars
-            if let Some(impl_end) = after_impl.find("}::") {
-                let after_impl_end = &after_impl[impl_end + 3..]; // "}::" is 3 chars
-                // The method name is everything after the last "}::"
-                let method_name = after_impl_end.to_string();
-                
-                // Skip if method_name is empty or contains "::" (shouldn't happen for wrapper methods)
-                if !method_name.is_empty() && !method_name.contains("::") {
-                    return Some(ClassMethod {
-                        class_name,
-                        method_name,
-                        func_name,
-                    });
-                }
+    let class_name = match extract_class_name_from_func(&func_name) {
+        Some(c) => c,
+        None => {
+            if is_target {
+                log::info!(
+                    "rcpta identify_class_method: get_and_wrap/get_id not in _classes::_ func={}",
+                    func_name
+                );
             }
+            return None;
+        }
+    };
+
+    // Must be a wrapper method (not data::) when type_system is None (legacy).
+    // When type_system is Some (rcpta): allow ::data:: so the concrete impl (the one with MIR
+    // that we actually call) is recognized and added to static_dispatch_callsites / callee body build.
+    if type_system.is_none() && func_name.contains("::data::") {
+        return None;
+    }
+
+    // Must not be a constructor
+    if func_name.contains("::new") {
+        return None;
+    }
+
+    // Must not be a getter or setter for a field that actually exists on the class.
+    // When type_system is provided: only exclude if class has that field (e.g. get_point for Container.point).
+    // When type_system is None: exclude any getter/setter pattern (legacy).
+    // So Entity::get_id is a class method (Entity has entity_id, not id); get_point for Container is getter.
+    if let Some(gs) = identify_getter_setter(func_ref) {
+        let exclude = match type_system {
+            None => true,
+            Some(ts) => ts.get_field_index(&gs.class_name, &gs.field_name).is_some(),
+        };
+        if is_target {
+            log::info!(
+                "rcpta identify_class_method: getter_check class={} field={} exclude={}",
+                gs.class_name, gs.field_name, exclude
+            );
+        }
+        if exclude {
+            return None;
         }
     }
-    
+
+    // Extract method name. Two shapes in MIR/DefPath:
+    // (1) With {impl#}: ...::_classes::_ClassName::{impl#N}::method_name or ...::data::{impl#0}::method_name
+    // (2) Without {impl#}: ...::_classes::_ClassName::ClassName::<generic>::method_name (e.g. get_and_wrap, get_id)
+    //    — rustc sometimes does not emit {impl#} for the impl ClassName<V> { fn method } block.
+    // Reject type fragments (e.g. "Entity_Tagged>", "Virtual>>") by requiring method_name to be a plain identifier.
+    let method_name = if let Some(impl_start) = func_name.find("::{impl#") {
+        let after_impl = &func_name[impl_start + 7..]; // "::{impl#" is 7 chars
+        if let Some(impl_end) = after_impl.find("}::") {
+            let after_impl_end = &after_impl[impl_end + 3..]; // "}::" is 3 chars
+            let m = after_impl_end.to_string();
+            if !m.is_empty() && !m.contains("::") && !m.contains('>') && m != "new" {
+                Some(m)
+            } else {
+                if is_target {
+                    log::info!(
+                        "rcpta identify_class_method: impl# branch rejected m=\"{}\"",
+                        m
+                    );
+                }
+                None
+            }
+        } else {
+            if is_target {
+                log::info!(
+                    "rcpta identify_class_method: impl# branch no }}:: in after_impl=\"{}\"",
+                    after_impl
+                );
+            }
+            None
+        }
+    } else {
+        // Fallback for (2): last path segment only if it is a plain method identifier.
+        let last = func_name.rsplit("::").next().unwrap_or("");
+        if last.is_empty()
+            || last == "new"
+            || last.contains('<')
+            || last.contains('>')
+            || last.contains('[')
+            || last.contains(']')
+            || !last.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+        {
+            if is_target {
+                log::info!(
+                    "rcpta identify_class_method: fallback rejected func={} last_segment=\"{}\" (empty/new/bad_char)",
+                    func_name, last
+                );
+            }
+            None
+        } else {
+            Some(last.to_string())
+        }
+    };
+    if let Some(method_name) = method_name {
+        return Some(ClassMethod {
+            class_name,
+            method_name,
+            func_name,
+        });
+    }
+    if is_target {
+        log::info!(
+            "rcpta identify_class_method: returned None (method_name extraction failed) func={}",
+            func_name
+        );
+    }
     None
 }
 

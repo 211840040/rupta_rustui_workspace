@@ -17,9 +17,13 @@ classes! {
             Self { .. }
         }
 
-        /// Load + Cast inside callee: get_item then into_superclass. Builds Load and Cast edges in callee body.
+        /// Load + Cast + internal Call inside callee: get_item, into_superclass, then get_id on Entity.
+        /// Builds Load, Cast, and Call edges in callee body for rcpta.
         pub fn get_and_wrap(&self) -> CRc<Entity> {
-            self.get_item().into_superclass()
+            let item = self.get_item();                    // Load: self.item -> item
+            let entity: CRc<Entity> = item.into_superclass(); // Cast: Item -> Entity
+            let _ = entity.get_id();             // Call: entity.get_id() (adds call edge in callee)
+            entity
         }
     }
 }

@@ -31,8 +31,9 @@ use crate::pta::strategies::context_strategy::ContextStrategy;
 use crate::pts_set::points_to::PointsToSet;
 use crate::util;
 use crate::util::class;
+use crate::util::class::analysis;
 use crate::util::class::{ClassCallGraph, ClassTypeSystem, ClassPtrSystem};
-use crate::rcpta::ClassPAG;
+use crate::rcpta::{solve_class_pts, ClassPAG, ClassPTSResult};
 
 pub fn dump_results<P: PAGPath, F, S>(
     acx: &AnalysisContext, 
@@ -102,10 +103,19 @@ pub fn dump_results<P: PAGPath, F, S>(
         dump_class_ptr_system(&acx.class_ptr_system, class_ptr_system_output);
     }
 
-    // dump rcpta ClassPAG (class-level pointer flow graph). Author: Yan Wang, Date: 2026-02-02
-    if let Some(class_pag_output) = &acx.analysis_options.class_pag_output {
-        info!("Dumping rcpta ClassPAG...");
-        dump_class_pag(&acx.class_pag, class_pag_output);
+    // dump rcpta ClassPAG and/or class PTS. Run solver once so PAG can show materialized store/load.
+    let class_pag_output = acx.analysis_options.class_pag_output.as_ref();
+    let class_pts_output = acx.analysis_options.class_pts_output.as_ref();
+    if class_pag_output.is_some() || class_pts_output.is_some() {
+        let result = solve_class_pts(&acx.class_pag);
+        if let Some(path) = class_pag_output {
+            info!("Dumping rcpta ClassPAG...");
+            dump_class_pag(&acx.class_pag, path, Some(&result));
+        }
+        if let Some(path) = class_pts_output {
+            info!("Dumping rcpta class PTS...");
+            dump_class_pts_from_result(&result, path);
+        }
     }
 }
 
@@ -910,12 +920,6 @@ pub fn dump_class_ptr_system(class_ptr_system: &ClassPtrSystem, output_path: &st
         .expect("Unable to write statistics");
 }
 
-/// Whether to hide this function from "Edges by function" output.
-/// Internal DSL trait methods (e.g. downgrade_from implementing into_superclass) are not user-facing class methods.
-fn is_internal_dsl_trait_method(func_name: &str) -> bool {
-    func_name.contains("downgrade_from") || func_name.contains("upgrade_from")
-}
-
 /// Normalizes a function path to a key for grouping: strip leading crate segment so that
 /// `rcpta_full_hierarchy::entry_complex_call_chain_demo` and `entry_complex_call_chain_demo` become the same key.
 fn normalize_func_key(name: &str) -> String {
@@ -948,6 +952,35 @@ fn func_scope_from_ptr_id(ptr_id: &str) -> String {
     normalize_func_key(&scope)
 }
 
+/// Strips "::{impl#N}::" and "::data::" from a function scope so trait method and impl wrapper
+/// map to the same key (one section per source-level method).
+fn collapse_impl_and_data_in_scope(scope: &str) -> String {
+    let mut s = scope.to_string();
+    // Remove ::{impl#0}::, ::{impl#1}::, etc.
+    while let Some(off) = s.find("::{impl#") {
+        if let Some(close) = s[off..].find("}::") {
+            let end = off + close + 3;
+            s = format!("{}{}", &s[..off], &s[end..]);
+        } else {
+            break;
+        }
+    }
+    s = s.replace("::data::", "::");
+    s
+}
+
+/// rcpta: Canonical section key so that one source-level class method gets one section (merge impl#0 / impl#1 / data::).
+/// If scope is a DSL class method (has _classes::_ and we can get class+method), returns "ClassName::method_name".
+/// Otherwise normalizes scope by collapsing {impl#N} and data:: so "Entity::{impl#1}::chain_with" and "Entity::chain_with" map to the same key.
+fn canonical_section_key_for_scope(scope: &str) -> String {
+    if let Some(class) = analysis::extract_class_name_from_func(scope) {
+        if let Some(method) = analysis::extract_method_name_from_func(scope) {
+            return format!("{}::{}", class.trim_start_matches('_'), method);
+        }
+    }
+    collapse_impl_and_data_in_scope(scope)
+}
+
 /// Extracts the caller function from a call_site id.
 /// Format is `[crate::]func_name:bbN[M]` (e.g. `rcpta_full_hierarchy::entry_complex_call_chain_demo:bb8[1]`).
 /// Returns the function name normalized (leading crate stripped) so it matches func_scope_from_ptr_id and all edges land in one section.
@@ -958,6 +991,28 @@ fn caller_from_call_site(call_site: &str) -> String {
         call_site
     };
     normalize_func_key(before_bb)
+}
+
+/// Extracts callee scope from a formal ptr id (e.g. `entityEntity::with_partner::param_1` -> `entityEntity::with_partner`,
+/// `entityEntity::with_partner::ret` -> `entityEntity::with_partner`). Used to detect "wrapper -> same-name body" calls.
+fn callee_scope_from_formal_ptr_id(id: &str) -> Option<String> {
+    if id.ends_with("::ret") {
+        return Some(id[..id.len() - 5].to_string());
+    }
+    if let Some(i) = id.rfind("::param_") {
+        return Some(id[..i].to_string());
+    }
+    None
+}
+
+/// True iff this CallArg/CallRet should be hidden from ClassPAG output: only when the call is
+/// "impl wrapper calling the same-named method body" (MIR artifact, not visible in source).
+fn is_wrapper_to_same_method_edge(caller_scope: &str, callee_scope: Option<&str>) -> bool {
+    if !caller_scope.contains("::{impl#") {
+        return false;
+    }
+    let Some(callee) = callee_scope else { return false };
+    canonical_section_key_for_scope(caller_scope) == canonical_section_key_for_scope(callee)
 }
 
 /// Shortens ClassPAG pointer/call_site ids for human-readable output.
@@ -979,14 +1034,25 @@ fn short_class_pag_name(id: &str) -> String {
             break;
         }
     }
-    s = s.replace("::{impl#0}::", "::");
+    // Strip any ::{impl#N}:: so impl wrapper and body display the same (no duplicate pointer lines in PTS).
+    while let Some(off) = s.find("::{impl#") {
+        let rest = &s[off + 8..];
+        if let Some(close) = rest.find('}') {
+            if rest.get(close..).map_or(false, |r| r.starts_with("}::")) {
+                s = format!("{}::{}", &s[..off], &rest[close + 3..]);
+                continue;
+            }
+        }
+        break;
+    }
     s = s.replace("::data::", "::");
     s
 }
 
 /// Dumps rcpta ClassPAG (class-level pointer flow graph): ptrs, objs, assign/alloc/load/store/call edges.
+/// When solver_result is Some, also dumps obj-level materialized Store/Load and obj.field pointers.
 /// Author: Yan Wang, Date: 2026-02-02
-pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str) {
+pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Option<&ClassPTSResult>) {
     let mut writer = BufWriter::new(match output_path {
         "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
         _ => {
@@ -998,9 +1064,16 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str) {
     writer.write_all(b"# rcpta ClassPAG (Class-level Pointer Assignment Graph)\n\n")
         .expect("Unable to write header");
 
-    // 1. Pointers
+    // 1. Pointers (build-time ptrs + obj.field ptrs from solver when available)
     writer.write_all(b"## Pointers\n\n").expect("Unable to write section header");
     let mut ptr_ids: Vec<_> = class_pag.ptr_ids().cloned().collect();
+    if let Some(result) = solver_result {
+        for id in result.pts.keys() {
+            if class_pag.get_ptr(id).is_none() {
+                ptr_ids.push(id.clone());
+            }
+        }
+    }
     ptr_ids.sort();
     if ptr_ids.is_empty() {
         writer.write_all(b"  (none)\n\n").expect("Unable to write");
@@ -1009,6 +1082,12 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str) {
             if let Some(ptr) = class_pag.get_ptr(id) {
                 let short = short_class_pag_name(&ptr.id);
                 writer.write_all(format!("  {}  [{}]\n", short, ptr.class_type).as_bytes())
+                    .expect("Unable to write pointer");
+            } else if solver_result.is_some() {
+                // obj.field pointer (materialized during PTS)
+                let short = short_class_pag_name(id);
+                let field = id.rsplit('.').next().unwrap_or("?");
+                writer.write_all(format!("  {}  [field: {}]\n", short, field).as_bytes())
                     .expect("Unable to write pointer");
             }
         }
@@ -1048,34 +1127,58 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str) {
     let empty_edges = || (Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new());
 
     for (src, dst) in class_pag.iter_assign_edges() {
-        let func = func_scope_from_ptr_id(&dst);
+        let scope = func_scope_from_ptr_id(&dst);
+        let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).0.push((src, dst));
     }
     for (src, dst) in class_pag.iter_cast_edges() {
-        let func = func_scope_from_ptr_id(&dst);
+        let scope = func_scope_from_ptr_id(&dst);
+        let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).1.push((src, dst));
     }
     for (ptr_id, obj_id) in class_pag.iter_alloc_edges() {
-        let func = func_scope_from_ptr_id(&ptr_id);
+        let scope = func_scope_from_ptr_id(&ptr_id);
+        let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).2.push((ptr_id, obj_id));
     }
     for e in class_pag.iter_load_edges() {
-        let func = func_scope_from_ptr_id(&e.dst_ptr_id);
+        let scope = func_scope_from_ptr_id(&e.dst_ptr_id);
+        let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).3.push(e);
     }
     for e in class_pag.iter_store_edges() {
-        let func = func_scope_from_ptr_id(&e.base_ptr_id);
+        let scope = func_scope_from_ptr_id(&e.base_ptr_id);
+        let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).4.push(e);
     }
+    // Only hide CallArg/CallRet when call is "impl wrapper -> same-named method body" (MIR artifact).
+    // Do not hide real calls from method bodies (e.g. chain_with -> with_partner).
     let call_arg = class_pag.call_arg_edges();
     for e in call_arg.iter() {
-        let func = caller_from_call_site(&e.call_site);
+        let scope = caller_from_call_site(&e.call_site);
+        let callee_scope = callee_scope_from_formal_ptr_id(&e.formal_ptr_id);
+        if is_wrapper_to_same_method_edge(&scope, callee_scope.as_deref()) {
+            continue;
+        }
+        let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).5.push((e.call_site.clone(), e.arg_idx, e.actual_ptr_id.clone(), e.formal_ptr_id.clone()));
     }
     let call_ret = class_pag.call_ret_edges();
     for e in call_ret.iter() {
-        let func = caller_from_call_site(&e.call_site);
+        let scope = caller_from_call_site(&e.call_site);
+        let callee_scope = callee_scope_from_formal_ptr_id(&e.formal_ret_ptr_id);
+        if is_wrapper_to_same_method_edge(&scope, callee_scope.as_deref()) {
+            continue;
+        }
+        let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).6.push((e.call_site.clone(), e.formal_ret_ptr_id.clone(), e.actual_ret_ptr_id.clone()));
+    }
+
+    // rcpta: ensure every function that has any ptr in ClassPAG gets a section (even if no edges yet).
+    for ptr_id in class_pag.ptr_ids() {
+        let scope = func_scope_from_ptr_id(ptr_id);
+        let func = canonical_section_key_for_scope(&scope);
+        by_func.entry(func).or_insert_with(empty_edges);
     }
 
     // Sort edge lists within each function for stable output
@@ -1106,6 +1209,10 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str) {
     // 4. Per-function sections: assign, cast, alloc, load, store, call_arg, call_ret
     writer.write_all(b"## Edges by function\n\n").expect("Unable to write section header");
     for (func_name, (assign, cast, alloc, load, store, call_arg_f, call_ret_f)) in &by_func {
+        // Skip sections with no edges (e.g. interface get_id with only formals, no body edges).
+        if assign.is_empty() && cast.is_empty() && alloc.is_empty() && load.is_empty() && store.is_empty() && call_arg_f.is_empty() && call_ret_f.is_empty() {
+            continue;
+        }
         total_assign += assign.len();
         total_cast += cast.len();
         total_alloc += alloc.len();
@@ -1113,7 +1220,7 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str) {
         total_store += store.len();
 
         // Skip internal DSL trait methods (e.g. downgrade_from for into_superclass); not user-facing class methods.
-        if is_internal_dsl_trait_method(func_name) {
+        if analysis::is_internal_dsl_trait_method(func_name) {
             continue;
         }
 
@@ -1179,19 +1286,52 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str) {
         writer.write_all(b"\n").expect("Unable to write newline");
     }
 
-    // 5. Statistics
+    // 5. Materialized Store/Load (after PTS): obj-level edges when base flows to obj
+    if let Some(result) = solver_result {
+        writer.write_all(b"## Materialized Store/Load (after PTS)\n\n").expect("Unable to write section header");
+        writer.write_all(b"  Store (src -> obj.field):\n").expect("Unable to write");
+        if result.materialized_stores.is_empty() {
+            writer.write_all(b"    (none)\n").expect("Unable to write");
+        } else {
+            let mut stores: Vec<_> = result.materialized_stores.iter().collect();
+            stores.sort_by(|a, b| (a.src_ptr_id.as_str(), a.obj_id.as_str(), a.field.as_str()).cmp(&(b.src_ptr_id.as_str(), b.obj_id.as_str(), b.field.as_str())));
+            for e in stores {
+                let obj_field = format!("{}.{}", e.obj_id, e.field);
+                writer.write_all(format!("    {} -> {}\n", short_class_pag_name(&e.src_ptr_id), obj_field).as_bytes()).expect("Unable to write");
+            }
+        }
+        writer.write_all(b"  Load (obj.field -> dst):\n").expect("Unable to write");
+        if result.materialized_loads.is_empty() {
+            writer.write_all(b"    (none)\n").expect("Unable to write");
+        } else {
+            let mut loads: Vec<_> = result.materialized_loads.iter().collect();
+            loads.sort_by(|a, b| (a.obj_id.as_str(), a.field.as_str(), a.dst_ptr_id.as_str()).cmp(&(b.obj_id.as_str(), b.field.as_str(), b.dst_ptr_id.as_str())));
+            for e in loads {
+                let obj_field = format!("{}.{}", e.obj_id, e.field);
+                writer.write_all(format!("    {} -> {}\n", obj_field, short_class_pag_name(&e.dst_ptr_id)).as_bytes()).expect("Unable to write");
+            }
+        }
+        writer.write_all(b"\n").expect("Unable to write newline");
+    }
+
+    // 6. Statistics
     writer.write_all(b"## Statistics\n\n").expect("Unable to write section header");
+    let (total_load_dump, total_store_dump) = if let Some(r) = solver_result {
+        (total_load + r.materialized_loads.len(), total_store + r.materialized_stores.len())
+    } else {
+        (total_load, total_store)
+    };
     writer
         .write_all(
             format!(
                 "  ptrs: {}  objs: {}  assign: {}  cast: {}  alloc: {}  load: {}  store: {}  call_arg: {}  call_ret: {}\n",
-                class_pag.num_ptrs(),
+                ptr_ids.len(),
                 class_pag.num_objs(),
                 total_assign,
                 total_cast,
                 total_alloc,
-                total_load,
-                total_store,
+                total_load_dump,
+                total_store_dump,
                 total_call_arg,
                 total_call_ret,
             )
@@ -1199,3 +1339,54 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str) {
         )
         .expect("Unable to write statistics");
 }
+
+/// Dumps rcpta class-level points-to sets from a precomputed ClassPTSResult (used when solver was already run for ClassPAG dump).
+pub fn dump_class_pts_from_result(result: &ClassPTSResult, output_path: &str) {
+    let pts = &result.pts;
+    let mut writer = BufWriter::new(match output_path {
+        "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
+        _ => {
+            ensure_parent_dir(output_path);
+            Box::new(File::create(output_path).expect("Unable to create file")) as Box<dyn Write>
+        }
+    });
+    writer
+        .write_all(b"# rcpta Class-level Points-to Sets (PTS)\n\n")
+        .expect("Unable to write header");
+    writer
+        .write_all(b"# For each pointer, the set of class heap objects it may point to after propagation on ClassPAG.\n\n")
+        .expect("Unable to write description");
+    writer.write_all(b"## Pointer -> Objects\n\n").expect("Unable to write section header");
+    let mut ptr_ids: Vec<_> = pts.keys().cloned().collect();
+    ptr_ids.sort();
+    for ptr_id in &ptr_ids {
+        let objs = pts.get(ptr_id).unwrap();
+        let short_ptr = short_class_pag_name(ptr_id);
+        if objs.is_empty() {
+            writer
+                .write_all(format!("  {}  ->  (none)\n", short_ptr).as_bytes())
+                .expect("Unable to write pts line");
+        } else {
+            let mut obj_list: Vec<_> = objs.iter().cloned().collect();
+            obj_list.sort();
+            let objs_str = obj_list.join(", ");
+            writer
+                .write_all(format!("  {}  ->  {}\n", short_ptr, objs_str).as_bytes())
+                .expect("Unable to write pts line");
+        }
+    }
+    writer.write_all(b"\n## Statistics\n\n").expect("Unable to write section header");
+    let total_ptrs = pts.len();
+    let ptrs_with_objs = pts.values().filter(|s| !s.is_empty()).count();
+    writer
+        .write_all(format!("  ptrs: {}  ptrs_with_objs: {}\n", total_ptrs, ptrs_with_objs).as_bytes())
+        .expect("Unable to write statistics");
+}
+
+/// Dumps rcpta class-level points-to sets: for each pointer, the set of class heap objects it may point to (after propagation on ClassPAG).
+/// Author: Yan Wang, Date: 2026-02-02
+pub fn dump_class_pts(class_pag: &ClassPAG, output_path: &str) {
+    let result = solve_class_pts(class_pag);
+    dump_class_pts_from_result(&result, output_path);
+}
+
