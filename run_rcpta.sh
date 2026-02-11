@@ -95,6 +95,16 @@ fi
 # Phase 2: touch + cargo-pta (recompile target crate with PTA, write class_pag)
 echo "[2/2] Analyzing (entry: $ENTRY_FUNC)..."
 touch "$ABS_FILE"
+
+# Avoid stack overflow when analyzing large crates (e.g. vehicle_hierarchy with deep type/call graphs).
+# ulimit -s is in KiB; 1048576 = 1 GiB. All child processes (cargo, cargo-pta, pta) inherit this.
+# Skip by setting RCPTA_SKIP_STACK_LIMIT=1 if you need the default limit.
+if [[ -z "${RCPTA_SKIP_STACK_LIMIT:-}" ]]; then
+  ulimit -s 1048576 2>/dev/null || ulimit -s 524288 2>/dev/null || ulimit -s 131072 2>/dev/null || true
+fi
+# Rust threads get stack from RUST_MIN_STACK (default 2 MiB); raise for deep recursion.
+export RUST_MIN_STACK="${RUST_MIN_STACK:-67108864}"   # 64 MiB per thread
+
 if [[ -n "$USE_LIB" ]]; then
   "$CARGO_PTA" pta \
     --manifest-path "$MANIFEST" \

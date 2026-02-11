@@ -32,7 +32,32 @@ Usage:
 /// Set the environment variable `PTA_BUILD_STD` to enable the building of std library when running pta.
 const PTA_BUILD_STD: &str = "PTA_BUILD_STD";
 
+/// Raise process stack limit so that spawned pta inherits it (avoids overflow on large crates).
+fn maybe_raise_stack_limit() {
+    if std::env::var_os("RCPTA_SKIP_STACK_LIMIT").is_some() {
+        return;
+    }
+    #[cfg(unix)]
+    {
+        use libc::{rlimit, setrlimit, RLIMIT_STACK, RLIM_INFINITY};
+        let mb_values = [1024_u64, 512, 256, 128];
+        for &stack_mb in &mb_values {
+            let limit = stack_mb * 1024 * 1024;
+            let rlim = rlimit { rlim_cur: limit, rlim_max: RLIM_INFINITY };
+            if unsafe { setrlimit(RLIMIT_STACK, &rlim) } == 0 {
+                return;
+            }
+            let rlim = rlimit { rlim_cur: limit, rlim_max: limit };
+            if unsafe { setrlimit(RLIMIT_STACK, &rlim) } == 0 {
+                return;
+            }
+        }
+    }
+}
+
 pub fn main() {
+    maybe_raise_stack_limit();
+
     if std::env::args().take_while(|a| a != "--").any(|a| a == "--help" || a == "-h") {
         println!("{}", CARGO_PTA_HELP);
         return;

@@ -1,0 +1,138 @@
+% RCPTA 项目报告 —— 具体设计 章节
+% 可直接插入主文档的 \section{具体设计} 下使用
+
+\section{具体设计}
+
+\subsection{总览}
+
+本指针分析框架（RCPTA）的核心思想是：在已有 Rust MIR 层指针分析（RUPTA）的基础上，将程序中与“类、对象、字段、方法”相关的指针行为以图为基础进行建模与求解，使分析结果与源码语义对应。分析流程分为三个主要阶段：首先，在 MIR 遍历过程中识别并抽象出与类引用相关的操作（对象创建、赋值、转型、字段读写、方法调用等），将其映射为类级指针操作语义；其次，在该抽象基础上构建类级指针赋值图（Class-level Pointer Assignment Graph, ClassPAG），以节点表示类级指针（ClassPtr）与抽象堆对象（ClassObj），边表示赋值、分配、加载、存储、转型及调用时的参数/返回值传播；最后，在 ClassPAG 上采用迭代算法执行指向集（points-to set）的传播，并对 Store/Load 约束进行物化，直到达到不动点，得到类级指向关系（Class PTS）及类调用图（Class Call Graph）。
+
+下文将对设计细节做具体介绍。
+
+\zihao{4-}
+\subsection{指针分析算法}
+
+为系统性地介绍 RCPTA 的类级指针分析技术，本框架设计并实现了一套与 Rust class 语法对应的类级分析算法。该算法在 MIR 层分析结果之上建立类级抽象，使输出与源码层的类、对象、字段与方法一一对应，为后续的精度评估与扩展分析奠定基础。
+
+本节分三部分展开：首先，对类级指针与堆对象的分类与建模进行说明；随后，介绍影响指针的语句类型及其在 ClassPAG 上的边构建方式；最后，描述在 ClassPAG 上基于迭代传播的指向集求解过程。
+
+\zihao{4-}
+\subsubsection{\heiti 类级指针与堆对象}
+
+在 RCPTA 中，仅关注与“类引用”相关的指针，即程序中持有或传递对堆上类实例（由 \texttt{ClassName::new(...)} 等构造）的引用的变量或位置。基本类型（如整型、浮点型）及不涉及类类型的引用不在本分析的考虑范围内。
+
+从指针所处方位的角度，类级指针（ClassPtr）可分为以下类别：
+
+\begin{enumerate}
+    \item \textbf{局部变量（Local）}：在函数或测试用例内部声明的类类型变量（如 \texttt{let p: CRc<Point> = ...}），对应 MIR 中的 \texttt{local}，在 ClassPAG 中以“函数名::local\_N”等形式标识。
+    
+    \item \textbf{方法参数（Param）}：方法或函数的类类型参数（如 \texttt{fn foo(\&self, other: CRc<Point>)}），对应被调用方的形参，标识为“函数名::param\_k”。
+    
+    \item \textbf{返回值（Return）}：方法或函数返回的类引用（如 \texttt{fn get\_point(\&self) -> CRc<Point>}），标识为“函数名::ret”。
+    
+    \item \textbf{实例字段（InstanceField）}：作为对象成员存在的类类型字段。在 ClassPAG 中通过“基指针.字段名”表示（如 \texttt{obj\_0.item}），在指向集传播过程中随 Store/Load 约束物化。
+    
+    \item \textbf{静态字段（StaticField）}：类级别的静态类引用（若 DSL 支持），以“类名::字段名”标识。
+\end{enumerate}
+
+上述类别在实现中统一由 \texttt{ClassPtr} 表示，通过 \texttt{id} 与 \texttt{class\_type} 区分不同指针及其静态类型，便于与源码层“变量/参数/返回值/字段”对应。
+
+堆对象采用类级抽象对象 \texttt{ClassObj} 表示。每个 \texttt{ClassObj} 与一个分配点（AllocSite）绑定，分配点由“函数名 + MIR 位置”（如 \texttt{main:bb5[2]}）唯一确定。同一分配点处创建的所有运行时刻对象在分析中被归约为同一个抽象对象，即基于分配点的堆抽象（见\ref{subsec:heap} 节）。
+
+类级指针与堆对象的定义及标识逻辑位于 \texttt{rupta/src/rcpta/class\_ptr.rs} 与 \texttt{rupta/src/rcpta/class\_obj.rs}；与类型系统、方法派发相关的辅助逻辑位于 \texttt{rupta/src/util/class/} 目录下。
+
+\subsubsection{\heiti 影响指针的语句及 Class PAG 构建}
+
+在构建 ClassPAG 时，分析器仅关注那些会改变类引用指向关系或引发类引用传播的 MIR 级操作。这些操作经识别后，被映射为 ClassPAG 上的各类边。影响类级指针分析的语句与边类型可归纳为以下几类：
+
+\begin{enumerate}
+    \item \textbf{对象创建（Alloc）}：如 \texttt{ClassName::new(...)} 在源码层的调用。在 MIR 中对应构造相关调用；当调用方处于“源码级”上下文（用户代码，而非 DSL 运行时或标准库内部）时，为该调用创建 \texttt{ClassObj}，并建立 \textbf{Alloc} 边：\texttt{ptr\_id $\to$ obj\_id}，表示该指针指向新创建的抽象对象。
+    
+    \item \textbf{指针赋值（Assign）}：如 \texttt{let x = y;}、\texttt{x.clone()} 等拷贝或移动类引用的操作。在 ClassPAG 上建立 \textbf{Assign} 边：\texttt{src $\to$ dst}，表示 \texttt{dst} 可能指向 \texttt{src} 所指向的对象集合。
+    
+    \item \textbf{类型转换（Cast）}：如 \texttt{into\_superclass()}、\texttt{try\_into\_subtype::<CRc<Sub>>()}、\texttt{cast\_mixin::<CRc<M>>()} 等。语义为同一堆对象的不同类型视图，不创建新对象。在 ClassPAG 上建立 \textbf{Cast} 边：\texttt{src $\to$ dst}，传播时与 Assign 一致（\texttt{pts(dst) $\supseteq$ pts(src)}）。
+    
+    \item \textbf{字段读（Load）}：如源码层的 \texttt{x.get\_foo()}，当返回类型为类引用时，表示从“基对象.字段”读到结果。在 ClassPAG 上建立 \textbf{Load} 边：\texttt{(base, field) $\to$ dst}，在求解时作为约束：对 \texttt{pts(base)} 中每个对象 \texttt{obj}，将 \texttt{content[(obj, field)]} 传播到 \texttt{pts(dst)}。
+    
+    \item \textbf{字段写（Store）}：如源码层的 \texttt{x.set\_foo(value)}，当 \texttt{value} 为类引用时，表示将值写入“基对象.字段”。在 ClassPAG 上建立 \textbf{Store} 边：\texttt{src $\to$ (base, field)}，在求解时对 \texttt{pts(base)} 中每个对象更新 \texttt{content[(obj, field)]}。
+    
+    \item \textbf{方法调用（CallArg / CallRet）}：\texttt{receiver.method(args)} 在 ClassPAG 上建模为 \textbf{CallArg}（实参/ receiver $\to$ 形参）与 \textbf{CallRet}（被调用方返回值 $\to$ 调用方接收位置）。多态调用根据 receiver 的指向集与类型层次进行 dispatch，解析出可能被调用的 callee 集合，再为每个 callee 建立相应的 CallArg/CallRet 边。
+\end{enumerate}
+
+上述语句的识别与 ClassPAG 边的添加在 MIR 遍历阶段完成：构造函数、转型、getter/setter 及特殊函数（如 \texttt{Option::unwrap}）由 \texttt{special\_function\_handler} 与 \texttt{fpag\_builder} 中的 \texttt{handle\_getter\_setter}、\texttt{handle\_class\_constructor}、\texttt{handle\_class\_cast\_call} 等逻辑处理；ClassPAG 的 \texttt{add\_alloc}、\texttt{add\_assign}、\texttt{add\_cast}、\texttt{add\_load}、\texttt{add\_store} 及 CallArg/CallRet 的注册在 \texttt{rupta/src/builder/fpag\_builder.rs} 与 \texttt{rupta/src/builder/special\_function\_handler.rs} 中实现，ClassPAG 数据结构本身定义于 \texttt{rupta/src/rcpta/class\_pag.rs}。
+
+\subsubsection{\heiti 类级指向集求解}
+
+在 ClassPAG 构建完成后，类级指向集（Class PTS）的求解在该图上通过迭代传播直至不动点完成。Store 与 Load 作为“约束”处理：当某指针的指向集包含某对象时，才物化该对象与字段对应的 Store/Load 传播。算法核心步骤可概括为：
+
+\begin{enumerate}
+    \item \textbf{初始化}：为每个 ClassPAG 中的指针分配空的指向集；对所有 Alloc 边，将 \texttt{ptr $\to$ obj} 加入初始 \texttt{pts(ptr)}。
+    \item \textbf{迭代传播}：反复执行以下规则直至无新对象加入任何 \texttt{pts} 或 \texttt{content[(obj, field)]}：
+    \begin{itemize}
+        \item \textbf{Assign / Cast}：对每条 \texttt{src $\to$ dst} 边，令 \texttt{pts(dst) $\gets$ pts(dst) $\cup$ pts(src)}。
+        \item \textbf{CallArg}：对每条 (call\_site, arg\_idx, actual $\to$ formal)，令 \texttt{pts(formal) $\gets$ pts(formal) $\cup$ pts(actual)}。
+        \item \textbf{CallRet}：对每条 formal\_ret $\to$ actual\_ret，令 \texttt{pts(actual\_ret) $\gets$ pts(actual\_ret) $\cup$ pts(formal\_ret)}。
+        \item \textbf{Store 约束}：对每条 \texttt{src $\to$ (base, field)}，对 \texttt{pts(base)} 中每个 \texttt{obj}，令 \texttt{content[(obj, field)] $\gets$ content[(obj, field)] $\cup$ pts(src)}；并同步维护“对象.字段”对应的虚拟指针 \texttt{obj.field} 的 \texttt{pts}。
+        \item \textbf{Load 约束}：对每条 \texttt{(base, field) $\to$ dst}，对 \texttt{pts(base)} 中每个 \texttt{obj}，令 \texttt{pts(dst) $\gets$ pts(dst) $\cup$ content[(obj, field)]}。
+    \end{itemize}
+    \item \textbf{终止}：当一轮迭代中所有 \texttt{pts} 与 \texttt{content} 均未发生变化时，分析结束。输出为每个指针的 \texttt{pts}，以及物化后的 Store/Load 边（可选用于报告）。
+\end{enumerate}
+
+该求解过程与经典的在指针流图上的 Worklist 传播思想一致，仅在“何时触发传播”的粒度上采用整图迭代方式，便于实现 Store/Load 约束与 \texttt{content} 的同步更新。类级指向集求解实现位于 \texttt{rupta/src/rcpta/class\_pts.rs} 的 \texttt{solve\_class\_pts} 函数。
+
+\zihao{4-}
+\subsection{堆抽象}
+\label{subsec:heap}
+
+在指针分析中，堆对象的动态性与数量给分析带来可扩展性挑战。RCPTA 采用基于分配点（Allocation Site）的堆抽象：所有在程序中同一 MIR 位置（函数 + 基本块 + 语句索引，即 \texttt{func:bbN[k]}）处创建的类实例，均被归约为同一个抽象对象 \texttt{ClassObj}。该 \texttt{ClassObj} 由唯一标识 \texttt{obj\_id}（如 \texttt{obj\_0}、\texttt{obj\_1}）、其具体类类型 \texttt{class\_type} 以及分配点 \texttt{AllocSite} 描述。
+
+基于分配点的抽象在保持“同一代码位置创建的对象归为一类”的区分能力的同时，将无穷多运行时刻对象归约为有限个抽象节点，降低了分析复杂度；且分配点与 MIR 位置一一对应，便于与源码行信息结合，也便于后续若引入上下文敏感分析时对同一分配点在不同上下文中进一步细分。堆抽象相关定义与 \texttt{ClassObj} 的创建逻辑位于 \texttt{rupta/src/rcpta/class\_obj.rs}；在 ClassPAG 中对象的创建与 Alloc 边的建立由 \texttt{class\_pag.rs} 与 \texttt{special\_function\_handler.rs} 中的 \texttt{handle\_class\_constructor} 协同完成。
+
+\zihao{4-}
+\subsection{上下文不敏感策略}
+
+本阶段 RCPTA 采用上下文不敏感（context-insensitive）分析：同一函数在不同调用点共享同一份类级指针与指向关系，不区分调用栈或调用上下文。该策略在实现上体现为：\texttt{ClassPtr} 与 \texttt{ClassObj} 的 \texttt{Context} 字段当前为占位类型（空元组），不参与指针标识或对象区分；CallArg/CallRet 边仅按“调用点 + 形参/返回值”建立，不携带上下文标识。
+
+选择上下文不敏感的目的在于先形成稳定、可验证的基线：分析结果易于与源码及规约文档对照，且在大规模测试套件上可扩展。上下文占位与相关类型定义位于 \texttt{rupta/src/rcpta/class\_ptr.rs} 与 \texttt{rupta/src/rcpta/class\_obj.rs}。
+
+\zihao{4-}
+\subsection{上下文敏感策略}
+
+为提升类级指针分析的精度，RCPTA 在上下文不敏感基线之上支持基于对象敏感（Object-Sensitivity）的上下文敏感分析。通过为变量与堆对象引入上下文标识，对不同调用路径下的类引用与对象进行细粒度区分，有效减少不同调用路径间的指针混淆，使 Class PTS 与 Class Call Graph 更精确。
+
+具体地，RCPTA 的上下文敏感策略包含以下两方面：
+
+\begin{enumerate}
+    \item \textbf{对类级指针的上下文抽象}：类级指针（ClassPtr）的指向关系不仅与其静态位置（如 \texttt{func::param\_1}、\texttt{func::ret}）相关，还与其调用上下文（如当前调用栈上的 receiver 对象或调用串）紧密关联。通过为每个 ClassPtr 维护上下文标识（如 k-对象敏感下的 receiver 链 \texttt{[obj\_a][obj\_b]::method}），可以区分同一函数、同一形参在不同调用环境下的不同指向集，从而在 CallArg/CallRet 传播时避免将来自不同调用路径的类引用混在一起。
+    
+    \item \textbf{对堆对象的上下文抽象}：堆对象（ClassObj）在基于分配点（AllocSite）抽象的基础上，结合调用上下文进行进一步区分。同一分配点（如 \texttt{entry:bb0[5]}）处创建的类实例，在不同调用上下文下可被视为不同的抽象对象节点（如 \texttt{obj\_0} 在上下文 \texttt{[o1]} 与 \texttt{[o2]} 下分别对应 \texttt{obj\_0\_ctx1}、\texttt{obj\_0\_ctx2}），从而在 Store/Load 与多态解析时提升“对象.字段”与“receiver 具体类型”的准确性，减少虚假的指向与调用边。
+\end{enumerate}
+
+综上，基于对象敏感的上下文抽象策略为 RCPTA 的 ClassPAG 与 Class PTS 提供了更强的表达能力，在面向对象风格的程序（多态调用、字段读写、多级调用链）上能够兼顾精度与可扩展性，为后续更精细的依赖分析或安全检测奠定基础。上下文敏感相关的上下文类型定义与 ClassPtr/ClassObj 的 \texttt{Context} 扩展位于 \texttt{rupta/src/rcpta/class\_ptr.rs}、\texttt{rupta/src/rcpta/class\_obj.rs}，与底层 RUPTA 的上下文策略（如 \texttt{pta/context\_sensitive.rs}、\texttt{pta/strategies/}）协同时可对类级节点与边进行上下文敏感的建图与传播。
+
+\zihao{4-}
+\subsection{针对 Rust class 语法的针对性设计}
+
+Rust class DSL 通过宏与类型系统在 Rust 上模拟继承、接口、mixin 及引用计数包装（如 \texttt{CRc}），其源码层写法与展开后的 MIR 存在较大差异。RCPTA 针对以下语法与 API 进行了专门设计，使 ClassPAG 与 Class PTS 与源码语义一致。
+
+\subsubsection{类构造与 Alloc 边}
+
+仅当调用方处于“源码级”上下文（用户 crate 的代码，而非 \texttt{core}、\texttt{std}、\texttt{classes::} 等 DSL 运行时内部）时，才为 \texttt{ClassName::new(...)} 创建 \texttt{ClassObj} 并添加 Alloc 边。类构造的识别通过 \texttt{identify\_class\_constructor}（\texttt{rupta/src/util/class/analysis.rs}）根据函数名模式（如 \texttt{\_classes::\_ClassName::...::new}）完成；\texttt{is\_source\_level\_context} 用于过滤调用方，避免在 DSL 内部或库函数内部重复建类级对象。实现位于 \texttt{rupta/src/builder/special\_function\_handler.rs} 的 \texttt{handle\_class\_constructor}。
+
+\subsubsection{转型语句与 Cast 边}
+
+\texttt{into\_superclass()}、\texttt{try\_into\_subtype::<CRc<Sub>>()}、\texttt{cast\_mixin::<CRc<M>>()} 在 DSL 实现上均为“同一块堆数据、不同 vtable/类型视图”，不分配新对象。RCPTA 在识别到这些调用时，为 receiver 与目标指针建立 \textbf{Cast} 边，并在求解时按与 Assign 相同的方式传播指向集。转型处理的入口为 \texttt{handle\_class\_cast\_call}（\texttt{special\_function\_handler.rs}），ClassPAG 的 \texttt{add\_cast} 在 \texttt{fpag\_builder} 的赋值与 cast 分支中被调用。
+
+\subsubsection{Getter/Setter 与 Load/Store 边}
+
+源码层的 \texttt{x.get\_foo()}、\texttt{x.set\_foo(value)} 在 MIR 中展开为对 DSL 运行时函数的调用。RCPTA 通过 \texttt{identify\_getter\_setter}（\texttt{util/class/analysis.rs}）识别用户 crate 中生成的 getter/setter，提取 \texttt{base}、\texttt{field}、\texttt{value} 或 \texttt{dst} 对应的路径，并经 \texttt{canonicalize\_path\_for\_class\_pag} 将 MIR 中的引用或临时变量规范化为同一源码变量对应的 ClassPtr，从而在 ClassPAG 上添加 Load 边 \texttt{(base, field) $\to$ dst} 与 Store 边 \texttt{src $\to$ (base, field)}。仅当字段类型为类引用时才建边；\texttt{classes::} 内部的 getter/setter 被排除，避免将 DSL 内部状态暴露为类级边。实现分布于 \texttt{fpag\_builder.rs} 的 \texttt{handle\_getter\_setter} 及对 \texttt{class\_pag.add\_load}、\texttt{class\_pag.add\_store} 的调用处。
+
+\subsubsection{Option::unwrap 与 Assign 边}
+
+向下转型 \texttt{try\_into\_subtype} 返回 \texttt{Option<CRc<Sub>>}，用户常通过 \texttt{opt.unwrap()} 取出内部类引用。RCPTA 将 \texttt{Option::unwrap} 建模为：Option 内部类引用（\texttt{Some.0}）到 unwrap 结果左端的 \textbf{Assign} 传播，从而在 ClassPAG 上不引入额外节点即可保持“同一对象”的语义。识别逻辑（\texttt{is\_option\_unwrap}）及 path 到 ClassPtr 的映射（含 \texttt{Downcast(1), Field(0)} 的规范化）位于 \texttt{fpag\_builder.rs} 与 \texttt{util/class} 相关模块。
+
+\subsubsection{多态调用与 Class Call Graph}
+
+对 \texttt{receiver.method(args)}，RCPTA 根据求解得到的 \texttt{pts(receiver)}，对其中每个抽象对象取其 \texttt{class\_type}，再通过 \texttt{ClassTypeSystem::dispatch}（\texttt{util/class/type\_system.rs}）查表得到该具体类型下 \texttt{method} 对应的实现函数，得到该调用点可能的所有 callee。据此建立 ClassPAG 的 CallArg/CallRet 边，并更新类调用图 \texttt{ClassCallGraph}（\texttt{util/class/call\_graph.rs}），输出时以“类名::方法名”为节点，便于与源码对应。多态解析与 pending 边的 flush 在 MIR 分析及 \texttt{flush\_pending\_class\_cg\_edges}（\texttt{mir/analysis\_context.rs}）中完成，结果通过 \texttt{results\_dumper} 输出为 \texttt{class\_cg.txt}、\texttt{class\_pag.txt}、\texttt{class\_pts.txt}。
+
+上述针对性设计使 RCPTA 的输出与 \texttt{doc/rcpta\_rust\_class\_syntax\_statements.md} 中规定的“源码层语句与 Class PAG 边”的对应关系一致，便于人工验证与后续扩展。

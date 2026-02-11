@@ -3,9 +3,15 @@
 # Output: analysis_results/rcpta/<suite>/<entry_func>/ (class_pag.txt, class_pts.txt, class_cg.txt, etc.)
 #
 # Usage:
-#   ./run_rcpta_all_entries.sh [--analyze-only]
+#   ./run_rcpta_all_entries.sh [suite] [--analyze-only]
 #
-# Without --analyze-only: compile each test binary once, then run rcpta for each entry (full compile first time).
+# Examples:
+#   ./run_rcpta_all_entries.sh                    # all four suites
+#   ./run_rcpta_all_entries.sh vehicle_hierarchy # only vehicle_hierarchy
+#   ./run_rcpta_all_entries.sh vehicle_hierarchy --analyze-only
+#   ./run_rcpta_all_entries.sh --analyze-only     # all suites, analyze-only
+#
+# Without --analyze-only: compile each test binary once, then run rcpta for each entry.
 # With --analyze-only: skip compile; use when binaries are already built (faster for re-runs).
 
 set -e
@@ -13,6 +19,17 @@ set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULTS_BASE="$SCRIPT_DIR/analysis_results/rcpta"
+
+# Optional: only run this suite (e.g. vehicle_hierarchy)
+SUITE_FILTER=""
+ANALYZE_ONLY=""
+for arg in "$@"; do
+  if [[ "$arg" == "--analyze-only" ]]; then
+    ANALYZE_ONLY=1
+  elif [[ -n "$arg" && "$arg" != "--analyze-only" ]]; then
+    SUITE_FILTER="$arg"
+  fi
+done
 
 # Paths relative to workspace (under rustdsl/classes/tests/)
 FILES=(
@@ -39,9 +56,6 @@ entries_tests() {
   grep -A1 '#\[test\]' "$1" | grep -oE 'fn [a-z_][a-z0-9_]*' | awk '{print $2}' | sort -u
 }
 
-ANALYZE_ONLY=
-[[ "${1:-}" == "--analyze-only" ]] && ANALYZE_ONLY=1
-
 mkdir -p "$RESULTS_BASE"
 
 for MAIN_RS in "${FILES[@]}"; do
@@ -49,6 +63,11 @@ for MAIN_RS in "${FILES[@]}"; do
   [[ -f "$ABS_MAIN" ]] || { echo "Skip (not found): $MAIN_RS"; continue; }
 
   SUITE="$(suite_from_path "$MAIN_RS")"
+  if [[ -n "$SUITE_FILTER" && "$SUITE" != "$SUITE_FILTER" ]]; then
+    echo "Skip suite: $SUITE (filter: $SUITE_FILTER)"
+    continue
+  fi
+
   echo "=========================================="
   echo "Suite: $SUITE ($MAIN_RS)"
   echo "=========================================="

@@ -21,7 +21,33 @@ use rupta::pta::PTACallbacks;
 use rupta::util;
 use rupta::util::options::AnalysisOptions;
 
+/// Raise process stack limit to avoid overflow on large crates (e.g. vehicle_hierarchy).
+/// Skip if RCPTA_SKIP_STACK_LIMIT=1. Tries 1024, 512, 256, 128 MiB until setrlimit succeeds.
+fn maybe_raise_stack_limit() {
+    if std::env::var_os("RCPTA_SKIP_STACK_LIMIT").is_some() {
+        return;
+    }
+    #[cfg(unix)]
+    {
+        use libc::{rlimit, setrlimit, RLIMIT_STACK, RLIM_INFINITY};
+        let mb_values = [1024_u64, 512, 256, 128];
+        for &stack_mb in &mb_values {
+            let limit = stack_mb * 1024 * 1024;
+            let rlim = rlimit { rlim_cur: limit, rlim_max: RLIM_INFINITY };
+            if unsafe { setrlimit(RLIMIT_STACK, &rlim) } == 0 {
+                return;
+            }
+            let rlim = rlimit { rlim_cur: limit, rlim_max: limit };
+            if unsafe { setrlimit(RLIMIT_STACK, &rlim) } == 0 {
+                return;
+            }
+        }
+    }
+}
+
 fn main() {
+    maybe_raise_stack_limit();
+
     let early_dcx =
         rustc_session::EarlyDiagCtxt::new(rustc_session::config::ErrorOutputType::default());
 
