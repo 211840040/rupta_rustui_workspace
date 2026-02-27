@@ -604,6 +604,7 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
         let lh_has_dsl = analysis::is_dsl_class_type(self.tcx(), lh_type)
             || analysis::extract_dsl_class_from_wrapper(self.tcx(), lh_type, None).is_some();
         if rh_has_dsl && lh_has_dsl {
+            debug!("DSL class assignment: {:?} = {:?} in func: {:?} ", lh_path, rh_path, self.func_ref.def_id);
             let func_name = self.rcpta_canonical_func_name();
             use crate::util::class::ptr_system::{path_to_class_ptr_id, ClassPtr as UtilClassPtr};
 
@@ -1771,6 +1772,7 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                     } else {
                         path_to_class_ptr_id(arg_path, Some(&caller_func_name), None)
                     };
+                    let actual_canonical_ptr_id = self.acx.get_canonical_rcpta_ptr(&actual_ptr_id);
                     // MIR uses 1-based parameter ordinals (0 = return place, 1 = first param/self).
                     let formal_ptr_id = format!("{}::param_{}", callee_func_name, arg_idx + 1);
                     let class_ty = self.acx.class_type_system
@@ -1779,7 +1781,7 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                         .unwrap_or_else(|| class_method.class_name.clone());
                     let formal_ptr = crate::rcpta::ClassPtr::new_local(formal_ptr_id.clone(), class_ty);
                     self.acx.class_pag.get_or_create_ptr(formal_ptr);
-                    self.acx.class_pag.add_call_arg(&call_site_id, arg_idx, &actual_ptr_id, &formal_ptr_id);
+                    self.acx.class_pag.add_call_arg(&call_site_id, arg_idx, &actual_canonical_ptr_id, &formal_ptr_id);
                     
                     // if caller_func_name.contains("apply_twice") {
                     //     eprintln!("[rcpta] Added CallArg in apply_twice: {} -> {}", actual_ptr_id, formal_ptr_id);
