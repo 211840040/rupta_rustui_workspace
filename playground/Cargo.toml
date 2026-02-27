@@ -8,6 +8,14 @@ classes = { path = "../rustdsl/classes" }
 classes_macros = { path = "../rustdsl/classes_macros" }
 
 [[bin]]
+name = "cs_test_example"
+path = "src/bin/cs_test_example.rs"
+
+[[bin]]
+name = "simple_cast"
+path = "src/bin/simple_cast.rs"
+
+[[bin]]
 name = "simple_new"
 path = "src/bin/simple_new.rs"
 
@@ -42,3 +50,7 @@ path = "expanded/simple_load_store_expanded.rs"
 [[bin]]
 name = "simple_method_call_expanded"
 path = "expanded/simple_method_call_expanded.rs"
+
+[[bin]]
+name = "simple_cast_expanded"
+path = "expanded/simple_cast_expanded.rs"

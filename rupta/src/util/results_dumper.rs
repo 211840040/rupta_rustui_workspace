@@ -19,31 +19,31 @@ fn ensure_parent_dir(file_path: &str) {
     }
 }
 
-use crate::graph::pag::{PAGNodeId, PAG, PAGPath};
-use crate::graph::call_graph::{CallGraph, CGFunction, CGCallSite, CSCallGraph};
+use crate::graph::call_graph::{CGCallSite, CGFunction, CSCallGraph, CallGraph};
+use crate::graph::pag::{PAGNodeId, PAGPath, PAG};
+use crate::mir::analysis_context::AnalysisContext;
 use crate::mir::call_site::{BaseCallSite, CallType};
 use crate::mir::context::{Context, ContextId};
 use crate::mir::function::FuncId;
-use crate::mir::analysis_context::AnalysisContext;
 use crate::mir::path::{Path, PathEnum};
-use crate::pta::DiffPTDataTy;
 use crate::pta::strategies::context_strategy::ContextStrategy;
+use crate::pta::DiffPTDataTy;
 use crate::pts_set::points_to::PointsToSet;
+use crate::rcpta::{solve_class_pts, ClassPAG, ClassPTSResult};
 use crate::util;
 use crate::util::class;
 use crate::util::class::analysis;
-use crate::util::class::{ClassCallGraph, ClassTypeSystem, ClassPtrSystem};
-use crate::rcpta::{solve_class_pts, ClassPAG, ClassPTSResult};
+use crate::util::class::{ClassCallGraph, ClassPtrSystem, ClassTypeSystem};
 
 pub fn dump_results<P: PAGPath, F, S>(
-    acx: &AnalysisContext, 
-    call_graph: &CallGraph<F, S>, 
-    pt_data: &DiffPTDataTy, 
-    pag: &PAG<P>, 
+    acx: &AnalysisContext,
+    call_graph: &CallGraph<F, S>,
+    pt_data: &DiffPTDataTy,
+    pag: &PAG<P>,
 ) where
     F: CGFunction + Into<FuncId>,
     S: CGCallSite + Into<BaseCallSite>,
-    <P as PAGPath>::FuncTy: Ord + std::fmt::Debug + Into<FuncId> + Copy
+    <P as PAGPath>::FuncTy: Ord + std::fmt::Debug + Into<FuncId> + Copy,
 {
     // dump points-to results
     if let Some(pts_output) = &acx.analysis_options.pts_output {
@@ -96,7 +96,7 @@ pub fn dump_results<P: PAGPath, F, S>(
         info!("Dumping class type system...");
         dump_class_type_system(acx, &acx.class_type_system, class_type_system_output);
     }
-    
+
     // dump class pointer system
     if let Some(class_ptr_system_output) = &acx.analysis_options.class_ptr_system_output {
         info!("Dumping class pointer system...");
@@ -119,12 +119,8 @@ pub fn dump_results<P: PAGPath, F, S>(
     }
 }
 
-
-pub fn dump_call_graph<F, S>(
-    acx: &AnalysisContext, 
-    call_graph: &CallGraph<F, S>, 
-    dot_path: &std::path::Path
-) where 
+pub fn dump_call_graph<F, S>(acx: &AnalysisContext, call_graph: &CallGraph<F, S>, dot_path: &std::path::Path)
+where
     F: CGFunction + Into<FuncId>,
     S: CGCallSite + Into<BaseCallSite>,
 {
@@ -188,7 +184,6 @@ pub fn dump_pts_for<P: PAGPath>(pt_data: &DiffPTDataTy, pag: &PAG<P>, node_id: P
     }
 }
 
-
 /// Helper function to check if a node's points-to set contains a class instance
 /// by recursively following PTS relationships.
 fn pointees_contain_class_instance<P: PAGPath>(
@@ -203,43 +198,41 @@ fn pointees_contain_class_instance<P: PAGPath>(
     if max_depth == 0 {
         return false;
     }
-    
+
     // Avoid cycles
     if visited.contains(&node_id) {
         return false;
     }
     visited.insert(node_id);
-    
+
     // Get the path for this node
     let path = pag.node_path(node_id);
     let path_enum = path.value();
-    
+
     // First, check if the path itself is a class instance (direct check)
     if class::analysis::is_class_instance_heap_obj(acx, path_enum) {
         return true;
     }
-    
+
     // Check if this node's pointees contain a class instance
     if let Some(pointees) = pt_data.get_propa_pts(node_id) {
         for pointee_node_id in pointees.iter() {
             // Recursively check if the pointee is or points to a class instance
-            if pointees_contain_class_instance(
-                acx,
-                pt_data,
-                pag,
-                pointee_node_id,
-                visited,
-                max_depth - 1,
-            ) {
+            if pointees_contain_class_instance(acx, pt_data, pag, pointee_node_id, visited, max_depth - 1) {
                 return true;
             }
         }
     }
-    
+
     false
 }
 
-pub fn dump_ci_pts<P: PAGPath>(acx: &AnalysisContext, pt_data: &DiffPTDataTy, pag: &PAG<P>, grouped_pts_path: &String) {
+pub fn dump_ci_pts<P: PAGPath>(
+    acx: &AnalysisContext,
+    pt_data: &DiffPTDataTy,
+    pag: &PAG<P>,
+    grouped_pts_path: &String,
+) {
     // Build mapping from PathEnum to NodeId for efficient lookup
     let mut path_to_node: HashMap<PathEnum, PAGNodeId> = HashMap::new();
     let mut grouped_pts: BTreeMap<FuncId, HashMap<&PathEnum, HashSet<&PathEnum>>> = BTreeMap::new();
@@ -269,7 +262,14 @@ pub fn dump_ci_pts<P: PAGPath>(acx: &AnalysisContext, pt_data: &DiffPTDataTy, pa
     }
     for (func_id, pts_map) in grouped_pts {
         pts_writer
-            .write_all(format!("{:?} - {:?}\n", func_id, acx.get_function_reference(func_id).to_string()).as_bytes())
+            .write_all(
+                format!(
+                    "{:?} - {:?}\n",
+                    func_id,
+                    acx.get_function_reference(func_id).to_string()
+                )
+                .as_bytes(),
+            )
             .expect("Unable to write data");
         for (pt, pts) in pts_map {
             // Check if this pointer's pointees contain a class instance
@@ -284,13 +284,13 @@ pub fn dump_ci_pts<P: PAGPath>(acx: &AnalysisContext, pt_data: &DiffPTDataTy, pa
                     class::analysis::is_class_instance_heap_obj(acx, pointee)
                 }
             });
-            
+
             let pt_label = if is_class_ref {
                 format!("{:?} [CLASS_REF]", pt)
             } else {
                 format!("{:?}", pt)
             };
-            
+
             pts_writer
                 .write_all(format!("\t{} ({:?}) ==> {{ ", pt_label, pts.len()).as_bytes())
                 .expect("Unable to write data");
@@ -319,9 +319,9 @@ pub fn dump_ci_pts<P: PAGPath>(acx: &AnalysisContext, pt_data: &DiffPTDataTy, pa
 }
 
 pub fn dump_mir<F: CGFunction + Into<FuncId>, S: CGCallSite>(
-    acx: &AnalysisContext, 
-    call_graph: &CallGraph<F, S>, 
-    mir_path: &String
+    acx: &AnalysisContext,
+    call_graph: &CallGraph<F, S>,
+    mir_path: &String,
 ) {
     // let mut mir_writer = Box::new(File::create(mir_path).expect("Unable to create file")) as Box<dyn Write>;
     let mut mir_writer = match &mir_path[..] {
@@ -344,18 +344,22 @@ pub fn dump_mir<F: CGFunction + Into<FuncId>, S: CGCallSite>(
             .write_all(format!("[{:?} - {:?}]\n", func_id, func_name).as_bytes())
             .expect("Unable to write data");
         if !acx.tcx.is_mir_available(def_id) {
-            mir_writer.write_all(("Mir is unavailable\n").as_bytes()).expect("Unable to write data");
+            mir_writer
+                .write_all(("Mir is unavailable\n").as_bytes())
+                .expect("Unable to write data");
         } else {
             rustc_middle::mir::write_mir_pretty(acx.tcx, Some(def_id), mir_writer.as_mut()).unwrap();
         }
-        mir_writer.write_all("\n".as_bytes()).expect("Unable to write data");
+        mir_writer
+            .write_all("\n".as_bytes())
+            .expect("Unable to write data");
     }
 }
 
 pub fn dump_dyn_calls<F: CGFunction, S: CGCallSite>(
-    acx: &AnalysisContext, 
-    call_graph: &CallGraph<F, S>, 
-    dyn_calls_path: &String
+    acx: &AnalysisContext,
+    call_graph: &CallGraph<F, S>,
+    dyn_calls_path: &String,
 ) where
     F: Into<FuncId>,
     S: Into<BaseCallSite>,
@@ -479,7 +483,12 @@ fn dump_dyn_calls_(
     }
 }
 
-pub fn dump_func_contexts(acx: &AnalysisContext, call_graph: &CSCallGraph, ctx_strategy: &impl ContextStrategy, func_ctxts_path: &String) {
+pub fn dump_func_contexts(
+    acx: &AnalysisContext,
+    call_graph: &CSCallGraph,
+    ctx_strategy: &impl ContextStrategy,
+    func_ctxts_path: &String,
+) {
     let mut func_ctxts_writer = BufWriter::new(match &func_ctxts_path[..] {
         "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
         _ => {
@@ -490,9 +499,12 @@ pub fn dump_func_contexts(acx: &AnalysisContext, call_graph: &CSCallGraph, ctx_s
 
     let mut func_ctxts_map: HashMap<FuncId, HashSet<ContextId>> = HashMap::new();
     for cs_func in call_graph.reach_funcs_iter() {
-        func_ctxts_map.entry(cs_func.func_id).or_default().insert(cs_func.cid);
+        func_ctxts_map
+            .entry(cs_func.func_id)
+            .or_default()
+            .insert(cs_func.cid);
     }
-    
+
     // Sort and print the func_ctxts_map
     let mut sorted_func_ctxts: Vec<(&FuncId, &HashSet<ContextId>)> = func_ctxts_map.iter().collect();
     sorted_func_ctxts.sort_by(|a, b| a.1.len().cmp(&b.1.len()));
@@ -500,7 +512,10 @@ pub fn dump_func_contexts(acx: &AnalysisContext, call_graph: &CSCallGraph, ctx_s
         let func_ref = acx.get_function_reference(*func_id);
         let has_self_parameter = util::has_self_parameter(acx.tcx, func_ref.def_id);
         let has_self_ref_parameter = util::has_self_ref_parameter(acx.tcx, func_ref.def_id);
-        let ctxts: HashSet<Rc<Context<_>>> = ctxts.iter().map(|ctxt_id| ctx_strategy.get_context_by_id(*ctxt_id)).collect();
+        let ctxts: HashSet<Rc<Context<_>>> = ctxts
+            .iter()
+            .map(|ctxt_id| ctx_strategy.get_context_by_id(*ctxt_id))
+            .collect();
         func_ctxts_writer
             .write_all(
                 format!(
@@ -513,11 +528,17 @@ pub fn dump_func_contexts(acx: &AnalysisContext, call_graph: &CSCallGraph, ctx_s
                 .as_bytes(),
             )
             .expect("Unable to write data");
-        func_ctxts_writer.write_all(format!("\t{:?}\n", ctxts).as_bytes()).expect("Unable to write data");
+        func_ctxts_writer
+            .write_all(format!("\t{:?}\n", ctxts).as_bytes())
+            .expect("Unable to write data");
     }
 }
 
-pub fn dump_most_called_funcs<W: Write>(acx: &AnalysisContext, call_graph: &CallGraph<FuncId, BaseCallSite>, stat_writer: &mut BufWriter<W>) {
+pub fn dump_most_called_funcs<W: Write>(
+    acx: &AnalysisContext,
+    call_graph: &CallGraph<FuncId, BaseCallSite>,
+    stat_writer: &mut BufWriter<W>,
+) {
     let edge_references = call_graph.graph.edge_references();
     let mut call_times_map: HashMap<FuncId, u32> = HashMap::new();
     for edge_ref in edge_references {
@@ -541,32 +562,24 @@ pub fn dump_most_called_funcs<W: Write>(acx: &AnalysisContext, call_graph: &Call
     }
 }
 
-
-
 fn path_func_id(value: &PathEnum) -> Option<FuncId> {
     match value {
-        PathEnum::LocalVariable { func_id, .. } 
-        | PathEnum::Parameter { func_id, .. } 
-        | PathEnum::ReturnValue { func_id } 
-        | PathEnum::Auxiliary { func_id, .. } 
+        PathEnum::LocalVariable { func_id, .. }
+        | PathEnum::Parameter { func_id, .. }
+        | PathEnum::ReturnValue { func_id }
+        | PathEnum::Auxiliary { func_id, .. }
         | PathEnum::HeapObj { func_id, .. } => Some(*func_id),
-        PathEnum::Constant 
-        | PathEnum::StaticVariable { .. } 
-        | PathEnum::PromotedConstant { .. } => {
-            None
-        }
-        PathEnum::QualifiedPath { base, .. } 
-        | PathEnum::OffsetPath { base, .. } => path_func_id(&base.value),
-        PathEnum::Function(..) 
-        | PathEnum::PromotedArgumentV1Array 
-        | PathEnum::PromotedStrRefArray 
+        PathEnum::Constant | PathEnum::StaticVariable { .. } | PathEnum::PromotedConstant { .. } => None,
+        PathEnum::QualifiedPath { base, .. } | PathEnum::OffsetPath { base, .. } => path_func_id(&base.value),
+        PathEnum::Function(..)
+        | PathEnum::PromotedArgumentV1Array
+        | PathEnum::PromotedStrRefArray
         | PathEnum::Type(..) => None,
     }
 }
 
-fn to_ci_call_graph<F, S>(
-    call_graph: &CallGraph<F, S>, 
-) -> CallGraph<FuncId, BaseCallSite> where 
+fn to_ci_call_graph<F, S>(call_graph: &CallGraph<F, S>) -> CallGraph<FuncId, BaseCallSite>
+where
     F: CGFunction + Into<FuncId>,
     S: CGCallSite + Into<BaseCallSite>,
 {
@@ -632,10 +645,11 @@ pub fn dump_class_info<F: CGFunction + Into<FuncId>, S: CGCallSite>(
     let total_constructors = class_constructors.len();
 
     // Group by class name
-    let mut by_class: std::collections::BTreeMap<String, Vec<(FuncId, class::analysis::ClassConstructor)>> = 
+    let mut by_class: std::collections::BTreeMap<String, Vec<(FuncId, class::analysis::ClassConstructor)>> =
         std::collections::BTreeMap::new();
     for (func_id, constructor) in class_constructors {
-        by_class.entry(constructor.class_name.clone())
+        by_class
+            .entry(constructor.class_name.clone())
             .or_default()
             .push((func_id, constructor));
     }
@@ -655,27 +669,29 @@ pub fn dump_class_info<F: CGFunction + Into<FuncId>, S: CGCallSite>(
                 .write_all(format!("  Function: {}\n", func_ref.to_string()).as_bytes())
                 .expect("Unable to write data");
             class_info_writer
-                .write_all(format!("  Type: {}\n", 
-                    if constructor.is_wrapper { "Wrapper" } else { "Data Constructor" }
-                ).as_bytes())
+                .write_all(
+                    format!(
+                        "  Type: {}\n",
+                        if constructor.is_wrapper {
+                            "Wrapper"
+                        } else {
+                            "Data Constructor"
+                        }
+                    )
+                    .as_bytes(),
+                )
                 .expect("Unable to write data");
-            class_info_writer
-                .write_all(b"\n")
-                .expect("Unable to write data");
+            class_info_writer.write_all(b"\n").expect("Unable to write data");
         }
     }
 
     class_info_writer
-        .write_all(format!("\n# Total: {} class constructor(s) found\n", 
-            total_constructors).as_bytes())
+        .write_all(format!("\n# Total: {} class constructor(s) found\n", total_constructors).as_bytes())
         .expect("Unable to write data");
 }
 
 /// Dumps class call graph (only class method calls, filters DSL internal details)
-pub fn dump_class_call_graph(
-    class_call_graph: &ClassCallGraph,
-    output_path: &String,
-) {
+pub fn dump_class_call_graph(class_call_graph: &ClassCallGraph, output_path: &String) {
     let mut writer = BufWriter::new(match &output_path[..] {
         "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
         _ => {
@@ -686,19 +702,21 @@ pub fn dump_class_call_graph(
 
     // Write DOT format
     let dot_content = class_call_graph.to_dot();
-    writer.write_all(dot_content.as_bytes())
+    writer
+        .write_all(dot_content.as_bytes())
         .expect("Unable to write class call graph");
 
     // Also write text format for readability
     let text_content = class_call_graph.to_text();
-    writer.write_all(b"\n\n")
-        .expect("Unable to write separator");
-    writer.write_all(text_content.as_bytes())
+    writer.write_all(b"\n\n").expect("Unable to write separator");
+    writer
+        .write_all(text_content.as_bytes())
         .expect("Unable to write class call graph text");
 
     // Write statistics
     let stats = class_call_graph.stats();
-    writer.write_all(format!("\n\n{}\n", stats).as_bytes())
+    writer
+        .write_all(format!("\n\n{}\n", stats).as_bytes())
         .expect("Unable to write statistics");
 }
 
@@ -709,7 +727,7 @@ pub fn dump_class_type_system(
     output_path: &String,
 ) {
     use std::collections::HashMap;
-    
+
     let mut writer = BufWriter::new(match &output_path[..] {
         "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
         _ => {
@@ -718,91 +736,125 @@ pub fn dump_class_type_system(
         }
     });
 
-    writer.write_all(b"Class Type System Report\n")
+    writer
+        .write_all(b"Class Type System Report\n")
         .expect("Unable to write header");
-    writer.write_all(b"=======================\n\n")
+    writer
+        .write_all(b"=======================\n\n")
         .expect("Unable to write separator");
 
     // 1. Class Definitions
-    writer.write_all(b"## Class Definitions\n\n")
+    writer
+        .write_all(b"## Class Definitions\n\n")
         .expect("Unable to write section header");
-    
+
     let mut class_names: Vec<_> = class_type_system.get_all_classes().keys().collect();
     class_names.sort();
-    
+
     for class_name in class_names {
         let class_info = class_type_system.get_class(class_name).unwrap();
-        
-        writer.write_all(format!("### Class: {}\n", class_name).as_bytes())
+
+        writer
+            .write_all(format!("### Class: {}\n", class_name).as_bytes())
             .expect("Unable to write class name");
-        
+
         // Inheritance
         if let Some(parent) = &class_info.parent {
-            writer.write_all(format!("  Parent: {}\n", parent).as_bytes())
+            writer
+                .write_all(format!("  Parent: {}\n", parent).as_bytes())
                 .expect("Unable to write parent");
         }
         if !class_info.subclasses.is_empty() {
             let mut subclasses: Vec<_> = class_info.subclasses.iter().collect();
             subclasses.sort();
-            writer.write_all(format!("  Subclasses: {}\n", subclasses.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(", ")).as_bytes())
+            writer
+                .write_all(
+                    format!(
+                        "  Subclasses: {}\n",
+                        subclasses
+                            .iter()
+                            .map(|s| s.as_str())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )
+                    .as_bytes(),
+                )
                 .expect("Unable to write subclasses");
         }
-        
+
         // Fields
         if !class_info.fields.is_empty() {
-            writer.write_all(b"  Fields:\n").expect("Unable to write fields header");
+            writer
+                .write_all(b"  Fields:\n")
+                .expect("Unable to write fields header");
             let mut fields: Vec<_> = class_info.fields.values().collect();
             fields.sort_by_key(|f| f.index);
             for field in fields {
-                let type_info = field.class_type.as_ref()
+                let type_info = field
+                    .class_type
+                    .as_ref()
                     .map(|t| format!(" -> {}", t))
                     .unwrap_or_else(|| "".to_string());
-                writer.write_all(format!("    [{}] {}: index={}{}\n", 
-                    field.index, field.name, field.index, type_info).as_bytes())
+                writer
+                    .write_all(
+                        format!(
+                            "    [{}] {}: index={}{}\n",
+                            field.index, field.name, field.index, type_info
+                        )
+                        .as_bytes(),
+                    )
                     .expect("Unable to write field");
             }
         }
-        
+
         // Methods
         if !class_info.methods.is_empty() {
-            writer.write_all(b"  Methods:\n").expect("Unable to write methods header");
+            writer
+                .write_all(b"  Methods:\n")
+                .expect("Unable to write methods header");
             let mut methods: Vec<_> = class_info.methods.iter().collect();
             methods.sort();
             for method in methods {
-                writer.write_all(format!("    - {}\n", method).as_bytes())
+                writer
+                    .write_all(format!("    - {}\n", method).as_bytes())
                     .expect("Unable to write method");
             }
         }
-        
+
         writer.write_all(b"\n").expect("Unable to write newline");
     }
 
     // 2. Class Instances
-    writer.write_all(b"## Class Instances\n\n")
+    writer
+        .write_all(b"## Class Instances\n\n")
         .expect("Unable to write section header");
-    
+
     let instances = class_type_system.get_all_instances();
     if instances.is_empty() {
-        writer.write_all(b"  (No class instances found)\n\n")
+        writer
+            .write_all(b"  (No class instances found)\n\n")
             .expect("Unable to write empty message");
     } else {
         // Group by class name
         let mut by_class: HashMap<String, Vec<&Rc<Path>>> = HashMap::new();
         for (path, class_name) in instances {
-            by_class.entry(class_name.clone())
+            by_class
+                .entry(class_name.clone())
                 .or_insert_with(Vec::new)
                 .push(path);
         }
-        
+
         let mut class_names: Vec<_> = by_class.keys().collect();
         class_names.sort();
-        
+
         for class_name in class_names {
-            writer.write_all(format!("  {}:\n", class_name).as_bytes())
+            writer
+                .write_all(format!("  {}:\n", class_name).as_bytes())
                 .expect("Unable to write class name");
             let paths = &by_class[class_name];
             for path in paths {
-                writer.write_all(format!("    - {:?}\n", path).as_bytes())
+                writer
+                    .write_all(format!("    - {:?}\n", path).as_bytes())
                     .expect("Unable to write instance path");
             }
         }
@@ -810,32 +862,37 @@ pub fn dump_class_type_system(
     }
 
     // 3. Class References
-    writer.write_all(b"## Class References\n\n")
+    writer
+        .write_all(b"## Class References\n\n")
         .expect("Unable to write section header");
-    
+
     let references = class_type_system.get_all_references();
     if references.is_empty() {
-        writer.write_all(b"  (No class references found)\n\n")
+        writer
+            .write_all(b"  (No class references found)\n\n")
             .expect("Unable to write empty message");
     } else {
         // Group by class name
         let mut by_class: HashMap<String, Vec<(&Rc<Path>, bool)>> = HashMap::new();
         for (path, (class_name, is_direct)) in references {
-            by_class.entry(class_name.clone())
+            by_class
+                .entry(class_name.clone())
                 .or_insert_with(Vec::new)
                 .push((path, *is_direct));
         }
-        
+
         let mut class_names: Vec<_> = by_class.keys().collect();
         class_names.sort();
-        
+
         for class_name in class_names {
-            writer.write_all(format!("  {}:\n", class_name).as_bytes())
+            writer
+                .write_all(format!("  {}:\n", class_name).as_bytes())
                 .expect("Unable to write class name");
             let refs = &by_class[class_name];
             for (path, is_direct) in refs {
                 let ref_type = if *is_direct { "direct" } else { "indirect" };
-                writer.write_all(format!("    - {:?} ({})\n", path, ref_type).as_bytes())
+                writer
+                    .write_all(format!("    - {:?} ({})\n", path, ref_type).as_bytes())
                     .expect("Unable to write reference path");
             }
         }
@@ -843,10 +900,12 @@ pub fn dump_class_type_system(
     }
 
     // 4. Statistics
-    writer.write_all(b"## Statistics\n\n")
+    writer
+        .write_all(b"## Statistics\n\n")
         .expect("Unable to write section header");
     let stats = class_type_system.stats();
-    writer.write_all(format!("{}\n", stats).as_bytes())
+    writer
+        .write_all(format!("{}\n", stats).as_bytes())
         .expect("Unable to write statistics");
 }
 
@@ -858,65 +917,78 @@ pub fn dump_class_ptr_system(class_ptr_system: &ClassPtrSystem, output_path: &st
             Box::new(File::create(output_path).expect("Unable to create file")) as Box<dyn Write>
         }
     });
-    
-    writer.write_all(b"# Class Pointer System\n\n")
+
+    writer
+        .write_all(b"# Class Pointer System\n\n")
         .expect("Unable to write header");
-    
+
     // 1. All Pointers
-    writer.write_all(b"## All Pointers\n\n")
+    writer
+        .write_all(b"## All Pointers\n\n")
         .expect("Unable to write section header");
     let ptrs = class_ptr_system.get_all_ptrs();
     if ptrs.is_empty() {
-        writer.write_all(b"  (No pointers found)\n\n")
+        writer
+            .write_all(b"  (No pointers found)\n\n")
             .expect("Unable to write empty message");
     } else {
         for ptr in ptrs {
-            writer.write_all(format!("  - {}\n", ptr).as_bytes())
+            writer
+                .write_all(format!("  - {}\n", ptr).as_bytes())
                 .expect("Unable to write pointer");
         }
         writer.write_all(b"\n").expect("Unable to write newline");
     }
-    
+
     // 2. All Objects
-    writer.write_all(b"## All Objects\n\n")
+    writer
+        .write_all(b"## All Objects\n\n")
         .expect("Unable to write section header");
     let objs = class_ptr_system.get_all_objs();
     if objs.is_empty() {
-        writer.write_all(b"  (No objects found)\n\n")
+        writer
+            .write_all(b"  (No objects found)\n\n")
             .expect("Unable to write empty message");
     } else {
         for obj in objs {
-            writer.write_all(format!("  - {}\n", obj).as_bytes())
+            writer
+                .write_all(format!("  - {}\n", obj).as_bytes())
                 .expect("Unable to write object");
         }
         writer.write_all(b"\n").expect("Unable to write newline");
     }
-    
+
     // 3. Points-to Relationships
-    writer.write_all(b"## Points-to Relationships\n\n")
+    writer
+        .write_all(b"## Points-to Relationships\n\n")
         .expect("Unable to write section header");
     let pts = class_ptr_system.get_all_points_to();
     if pts.is_empty() {
-        writer.write_all(b"  (No points-to relationships found)\n\n")
+        writer
+            .write_all(b"  (No points-to relationships found)\n\n")
             .expect("Unable to write empty message");
     } else {
         for (ptr, objs) in pts {
-            writer.write_all(format!("  {} -> {{\n", ptr).as_bytes())
+            writer
+                .write_all(format!("  {} -> {{\n", ptr).as_bytes())
                 .expect("Unable to write pointer");
             for obj in objs {
-                writer.write_all(format!("    {}\n", obj).as_bytes())
+                writer
+                    .write_all(format!("    {}\n", obj).as_bytes())
                     .expect("Unable to write object");
             }
             writer.write_all(b"  }\n").expect("Unable to write closing brace");
         }
         writer.write_all(b"\n").expect("Unable to write newline");
     }
-    
+
     // 4. Statistics
-    writer.write_all(b"## Statistics\n\n")
+    writer
+        .write_all(b"## Statistics\n\n")
         .expect("Unable to write section header");
     let stats = class_ptr_system.stats();
-    writer.write_all(format!("{}\n", stats).as_bytes())
+    writer
+        .write_all(format!("{}\n", stats).as_bytes())
         .expect("Unable to write statistics");
 }
 
@@ -939,7 +1011,12 @@ fn func_scope_from_ptr_id(ptr_id: &str) -> String {
         base[..i].to_string()
     } else if let Some(i) = base.rfind("::ret") {
         let after = base.get(i + 5..).unwrap_or("");
-        if after.is_empty() || !after.chars().next().map_or(false, |c| c.is_ascii_alphanumeric() || c == '_') {
+        if after.is_empty()
+            || !after
+                .chars()
+                .next()
+                .map_or(false, |c| c.is_ascii_alphanumeric() || c == '_')
+        {
             base[..i].to_string()
         } else {
             base.to_string()
@@ -1053,6 +1130,11 @@ fn short_class_pag_name(id: &str) -> String {
 /// When solver_result is Some, also dumps obj-level materialized Store/Load and obj.field pointers.
 /// Author: Yan Wang, Date: 2026-02-02
 pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Option<&ClassPTSResult>) {
+    // for debug
+    // for ptr_id in class_pag.ptr_ids() {
+    //     debug!("{}", ptr_id);
+    // }
+
     let mut writer = BufWriter::new(match output_path {
         "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
         _ => {
@@ -1061,11 +1143,14 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
         }
     });
 
-    writer.write_all(b"# rcpta ClassPAG (Class-level Pointer Assignment Graph)\n\n")
+    writer
+        .write_all(b"# rcpta ClassPAG (Class-level Pointer Assignment Graph)\n\n")
         .expect("Unable to write header");
 
     // 1. Pointers (build-time ptrs + obj.field ptrs from solver when available)
-    writer.write_all(b"## Pointers\n\n").expect("Unable to write section header");
+    writer
+        .write_all(b"## Pointers\n\n")
+        .expect("Unable to write section header");
     let mut ptr_ids: Vec<_> = class_pag.ptr_ids().cloned().collect();
     if let Some(result) = solver_result {
         for id in result.pts.keys() {
@@ -1081,13 +1166,15 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
         for id in &ptr_ids {
             if let Some(ptr) = class_pag.get_ptr(id) {
                 let short = short_class_pag_name(&ptr.id);
-                writer.write_all(format!("  {}  [{}]\n", short, ptr.class_type).as_bytes())
+                writer
+                    .write_all(format!("  {}  [{}]\n", short, ptr.class_type).as_bytes())
                     .expect("Unable to write pointer");
             } else if solver_result.is_some() {
                 // obj.field pointer (materialized during PTS)
                 let short = short_class_pag_name(id);
                 let field = id.rsplit('.').next().unwrap_or("?");
-                writer.write_all(format!("  {}  [field: {}]\n", short, field).as_bytes())
+                writer
+                    .write_all(format!("  {}  [field: {}]\n", short, field).as_bytes())
                     .expect("Unable to write pointer");
             }
         }
@@ -1095,7 +1182,9 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
     }
 
     // 2. Objects
-    writer.write_all(b"## Objects\n\n").expect("Unable to write section header");
+    writer
+        .write_all(b"## Objects\n\n")
+        .expect("Unable to write section header");
     let mut obj_ids: Vec<_> = class_pag.obj_ids().cloned().collect();
     obj_ids.sort();
     if obj_ids.is_empty() {
@@ -1124,7 +1213,17 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
         Vec<(String, String, String)>,
     );
     let mut by_func: BTreeMap<String, FuncEdges> = BTreeMap::new();
-    let empty_edges = || (Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new());
+    let empty_edges = || {
+        (
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+        )
+    };
 
     for (src, dst) in class_pag.iter_assign_edges() {
         let scope = func_scope_from_ptr_id(&dst);
@@ -1139,7 +1238,11 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
     for (ptr_id, obj_id) in class_pag.iter_alloc_edges() {
         let scope = func_scope_from_ptr_id(&ptr_id);
         let func = canonical_section_key_for_scope(&scope);
-        by_func.entry(func).or_insert_with(empty_edges).2.push((ptr_id, obj_id));
+        by_func
+            .entry(func)
+            .or_insert_with(empty_edges)
+            .2
+            .push((ptr_id, obj_id));
     }
     for e in class_pag.iter_load_edges() {
         let scope = func_scope_from_ptr_id(&e.dst_ptr_id);
@@ -1161,7 +1264,12 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
             continue;
         }
         let func = canonical_section_key_for_scope(&scope);
-        by_func.entry(func).or_insert_with(empty_edges).5.push((e.call_site.clone(), e.arg_idx, e.actual_ptr_id.clone(), e.formal_ptr_id.clone()));
+        by_func.entry(func).or_insert_with(empty_edges).5.push((
+            e.call_site.clone(),
+            e.arg_idx,
+            e.actual_ptr_id.clone(),
+            e.formal_ptr_id.clone(),
+        ));
     }
     let call_ret = class_pag.call_ret_edges();
     for e in call_ret.iter() {
@@ -1171,7 +1279,11 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
             continue;
         }
         let func = canonical_section_key_for_scope(&scope);
-        by_func.entry(func).or_insert_with(empty_edges).6.push((e.call_site.clone(), e.formal_ret_ptr_id.clone(), e.actual_ret_ptr_id.clone()));
+        by_func.entry(func).or_insert_with(empty_edges).6.push((
+            e.call_site.clone(),
+            e.formal_ret_ptr_id.clone(),
+            e.actual_ret_ptr_id.clone(),
+        ));
     }
 
     // rcpta: ensure every function that has any ptr in ClassPAG gets a section (even if no edges yet).
@@ -1187,12 +1299,14 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
         cast.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
         alloc.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
         load.sort_by(|a, b| {
-            a.base_ptr_id.cmp(&b.base_ptr_id)
+            a.base_ptr_id
+                .cmp(&b.base_ptr_id)
                 .then_with(|| a.field.cmp(&b.field))
                 .then_with(|| a.dst_ptr_id.cmp(&b.dst_ptr_id))
         });
         store.sort_by(|a, b| {
-            a.base_ptr_id.cmp(&b.base_ptr_id)
+            a.base_ptr_id
+                .cmp(&b.base_ptr_id)
                 .then_with(|| a.field.cmp(&b.field))
                 .then_with(|| a.src_ptr_id.cmp(&b.src_ptr_id))
         });
@@ -1207,10 +1321,19 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
     let total_call_ret = call_ret.len();
 
     // 4. Per-function sections: assign, cast, alloc, load, store, call_arg, call_ret
-    writer.write_all(b"## Edges by function\n\n").expect("Unable to write section header");
+    writer
+        .write_all(b"## Edges by function\n\n")
+        .expect("Unable to write section header");
     for (func_name, (assign, cast, alloc, load, store, call_arg_f, call_ret_f)) in &by_func {
         // Skip sections with no edges (e.g. interface get_id with only formals, no body edges).
-        if assign.is_empty() && cast.is_empty() && alloc.is_empty() && load.is_empty() && store.is_empty() && call_arg_f.is_empty() && call_ret_f.is_empty() {
+        if assign.is_empty()
+            && cast.is_empty()
+            && alloc.is_empty()
+            && load.is_empty()
+            && store.is_empty()
+            && call_arg_f.is_empty()
+            && call_ret_f.is_empty()
+        {
             continue;
         }
         total_assign += assign.len();
@@ -1225,62 +1348,139 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
         }
 
         let short_func = short_class_pag_name(func_name);
-        writer.write_all(format!("### {}\n\n", short_func).as_bytes()).expect("Unable to write func header");
+        writer
+            .write_all(format!("### {}\n\n", short_func).as_bytes())
+            .expect("Unable to write func header");
 
-        writer.write_all(b"  Assign (src -> dst):\n").expect("Unable to write");
+        writer
+            .write_all(b"  Assign (src -> dst):\n")
+            .expect("Unable to write");
         if assign.is_empty() {
             writer.write_all(b"    (none)\n").expect("Unable to write");
         } else {
             for (src, dst) in assign {
-                writer.write_all(format!("    {} -> {}\n", short_class_pag_name(src), short_class_pag_name(dst)).as_bytes()).expect("Unable to write assign edge");
+                writer
+                    .write_all(
+                        format!(
+                            "    {} -> {}\n",
+                            short_class_pag_name(src),
+                            short_class_pag_name(dst)
+                        )
+                        .as_bytes(),
+                    )
+                    .expect("Unable to write assign edge");
             }
         }
-        writer.write_all(b"  Cast (src -> dst):\n").expect("Unable to write");
+        writer
+            .write_all(b"  Cast (src -> dst):\n")
+            .expect("Unable to write");
         if cast.is_empty() {
             writer.write_all(b"    (none)\n").expect("Unable to write");
         } else {
             for (src, dst) in cast {
-                writer.write_all(format!("    {} -> {}  [cast]\n", short_class_pag_name(src), short_class_pag_name(dst)).as_bytes()).expect("Unable to write cast edge");
+                writer
+                    .write_all(
+                        format!(
+                            "    {} -> {}  [cast]\n",
+                            short_class_pag_name(src),
+                            short_class_pag_name(dst)
+                        )
+                        .as_bytes(),
+                    )
+                    .expect("Unable to write cast edge");
             }
         }
-        writer.write_all(b"  Alloc (ptr -> obj):\n").expect("Unable to write");
+        writer
+            .write_all(b"  Alloc (ptr -> obj):\n")
+            .expect("Unable to write");
         if alloc.is_empty() {
             writer.write_all(b"    (none)\n").expect("Unable to write");
         } else {
             for (ptr_id, obj_id) in alloc {
-                writer.write_all(format!("    {} -> {}\n", short_class_pag_name(ptr_id), obj_id).as_bytes()).expect("Unable to write alloc edge");
+                writer
+                    .write_all(format!("    {} -> {}\n", short_class_pag_name(ptr_id), obj_id).as_bytes())
+                    .expect("Unable to write alloc edge");
             }
         }
-        writer.write_all(b"  Load (base.field -> dst):\n").expect("Unable to write");
+        writer
+            .write_all(b"  Load (base.field -> dst):\n")
+            .expect("Unable to write");
         if load.is_empty() {
             writer.write_all(b"    (none)\n").expect("Unable to write");
         } else {
             for e in load {
-                writer.write_all(format!("    {}.{} -> {}\n", short_class_pag_name(&e.base_ptr_id), e.field, short_class_pag_name(&e.dst_ptr_id)).as_bytes()).expect("Unable to write load edge");
+                writer
+                    .write_all(
+                        format!(
+                            "    {}.{} -> {}\n",
+                            short_class_pag_name(&e.base_ptr_id),
+                            e.field,
+                            short_class_pag_name(&e.dst_ptr_id)
+                        )
+                        .as_bytes(),
+                    )
+                    .expect("Unable to write load edge");
             }
         }
-        writer.write_all(b"  Store (base.field <- src):\n").expect("Unable to write");
+        writer
+            .write_all(b"  Store (base.field <- src):\n")
+            .expect("Unable to write");
         if store.is_empty() {
             writer.write_all(b"    (none)\n").expect("Unable to write");
         } else {
             for e in store {
-                writer.write_all(format!("    {}.{} <- {}\n", short_class_pag_name(&e.base_ptr_id), e.field, short_class_pag_name(&e.src_ptr_id)).as_bytes()).expect("Unable to write store edge");
+                writer
+                    .write_all(
+                        format!(
+                            "    {}.{} <- {}\n",
+                            short_class_pag_name(&e.base_ptr_id),
+                            e.field,
+                            short_class_pag_name(&e.src_ptr_id)
+                        )
+                        .as_bytes(),
+                    )
+                    .expect("Unable to write store edge");
             }
         }
-        writer.write_all(b"  CallArg (call_site [arg idx] actual -> formal):\n").expect("Unable to write");
+        writer
+            .write_all(b"  CallArg (call_site [arg idx] actual -> formal):\n")
+            .expect("Unable to write");
         if call_arg_f.is_empty() {
             writer.write_all(b"    (none)\n").expect("Unable to write");
         } else {
             for (call_site, arg_idx, actual, formal) in call_arg_f {
-                writer.write_all(format!("    {} [arg {}] {} -> {}\n", short_class_pag_name(call_site), arg_idx, short_class_pag_name(actual), short_class_pag_name(formal)).as_bytes()).expect("Unable to write call arg edge");
+                writer
+                    .write_all(
+                        format!(
+                            "    {} [arg {}] {} -> {}\n",
+                            short_class_pag_name(call_site),
+                            arg_idx,
+                            short_class_pag_name(actual),
+                            short_class_pag_name(formal)
+                        )
+                        .as_bytes(),
+                    )
+                    .expect("Unable to write call arg edge");
             }
         }
-        writer.write_all(b"  CallRet (call_site: formal_ret -> actual_ret):\n").expect("Unable to write");
+        writer
+            .write_all(b"  CallRet (call_site: formal_ret -> actual_ret):\n")
+            .expect("Unable to write");
         if call_ret_f.is_empty() {
             writer.write_all(b"    (none)\n").expect("Unable to write");
         } else {
             for (call_site, formal_ret, actual_ret) in call_ret_f {
-                writer.write_all(format!("    {}  {} -> {}\n", short_class_pag_name(call_site), short_class_pag_name(formal_ret), short_class_pag_name(actual_ret)).as_bytes()).expect("Unable to write call ret edge");
+                writer
+                    .write_all(
+                        format!(
+                            "    {}  {} -> {}\n",
+                            short_class_pag_name(call_site),
+                            short_class_pag_name(formal_ret),
+                            short_class_pag_name(actual_ret)
+                        )
+                        .as_bytes(),
+                    )
+                    .expect("Unable to write call ret edge");
             }
         }
         writer.write_all(b"\n").expect("Unable to write newline");
@@ -1288,36 +1488,67 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
 
     // 5. Materialized Store/Load (after PTS): obj-level edges when base flows to obj
     if let Some(result) = solver_result {
-        writer.write_all(b"## Materialized Store/Load (after PTS)\n\n").expect("Unable to write section header");
-        writer.write_all(b"  Store (src -> obj.field):\n").expect("Unable to write");
+        writer
+            .write_all(b"## Materialized Store/Load (after PTS)\n\n")
+            .expect("Unable to write section header");
+        writer
+            .write_all(b"  Store (src -> obj.field):\n")
+            .expect("Unable to write");
         if result.materialized_stores.is_empty() {
             writer.write_all(b"    (none)\n").expect("Unable to write");
         } else {
             let mut stores: Vec<_> = result.materialized_stores.iter().collect();
-            stores.sort_by(|a, b| (a.src_ptr_id.as_str(), a.obj_id.as_str(), a.field.as_str()).cmp(&(b.src_ptr_id.as_str(), b.obj_id.as_str(), b.field.as_str())));
+            stores.sort_by(|a, b| {
+                (a.src_ptr_id.as_str(), a.obj_id.as_str(), a.field.as_str()).cmp(&(
+                    b.src_ptr_id.as_str(),
+                    b.obj_id.as_str(),
+                    b.field.as_str(),
+                ))
+            });
             for e in stores {
                 let obj_field = format!("{}.{}", e.obj_id, e.field);
-                writer.write_all(format!("    {} -> {}\n", short_class_pag_name(&e.src_ptr_id), obj_field).as_bytes()).expect("Unable to write");
+                writer
+                    .write_all(
+                        format!("    {} -> {}\n", short_class_pag_name(&e.src_ptr_id), obj_field).as_bytes(),
+                    )
+                    .expect("Unable to write");
             }
         }
-        writer.write_all(b"  Load (obj.field -> dst):\n").expect("Unable to write");
+        writer
+            .write_all(b"  Load (obj.field -> dst):\n")
+            .expect("Unable to write");
         if result.materialized_loads.is_empty() {
             writer.write_all(b"    (none)\n").expect("Unable to write");
         } else {
             let mut loads: Vec<_> = result.materialized_loads.iter().collect();
-            loads.sort_by(|a, b| (a.obj_id.as_str(), a.field.as_str(), a.dst_ptr_id.as_str()).cmp(&(b.obj_id.as_str(), b.field.as_str(), b.dst_ptr_id.as_str())));
+            loads.sort_by(|a, b| {
+                (a.obj_id.as_str(), a.field.as_str(), a.dst_ptr_id.as_str()).cmp(&(
+                    b.obj_id.as_str(),
+                    b.field.as_str(),
+                    b.dst_ptr_id.as_str(),
+                ))
+            });
             for e in loads {
                 let obj_field = format!("{}.{}", e.obj_id, e.field);
-                writer.write_all(format!("    {} -> {}\n", obj_field, short_class_pag_name(&e.dst_ptr_id)).as_bytes()).expect("Unable to write");
+                writer
+                    .write_all(
+                        format!("    {} -> {}\n", obj_field, short_class_pag_name(&e.dst_ptr_id)).as_bytes(),
+                    )
+                    .expect("Unable to write");
             }
         }
         writer.write_all(b"\n").expect("Unable to write newline");
     }
 
     // 6. Statistics
-    writer.write_all(b"## Statistics\n\n").expect("Unable to write section header");
+    writer
+        .write_all(b"## Statistics\n\n")
+        .expect("Unable to write section header");
     let (total_load_dump, total_store_dump) = if let Some(r) = solver_result {
-        (total_load + r.materialized_loads.len(), total_store + r.materialized_stores.len())
+        (
+            total_load + r.materialized_loads.len(),
+            total_store + r.materialized_stores.len(),
+        )
     } else {
         (total_load, total_store)
     };
@@ -1356,7 +1587,9 @@ pub fn dump_class_pts_from_result(result: &ClassPTSResult, output_path: &str) {
     writer
         .write_all(b"# For each pointer, the set of class heap objects it may point to after propagation on ClassPAG.\n\n")
         .expect("Unable to write description");
-    writer.write_all(b"## Pointer -> Objects\n\n").expect("Unable to write section header");
+    writer
+        .write_all(b"## Pointer -> Objects\n\n")
+        .expect("Unable to write section header");
     let mut ptr_ids: Vec<_> = pts.keys().cloned().collect();
     ptr_ids.sort();
     for ptr_id in &ptr_ids {
@@ -1375,7 +1608,9 @@ pub fn dump_class_pts_from_result(result: &ClassPTSResult, output_path: &str) {
                 .expect("Unable to write pts line");
         }
     }
-    writer.write_all(b"\n## Statistics\n\n").expect("Unable to write section header");
+    writer
+        .write_all(b"\n## Statistics\n\n")
+        .expect("Unable to write section header");
     let total_ptrs = pts.len();
     let ptrs_with_objs = pts.values().filter(|s| !s.is_empty()).count();
     writer
@@ -1389,4 +1624,3 @@ pub fn dump_class_pts(class_pag: &ClassPAG, output_path: &str) {
     let result = solve_class_pts(class_pag);
     dump_class_pts_from_result(&result, output_path);
 }
-

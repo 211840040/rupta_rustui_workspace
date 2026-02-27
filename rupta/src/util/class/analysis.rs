@@ -4,15 +4,15 @@
 // LICENSE file in the root directory of this source tree.
 
 //! Class-level analysis utilities for DSL programs.
-//! 
+//!
 //! This module provides utilities to identify and analyze class-related operations
 //! in programs that use the classes DSL macro.
 
-use std::rc::Rc;
+use crate::mir::function::FunctionReference;
+use log::*;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::{Ty, TyCtxt, TyKind};
-use log::*;
-use crate::mir::function::FunctionReference;
+use std::rc::Rc;
 
 use super::type_system::ClassTypeSystem;
 
@@ -30,7 +30,7 @@ pub struct ClassConstructor {
 /// Identifies if a function is a class constructor (new operation)
 pub fn identify_class_constructor(func_ref: &Rc<FunctionReference>) -> Option<ClassConstructor> {
     let func_name = func_ref.to_string();
-    
+
     // Pattern 1: _classes::_Point::{impl#0}::new (wrapper constructor)
     // Pattern 2: _classes::_Point::data::{impl#0}::new (data constructor)
     if let Some(class_name) = extract_class_name_from_func(&func_name) {
@@ -43,12 +43,12 @@ pub fn identify_class_constructor(func_ref: &Rc<FunctionReference>) -> Option<Cl
             });
         }
     }
-    
+
     None
 }
 
 /// Extracts class name from a function name
-/// 
+///
 /// Examples:
 /// - "simple_new::_classes::_Point::{impl#0}::new" -> Some("Point")
 /// - "simple_new::_classes::_Point::data::{impl#0}::new" -> Some("Point")
@@ -127,11 +127,30 @@ pub fn is_source_level_allocation_caller(caller_func_name: &str) -> bool {
 /// - A cast method implementation (caller name contains into_superclass, try_into_subtype, cast_mixin)
 /// - DSL internal (e.g. classes::ptr::, _delegate_ctor) — not user-visible cast
 pub fn is_source_level_cast_caller(caller_func_name: &str) -> bool {
-    if caller_func_name.contains("into_superclass")
-        || caller_func_name.contains("try_into_subtype")
-        || caller_func_name.contains("cast_mixin")
-    {
-        return false; // inside a cast method implementation
+    let cast_methods = [
+        "as_superclass",
+        "to_superclass",
+        "into_superclass",
+        "to_supertype",
+        "into_supertype",
+        "as_subclass",
+        "to_subclass",
+        "into_subclass",
+        "to_subtype",
+        "into_subtype",
+        "as_super",
+        "to_super",
+        "into_super",
+        "to_impl",
+        "into_impl",
+        "upcast",
+        "downcast",
+        "cast_mixin",
+    ];
+    for m in cast_methods {
+        if caller_func_name.contains(m) {
+            return false;
+        }
     }
     if caller_func_name.contains("classes::ptr::") || caller_func_name.contains("_delegate_ctor") {
         return false; // DSL internal
@@ -226,7 +245,9 @@ pub fn type_is_option_containing_dsl_class<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>
     use rustc_middle::ty::GenericArgKind;
     if let TyKind::Adt(def, args) = ty.kind() {
         let path_str = tcx.def_path_str(def.did());
-        if (path_str.contains("option::Option") || path_str.contains("core::option") || path_str.contains("std::option"))
+        if (path_str.contains("option::Option")
+            || path_str.contains("core::option")
+            || path_str.contains("std::option"))
             && !args.is_empty()
         {
             if let Some(GenericArgKind::Type(inner_ty)) = args.get(0).map(|arg| arg.unpack()) {
@@ -243,10 +264,38 @@ pub fn type_is_option_containing_dsl_class<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>
 /// Recognized: into_superclass, try_into_subtype, cast_mixin (classes crate / _classes).
 pub fn identify_class_cast_method(func_ref: &Rc<FunctionReference>) -> bool {
     let name = func_ref.to_string();
-    let is_cast_name = name.contains("into_superclass")
-        || name.contains("try_into_subtype")
-        || name.contains("cast_mixin");
+    let cast_methods = [
+        "as_superclass",
+        "to_superclass",
+        "into_superclass",
+        "to_supertype",
+        "into_supertype",
+        "as_subclass",
+        "to_subclass",
+        "into_subclass",
+        "to_subtype",
+        "into_subtype",
+        "as_super",
+        "to_super",
+        "into_super",
+        "to_impl",
+        "into_impl",
+        "upcast",
+        "downcast",
+        "cast_mixin",
+    ];
+    let mut is_cast_name = false;
+    for m in cast_methods {
+        if name.contains(m) {
+            is_cast_name = true;
+        }
+    }
     let is_classes = name.contains("classes::ptr") || name.contains("_classes::_");
+    debug!(
+        "[RCPTA] {} is {}class cast method",
+        name,
+        if is_cast_name && is_classes { "" } else { "not " }
+    );
     is_cast_name && is_classes
 }
 
@@ -278,11 +327,11 @@ pub struct GetterSetter {
 }
 
 /// Identifies if a function is a getter or setter method
-/// 
+///
 /// A getter/setter method must have the exact pattern: get_<field_name> or set_<field_name>
 /// where field_name contains no underscores (single word). Methods like get_internal_point
 /// or get_point_sum are NOT getters, they are regular class methods.
-/// 
+///
 /// Examples:
 /// - "simple_load_store::_classes::_Container::{impl#0}::get_point" -> Some(GetterSetter { class_name: "Container", field_name: "point", is_getter: true })
 /// - "simple_load_store::_classes::_Container::{impl#0}::set_point" -> Some(GetterSetter { class_name: "Container", field_name: "point", is_getter: false })
@@ -290,9 +339,9 @@ pub struct GetterSetter {
 /// - "simple_method_call::_classes::_Container::{impl#0}::get_point_sum" -> None (not a getter, has underscore in field name)
 pub fn identify_getter_setter(func_ref: &Rc<FunctionReference>) -> Option<GetterSetter> {
     let func_name = func_ref.to_string();
-    if func_name.contains("set_item") {
-        eprintln!("[rcpta] identify_getter_setter checking: {}", func_name);
-    }
+    // if func_name.contains("set_item") {
+    //     eprintln!("[rcpta] identify_getter_setter checking: {}", func_name);
+    // }
 
     // Only user-crate getters/setters; exclude DSL runtime (e.g. GetSet::cell_option_get/set).
     // Those live in classes:: and would otherwise be mis-identified via _classes::_ in generic args.
@@ -303,7 +352,7 @@ pub fn identify_getter_setter(func_ref: &Rc<FunctionReference>) -> Option<Getter
     // Pattern: _classes::_ClassName::{impl#N}::get_field_name or set_field_name
     if let Some(class_name) = extract_class_name_from_func(&func_name) {
         if func_name.contains("set_item") {
-             eprintln!("[rcpta] identify_getter_setter: class_name={}", class_name);
+            eprintln!("[rcpta] identify_getter_setter: class_name={}", class_name);
         }
         // Check for get_ prefix: get_X -> field X (allow underscores in X, e.g. get_entity_id -> entity_id).
         // Actual field check is done in flush (get_field_index) so we don't treat get_point_sum as getter.
@@ -320,19 +369,19 @@ pub fn identify_getter_setter(func_ref: &Rc<FunctionReference>) -> Option<Getter
                 });
             }
         }
-        
+
         // Check for set_ prefix: set_X -> field X (allow underscores in X).
         if let Some(set_start) = func_name.find("::set_") {
-            if func_name.contains("set_item") {
-                 eprintln!("[rcpta] identify_getter_setter: found ::set_ at {}", set_start);
-            }
+            // if func_name.contains("set_item") {
+            //     eprintln!("[rcpta] identify_getter_setter: found ::set_ at {}", set_start);
+            // }
             let after_set = &func_name[set_start + 6..]; // "::set_" is 6 chars
             let field_name_end = after_set.find("::").unwrap_or(after_set.len());
             let field_name = after_set[..field_name_end].to_string();
-            
-            if func_name.contains("set_item") {
-                 eprintln!("[rcpta] identify_getter_setter: field_name={}", field_name);
-            }
+
+            // if func_name.contains("set_item") {
+            //     eprintln!("[rcpta] identify_getter_setter: field_name={}", field_name);
+            // }
 
             if !field_name.is_empty() {
                 return Some(GetterSetter {
@@ -344,7 +393,7 @@ pub fn identify_getter_setter(func_ref: &Rc<FunctionReference>) -> Option<Getter
             }
         }
     }
-    
+
     None
 }
 
@@ -360,7 +409,7 @@ pub struct ClassMethod {
 }
 
 /// Identifies if a function is a class method (not a constructor, getter, or setter)
-/// 
+///
 /// Examples:
 /// - "simple_method_call::_classes::_Point::{impl#0}::sum_coords" -> Some(ClassMethod { class_name: "Point", method_name: "sum_coords" })
 /// - "simple_method_call::_classes::_Container::{impl#0}::distance_to" -> Some(ClassMethod { class_name: "Container", method_name: "distance_to" })
@@ -387,7 +436,8 @@ fn identify_class_method_impl(
     type_system: Option<&ClassTypeSystem>,
 ) -> Option<ClassMethod> {
     let func_name = func_ref.to_string();
-    let is_target = func_name.contains("get_and_wrap") || func_name.contains("get_id");
+    let is_target =
+        func_name.contains("get_and_wrap") || func_name.contains("get_id") || func_name.contains("as_super");
 
     // Must be in _classes::_ namespace
     let class_name = match extract_class_name_from_func(&func_name) {
@@ -427,7 +477,9 @@ fn identify_class_method_impl(
         if is_target {
             log::info!(
                 "rcpta identify_class_method: getter_check class={} field={} exclude={}",
-                gs.class_name, gs.field_name, exclude
+                gs.class_name,
+                gs.field_name,
+                exclude
             );
         }
         if exclude {
@@ -449,10 +501,7 @@ fn identify_class_method_impl(
                 Some(m)
             } else {
                 if is_target {
-                    log::info!(
-                        "rcpta identify_class_method: impl# branch rejected m=\"{}\"",
-                        m
-                    );
+                    log::info!("rcpta identify_class_method: impl# branch rejected m=\"{}\"", m);
                 }
                 None
             }
@@ -488,6 +537,10 @@ fn identify_class_method_impl(
         }
     };
     if let Some(method_name) = method_name {
+        log::info!(
+            "rcpta identify_class_method: method_name extraction success func={}",
+            func_name
+        );
         return Some(ClassMethod {
             class_name,
             method_name,
@@ -511,36 +564,36 @@ pub fn is_class_instance_heap_obj(
     path: &crate::mir::path::PathEnum,
 ) -> bool {
     use crate::mir::path::{Path, PathEnum};
-    
+
     // Check if this is directly a HeapObj
     if let PathEnum::HeapObj { func_id, location } = path {
         let path_rc = Path::new_heap_obj(*func_id, *location);
         return acx.class_instance_heap_objs.contains(&path_rc);
     }
-    
+
     // For QualifiedPath and OffsetPath, recursively check the base
     let base_path = match path {
         PathEnum::QualifiedPath { base, .. } => Some(base.clone()),
         PathEnum::OffsetPath { base, .. } => Some(base.clone()),
         _ => None,
     };
-    
+
     if let Some(base) = base_path {
         // Recursively check the base path
         return is_class_instance_heap_obj(acx, &base.value);
     }
-    
+
     false
 }
 
 /// Checks if a type is a DSL class type
-/// 
+///
 /// DSL class types are structs defined in the `_classes::_` module.
 /// Examples:
 /// - `Point<ClassMarker, Virtual>` (wrapper type)
 /// - `Point<RcDyn<Point>, Virtual>` (instance type)
 /// - `Container<ClassMarker, Virtual>`
-/// 
+///
 /// This function checks if the type's DefId path contains `_classes::_`.
 pub fn is_dsl_class_type<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>) -> bool {
     if let TyKind::Adt(adt_def, _args) = ty.kind() {
@@ -548,48 +601,54 @@ pub fn is_dsl_class_type<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>) -> bool {
         let def_id = adt_def.did();
         let path = tcx.def_path_str(def_id);
         let is_class = path.contains("_classes::_");
-        debug!("is_dsl_class_type: ty={:?}, path={}, result={}", ty, path, is_class);
+        // debug!(
+        //     "is_dsl_class_type: ty={:?}, path={}, result={}",
+        //     ty, path, is_class
+        // );
         is_class
     } else {
-        debug!("is_dsl_class_type: ty={:?}, not an Adt, result=false", ty);
+        // debug!("is_dsl_class_type: ty={:?}, not an Adt, result=false", ty);
         false
     }
 }
 
 /// Recursively unwraps wrapper types (ManuallyDrop, Rc, Dyn, etc.) to extract
 /// the inner DSL class type, if any.
-/// 
+///
 /// This function handles the case where DSL class types are wrapped in:
 /// - `ManuallyDrop<T>` -> unwraps to T
 /// - `Rc<T>` -> unwraps to T
 /// - `Dyn<T>` -> unwraps to T
 /// - `Cell<T>` -> unwraps to T
 /// - `Option<T>` -> unwraps to T
-/// 
+///
 /// If `field_index` is provided, it will directly access that field after unwrapping
 /// to the struct type, instead of traversing all fields.
-/// 
+///
 /// Returns the inner DSL class type if found, or None if no DSL class type
 /// is found after unwrapping all wrappers.
 pub fn extract_dsl_class_from_wrapper<'tcx>(
-    tcx: TyCtxt<'tcx>, 
+    tcx: TyCtxt<'tcx>,
     ty: Ty<'tcx>,
     field_index: Option<usize>,
 ) -> Option<Ty<'tcx>> {
-    use rustc_middle::ty::GenericArgKind;
     use crate::util::type_util;
-    
+    use rustc_middle::ty::GenericArgKind;
+
     let mut current_ty = ty;
     let mut depth = 0;
     const MAX_DEPTH: usize = 10; // Prevent infinite recursion
-    
+
     while depth < MAX_DEPTH {
         // First, check if current_ty is already a DSL class type
         if is_dsl_class_type(tcx, current_ty) {
-            debug!("extract_dsl_class_from_wrapper: found DSL class type {:?} at depth {}", current_ty, depth);
+            debug!(
+                "extract_dsl_class_from_wrapper: found DSL class type {:?} at depth {}",
+                current_ty, depth
+            );
             return Some(current_ty);
         }
-        
+
         // Also check if this is a struct with DSL class type fields
         // For example, Container::data::Container has a point field of type Cell<Option<CRc<Point>>>
         if let TyKind::Adt(adt_def, _args) = current_ty.kind() {
@@ -600,8 +659,10 @@ pub fn extract_dsl_class_from_wrapper<'tcx>(
                         // If field_index is provided, directly access that specific field
                         if field_idx < variant.fields.len() {
                             let field_ty = type_util::get_field_type(tcx, current_ty, field_idx);
-                            debug!("extract_dsl_class_from_wrapper: checking field {} of {:?}", 
-                                   field_idx, current_ty);
+                            debug!(
+                                "extract_dsl_class_from_wrapper: checking field {} of {:?}",
+                                field_idx, current_ty
+                            );
                             // Recursively check this specific field type
                             if let Some(class_ty) = extract_dsl_class_from_wrapper(tcx, field_ty, None) {
                                 debug!("extract_dsl_class_from_wrapper: found DSL class type {:?} in field {} of {:?}", 
@@ -609,13 +670,16 @@ pub fn extract_dsl_class_from_wrapper<'tcx>(
                                 return Some(class_ty);
                             }
                         } else {
-                            debug!("extract_dsl_class_from_wrapper: field index {} out of bounds for {:?}", 
-                                   field_idx, current_ty);
+                            debug!(
+                                "extract_dsl_class_from_wrapper: field index {} out of bounds for {:?}",
+                                field_idx, current_ty
+                            );
                         }
                     } else {
                         // Fallback: check a limited number of fields if no field_index provided
                         let max_fields_to_check = 5;
-                        for (field_idx, _field) in variant.fields.iter().enumerate().take(max_fields_to_check) {
+                        for (field_idx, _field) in variant.fields.iter().enumerate().take(max_fields_to_check)
+                        {
                             let field_ty = type_util::get_field_type(tcx, current_ty, field_idx);
                             // Recursively check this field type
                             if let Some(class_ty) = extract_dsl_class_from_wrapper(tcx, field_ty, None) {
@@ -628,14 +692,14 @@ pub fn extract_dsl_class_from_wrapper<'tcx>(
                 }
             }
         }
-        
+
         // Try to unwrap various wrapper types
         match current_ty.kind() {
             // ManuallyDrop<T> -> T
             TyKind::Adt(adt_def, args) => {
                 let def_id = adt_def.did();
                 let path_str = tcx.def_path_str(def_id);
-                
+
                 if path_str == "std::mem::ManuallyDrop" || path_str == "core::mem::ManuallyDrop" {
                     // ManuallyDrop has a single type parameter (index 0)
                     if let Some(GenericArgKind::Type(inner_ty)) = args.get(0).map(|arg| arg.unpack()) {
@@ -645,7 +709,10 @@ pub fn extract_dsl_class_from_wrapper<'tcx>(
                     }
                 }
                 // Rc<T> -> T (including classes::Rc which is a re-export of alloc::rc::Rc)
-                else if path_str == "alloc::rc::Rc" || path_str == "std::rc::Rc" || path_str == "classes::Rc" {
+                else if path_str == "alloc::rc::Rc"
+                    || path_str == "std::rc::Rc"
+                    || path_str == "classes::Rc"
+                {
                     if let Some(GenericArgKind::Type(inner_ty)) = args.get(0).map(|arg| arg.unpack()) {
                         debug!("extract_dsl_class_from_wrapper: unwrapping Rc<{:?}>", inner_ty);
                         current_ty = inner_ty;
@@ -683,7 +750,10 @@ pub fn extract_dsl_class_from_wrapper<'tcx>(
                 else if path_str.contains("classes::ptr::RcDyn") {
                     // Get field 0's type (the actual data field)
                     let field_ty = type_util::get_field_type(tcx, current_ty, 0);
-                    debug!("extract_dsl_class_from_wrapper: unwrapping RcDyn, field 0 type = {:?}", field_ty);
+                    debug!(
+                        "extract_dsl_class_from_wrapper: unwrapping RcDyn, field 0 type = {:?}",
+                        field_ty
+                    );
                     current_ty = field_ty;
                     depth += 1;
                     continue;
@@ -706,18 +776,18 @@ pub fn extract_dsl_class_from_wrapper<'tcx>(
                 break;
             }
         }
-        
+
         // If we didn't continue, break the loop
         break;
     }
-    
+
     None
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_extract_class_name() {
         assert_eq!(
@@ -728,9 +798,6 @@ mod tests {
             extract_class_name_from_func("simple_new::_classes::_Point::data::{impl#0}::new"),
             Some("Point".to_string())
         );
-        assert_eq!(
-            extract_class_name_from_func("simple_new::main"),
-            None
-        );
+        assert_eq!(extract_class_name_from_func("simple_new::main"), None);
     }
 }

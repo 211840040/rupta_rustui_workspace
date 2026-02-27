@@ -13,7 +13,7 @@ export RUST_LOG_STYLE=always
 export LD_LIBRARY_PATH=$(rustc --print sysroot)/lib:$LD_LIBRARY_PATH
 
 # 切换到 playground 目录
-cd /home/wy/rupta_rustdsl_workspace/playground
+cd /root/rupta_rustdsl_workspace/playground
 
 # 创建输出目录
 mkdir -p analysis_results/simple_load_store

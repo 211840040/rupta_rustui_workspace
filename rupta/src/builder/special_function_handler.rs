@@ -19,8 +19,8 @@ use crate::builder::fpag_builder::FuncPAGBuilder;
 use crate::mir::analysis_context::AnalysisContext;
 use crate::mir::known_names::KnownNames;
 use crate::mir::path::{Path, PathEnum, PathSelector};
-use crate::util::type_util;
 use crate::util::class::analysis as class_analysis;
+use crate::util::type_util;
 
 lazy_static! {
     static ref SPECIALLY_HANDLED_FUNCTIONS: HashSet<KnownNames> = {
@@ -521,19 +521,19 @@ fn is_class_constructor<'tcx>(
 ) -> bool {
     let func_id = acx.get_func_id(callee_def_id, *gen_args);
     let func_ref = acx.get_function_reference(func_id);
-    
+
     if let Some(constructor) = class_analysis::identify_class_constructor(&func_ref) {
         // Only handle wrapper constructors (the public API)
         // Data constructors are internal implementation details
         return constructor.is_wrapper;
     }
-    
+
     false
 }
 
 /// Handles class constructor calls by creating a heap object abstraction
 /// and establishing pointer relationships.
-/// 
+///
 /// For `let p = Point::new(10, 20);`:
 /// - Creates a HeapObj node representing the Point instance
 /// - Establishes that `p` (or the pointer inside `p`) points to this HeapObj
@@ -551,42 +551,46 @@ fn handle_class_constructor<'tcx>(
     let class_name = class_analysis::identify_class_constructor(&func_ref)
         .map(|c| c.class_name)
         .unwrap_or_else(|| "Unknown".to_string());
-    
+
     // Get the return type of the constructor (e.g., Point<RcDyn<Point>>)
-    let return_ty = fpb.acx.get_path_rustc_type(destination)
+    let return_ty = fpb
+        .acx
+        .get_path_rustc_type(destination)
         .expect("Failed to get return type for class constructor");
-    
+
     // Create a heap object to represent the class instance
     // This represents the actual class data allocated on the heap
     let heap_object_path = Path::new_heap_obj(fpb.fpag.func_id, location);
-    
+
     // The heap object represents the concrete class data type
     // For now, we use the return type, but ideally we'd extract the inner data type
     // For Point, the heap object would be of type data::Point
     fpb.acx.set_path_rustc_type(heap_object_path.clone(), return_ty);
-    
+
     // Store the concretized type for the heap object
     // This allows the analysis to know what type this heap object represents
     fpb.acx
         .concretized_heap_objs
         .insert(heap_object_path.clone(), return_ty);
-    
+
     // Mark this HeapObj as a class instance (legacy)
-    fpb.acx
-        .class_instance_heap_objs
-        .insert(heap_object_path.clone());
-    
+    fpb.acx.class_instance_heap_objs.insert(heap_object_path.clone());
+
     // ===== Class Type System Integration =====
     // Register the class type in our simplified type system
     fpb.acx.class_type_system.register_class(&class_name);
-    
+
     // Mark the heap object as an instance of this class
-    fpb.acx.class_type_system.mark_class_instance(heap_object_path.clone(), &class_name);
-    
+    fpb.acx
+        .class_type_system
+        .mark_class_instance(heap_object_path.clone(), &class_name);
+
     // Mark the destination as a reference to this class
-    fpb.acx.class_type_system.mark_class_reference(destination.clone(), &class_name, true);
+    fpb.acx
+        .class_type_system
+        .mark_class_reference(destination.clone(), &class_name, true);
     // ==========================================
-    
+
     // ===== Class Pointer System Integration =====
     // Use canonical name so ptr ids match visit_assign/cast (no duplicate e.g. get_and_wrap::local_2).
     let func_ref = fpb.acx.get_function_reference(fpb.fpag.func_id);
@@ -595,7 +599,10 @@ fn handle_class_constructor<'tcx>(
     let alloc_location = format!("{}:{:?}", func_name_raw, location);
 
     // Create ClassObj for the heap allocation
-    let obj_id = fpb.acx.class_ptr_system.create_obj(class_name.clone(), alloc_location);
+    let obj_id = fpb
+        .acx
+        .class_ptr_system
+        .create_obj(class_name.clone(), alloc_location);
 
     // Create ClassPtr for the destination
     use crate::util::class::ptr_system::{path_to_class_ptr_id, ClassPtr as UtilClassPtr};
@@ -619,12 +626,12 @@ fn handle_class_constructor<'tcx>(
         fpb.acx.class_pag.add_alloc(&ptr_id, &obj_id_rcpta);
     }
     // ============================================
-    
+
     // Establish that the destination points to the heap object
     // Use add_addr_edge because the constructor returns a pointer/reference to the heap object
     // This creates: destination -> (address of) -> HeapObj
     fpb.add_addr_edge(heap_object_path.clone(), destination.clone());
-    
+
     debug!(
         "Class constructor [{}]: created HeapObj {:?} for type {:?}, destination: {:?}",
         class_name, heap_object_path, return_ty, destination
@@ -692,7 +699,8 @@ pub fn handle_class_cast_call<'tcx>(
             destination.clone(),
             vec![PathSelector::Downcast(1), PathSelector::Field(0)],
         );
-        fpb.acx.set_path_rustc_type(option_some_inner.clone(), dest_class_ty);
+        fpb.acx
+            .set_path_rustc_type(option_some_inner.clone(), dest_class_ty);
         let ptr_id = path_to_class_ptr_id(&option_some_inner, Some(&func_name), None);
         (option_some_inner, ptr_id)
     } else {
@@ -707,14 +715,18 @@ pub fn handle_class_cast_call<'tcx>(
     let dest_ptr = UtilClassPtr::new_local(dest_ptr_id.clone(), dest_class.clone());
     fpb.acx.class_ptr_system.get_or_create_ptr(receiver_ptr);
     fpb.acx.class_ptr_system.get_or_create_ptr(dest_ptr);
-    fpb.acx.class_ptr_system.propagate_points_to(&receiver_ptr_id, &dest_ptr_id);
+    fpb.acx
+        .class_ptr_system
+        .propagate_points_to(&receiver_ptr_id, &dest_ptr_id);
 
     // rcpta: ClassPAG — cast source = canonical(receiver).
     if class_analysis::is_source_level_context(&func_name) {
         use crate::rcpta::ClassPtr;
+        debug!("Handling class cast: {} is source-level", func_name);
         let canonical_receiver = fpb.acx.get_canonical_rcpta_ptr(&receiver_ptr_id);
         let receiver_cptr = ClassPtr::new_local(canonical_receiver.clone(), receiver_class);
         let dest_cptr = ClassPtr::new_local(dest_ptr_id.clone(), dest_class);
+        debug!("Add class cast edge: {} -> {}", receiver_ptr_id, dest_ptr_id);
         fpb.acx.class_pag.get_or_create_ptr(receiver_cptr);
         fpb.acx.class_pag.get_or_create_ptr(dest_cptr);
         fpb.acx.class_pag.add_cast(&canonical_receiver, &dest_ptr_id);

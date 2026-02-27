@@ -531,8 +531,8 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
             // RawPtr: 创建原始指针的操作 (e.g., &raw const x, &raw mut x)
             // TODO: RawPtr 与指针分析高度相关，未来需要实现对原始指针创建的分析逻辑
             // 应该类似于 visit_ref_or_address_of，但需要考虑原始指针的特殊语义
-            mir::Rvalue::RawPtr(_, _) => {
-                // 暂时不处理，等待实现原始指针分析
+            mir::Rvalue::RawPtr(_, place) => {
+               self.visit_ref_or_address_of(lh_path, place);
             }
             // 新增：处理 WrapUnsafeBinder（Rust 2025-05-09 nightly 新增）
             // WrapUnsafeBinder: 处理 unsafe binder 的包装，用于高阶类型推理
@@ -1354,14 +1354,14 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
         let func_ref = self.acx.get_function_reference(callee_func_id);
         
         // DEBUG: trace apply_twice resolution
-        if func_ref.to_string().contains("apply_twice") {
-             eprintln!("[rcpta] resolve_call seeing apply_twice: {}", func_ref.to_string());
-             if let Some(cm) = analysis::identify_class_method_with_type_system(&func_ref, &self.acx.class_type_system) {
-                 eprintln!("[rcpta] Identified as class method: {:?}", cm);
-             } else {
-                 eprintln!("[rcpta] NOT identified as class method");
-             }
-        }
+        // if func_ref.to_string().contains("apply_twice") {
+        //      eprintln!("[rcpta] resolve_call seeing apply_twice: {}", func_ref.to_string());
+        //      if let Some(cm) = analysis::identify_class_method_with_type_system(&func_ref, &self.acx.class_type_system) {
+        //          eprintln!("[rcpta] Identified as class method: {:?}", cm);
+        //      } else {
+        //          eprintln!("[rcpta] NOT identified as class method");
+        //      }
+        // }
 
         if let Some(gs) = analysis::identify_getter_setter(&func_ref) {
             // ROBUST CHECK: Generalizable logic to differentiate Field Access (Load/Store) from Method Call.
@@ -1626,6 +1626,7 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
         // Check if this is a class method call (not getter/setter, not constructor)
         let class_method_opt = analysis::identify_class_method_with_type_system(&func_ref, &self.acx.class_type_system);
         if let Some(class_method) = class_method_opt {
+            debug!("[rcpta] register class method: {}", class_method.func_name);
             // Register the method in the type system
             self.acx.class_type_system.register_method(
                 &class_method.class_name,
@@ -1780,14 +1781,15 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                     self.acx.class_pag.get_or_create_ptr(formal_ptr);
                     self.acx.class_pag.add_call_arg(&call_site_id, arg_idx, &actual_ptr_id, &formal_ptr_id);
                     
-                    if caller_func_name.contains("apply_twice") {
-                        eprintln!("[rcpta] Added CallArg in apply_twice: {} -> {}", actual_ptr_id, formal_ptr_id);
-                    }
+                    // if caller_func_name.contains("apply_twice") {
+                    //     eprintln!("[rcpta] Added CallArg in apply_twice: {} -> {}", actual_ptr_id, formal_ptr_id);
+                    // }
                 }
                 // CallRet: formal_ret → actual_ret when return type is class
                 if analysis::is_dsl_class_type(self.tcx(), dest_type) {
                     let actual_ret_id = path_to_class_ptr_id(&destination, Some(&caller_func_name), None);
                     let formal_ret_id = format!("{}::ret", callee_func_name);
+                    debug!("[rcpta] Adding CallRet for return value: actual_ret={} formal_ret={}", actual_ret_id, formal_ret_id);
                     let ret_ptr = crate::rcpta::ClassPtr::new_local(formal_ret_id.clone(), class_method.class_name.clone());
                     self.acx.class_pag.get_or_create_ptr(ret_ptr);
                     self.acx.class_pag.add_call_ret(&call_site_id, &formal_ret_id, &actual_ret_id);
@@ -1903,6 +1905,7 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                 &destination,
                 location,
             );
+            
         }
 
         // rcpta: Option::unwrap() on Option<CRc<T>> — build Assign(option_inner_ptr, lhs_ptr).

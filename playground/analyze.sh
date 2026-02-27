@@ -5,6 +5,11 @@
 
 set -e
 
+export PTA_LOG=debug
+# export RUST_LOG=rupta=debug
+export LD_LIBRARY_PATH=$(rustc --print sysroot)/lib:$LD_LIBRARY_PATH
+
+
 # 检查参数
 if [ $# -eq 0 ]; then
     echo "用法: $0 <bin_target>"
@@ -36,6 +41,11 @@ if [ ! -f "$RUPTA_DIR/target/debug/cargo-pta" ]; then
     cd "$SCRIPT_DIR"
 fi
 
+cd "$RUPTA_DIR"
+cargo build
+cd "$SCRIPT_DIR"
+cargo clean
+
 # 运行分析
 echo "开始分析..."
 "$RUPTA_DIR/target/debug/cargo-pta" pta \
@@ -48,9 +58,11 @@ echo "开始分析..."
   --dump-mir "$OUTPUT_DIR/${BIN_TARGET}_mir.txt" \
   --dump-call-graph "$OUTPUT_DIR/call_graph.dot" \
   --dump-class-call-graph "$OUTPUT_DIR/class_cg.txt" \
-  --dump-class-type-system "$OUTPUT_DIR/class_type_system.txt" \
-  --dump-class-ptr-system "$OUTPUT_DIR/class_ptr_system.txt" \
+  --dump-class-pag "$OUTPUT_DIR/class_pag.txt" \
+  --dump-class-pts "$OUTPUT_DIR/class_pts.txt" \
   2>&1 | tee "$OUTPUT_DIR/debug.log"
+#   --dump-class-type-system "$OUTPUT_DIR/class_type_system.txt" \
+#   --dump-class-ptr-system "$OUTPUT_DIR/class_ptr_system.txt" \
 
 echo ""
 echo "=========================================="

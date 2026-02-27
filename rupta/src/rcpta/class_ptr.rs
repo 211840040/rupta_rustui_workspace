@@ -10,15 +10,60 @@
 //! A ClassPtr represents one of: local variable, parameter, return value,
 //! instance field, or static field — each holding a reference to a class instance.
 
-use std::fmt;
+use std::{fmt, rc::Rc};
+
+use rustc_middle::mir::Location;
 
 /// Placeholder for context-sensitive analysis. Replace with real context type (e.g. k-CFA stack) later.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
-pub struct Context(());
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+// 这里先采用k-callsites
+pub struct DSLContextElement {
+    /// Function name (e.g. `main`, `Point::new`)
+    pub func: String,
+    /// MIR location (e.g. `bb0[6]`, `bb1[0]`)
+    pub location: Location,
+}
+
+impl DSLContextElement {
+    pub fn new(func: String, location: Location) -> Self {
+        Self { func, location }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct Context {
+    pub context_elems: Vec<DSLContextElement>,
+}
 
 impl Context {
-    pub fn new() -> Self {
-        Context(())
+    pub fn new_empty() -> Rc<Self> {
+        Rc::new(Context {
+            context_elems: Vec::new(),
+        })
+    }
+
+    pub fn new(context_elems: Vec<DSLContextElement>) -> Rc<Self> {
+        Rc::new(Context { context_elems })
+    }
+
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.context_elems.len()
+    }
+
+    /// Composes a new context from a given context and a new context element.
+    /// Discard the last old context element if the length of context exceeds the depth limit.
+    pub fn new_k_limited_context(old_ctx: &Rc<Context>, elem: DSLContextElement, k: usize) -> Rc<Self> {
+        let mut elems = Vec::with_capacity(k);
+        if k > 0 {
+            elems.push(elem);
+            if old_ctx.len() < k {
+                elems.extend_from_slice(&old_ctx.context_elems[..])
+            } else {
+                elems.extend_from_slice(&old_ctx.context_elems[..k - 1])
+            }
+        }
+        Rc::new(Context { context_elems: elems })
     }
 }
 
