@@ -1775,10 +1775,14 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                     let actual_canonical_ptr_id = self.acx.get_canonical_rcpta_ptr(&actual_ptr_id);
                     // MIR uses 1-based parameter ordinals (0 = return place, 1 = first param/self).
                     let formal_ptr_id = format!("{}::param_{}", callee_func_name, arg_idx + 1);
-                    let class_ty = self.acx.class_type_system
-                        .get_path_class_type(arg_path)
-                        .cloned()
-                        .unwrap_or_else(|| class_method.class_name.clone());
+                    let class_ty = match analysis::extract_dsl_class_from_wrapper(self.tcx(), effective_ty,None) {
+                        Some(ty)=> match analysis::class_name_of_dsl_type(self.tcx(), ty) {
+                            Some(s)=>s,
+                            None=>class_method.class_name.clone(),
+                        },
+                        None=> class_method.class_name.clone(),
+                    };
+                    debug!("[rcpta] Adding CallArg for arg {}: actual_ptr={} formal_ptr={} class_ty={}, arg_ty={}", arg_idx, actual_canonical_ptr_id, formal_ptr_id, class_ty, arg_ty);
                     let formal_ptr = crate::rcpta::ClassPtr::new_local(formal_ptr_id.clone(), class_ty);
                     self.acx.class_pag.get_or_create_ptr(formal_ptr);
                     self.acx.class_pag.add_call_arg(&call_site_id, arg_idx, &actual_canonical_ptr_id, &formal_ptr_id);
@@ -1791,9 +1795,19 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                 if analysis::is_dsl_class_type(self.tcx(), dest_type) {
                     let actual_ret_id = path_to_class_ptr_id(&destination, Some(&caller_func_name), None);
                     let formal_ret_id = format!("{}::ret", callee_func_name);
-                    debug!("[rcpta] Adding CallRet for return value: actual_ret={} formal_ret={}", actual_ret_id, formal_ret_id);
-                    let ret_ptr = crate::rcpta::ClassPtr::new_local(formal_ret_id.clone(), class_method.class_name.clone());
+                    let dest_ty = destination.try_eval_path_type(self.acx);
+                    let class_ty = match analysis::extract_dsl_class_from_wrapper(self.tcx(), dest_ty, None) {
+                        Some(ty)=> match analysis::class_name_of_dsl_type(self.tcx(), ty) {
+                            Some(s)=>s,
+                            None=>class_method.class_name.clone(),
+                        },
+                        None=> class_method.class_name.clone(),
+                    };
+                    debug!("[rcpta] Adding CallRet: actual_ret={} formal_ret={} class_ty={}", actual_ret_id, formal_ret_id, class_ty);
+                    let ret_ptr = crate::rcpta::ClassPtr::new_return(&callee_func_name, class_ty.clone());
+                    let actual_ptr = crate::rcpta::ClassPtr::new_local(actual_ret_id.clone(), class_ty);
                     self.acx.class_pag.get_or_create_ptr(ret_ptr);
+                    self.acx.class_pag.get_or_create_ptr(actual_ptr);
                     self.acx.class_pag.add_call_ret(&call_site_id, &formal_ret_id, &actual_ret_id);
                 }
             }
