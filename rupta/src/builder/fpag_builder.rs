@@ -1800,11 +1800,12 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                 // CallRet: formal_ret → actual_ret when return type is class
                 if analysis::is_dsl_class_type(self.tcx(), dest_type) {
                     let actual_ret_id = path_to_class_ptr_id(&destination, Some(&caller_func_name), None);
-                    let formal_ret_id = format!("{}::ret", callee_func_name);
-                    debug!("[rcpta] Adding CallRet for return value: actual_ret={} formal_ret={}", actual_ret_id, formal_ret_id);
-                    let ret_ptr = crate::rcpta::ClassPtr::new_local(formal_ret_id.clone(), class_method.class_name.clone(),context_t.clone());
-                    self.acx.class_pag.get_or_create_ptr(ret_ptr);
-                    self.acx.class_pag.add_call_ret(&call_site_id, &formal_ret_id, &actual_ret_id);
+                    debug!("[rcpta] Adding CallRet for return value: actual_ret={} formal_ret={}::ret", actual_ret_id, callee_func_name);
+                    let formal_ret_ptr = crate::rcpta::ClassPtr::new_return(&callee_func_name, class_method.class_name.clone(),context_t.clone());
+                    let actual_ret_ptr = crate::rcpta::ClassPtr::new_local(actual_ret_id.clone(), class_method.class_name.clone(), current_context.clone());
+                    let formal_ret_ptr_id= self.acx.class_pag.get_or_create_ptr(formal_ret_ptr);
+                    self.acx.class_pag.get_or_create_ptr(actual_ret_ptr);
+                    self.acx.class_pag.add_call_ret(&call_site_id, &formal_ret_ptr_id, &actual_ret_id);
                 }
             }
             
@@ -1827,9 +1828,9 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
             }
             
             // DEBUG: track added static dispatch
-            if self.acx.get_function_reference(resolved_callee_func_id).to_string().contains("apply_twice") {
-                eprintln!("[rcpta] Added static dispatch to apply_twice in func {:?}. Total callsites: {}", self.fpag.func_id, self.fpag.static_dispatch_callsites.len());
-            }
+            // if self.acx.get_function_reference(resolved_callee_func_id).to_string().contains("apply_twice") {
+            //     eprintln!("[rcpta] Added static dispatch to apply_twice in func {:?}. Total callsites: {}", self.fpag.func_id, self.fpag.static_dispatch_callsites.len());
+            // }
             // Continue with normal call handling to build call graph
         } else if let Some(gs) = analysis::identify_getter_setter(&func_ref) {
             // Generalizable Logic: Distinguish Field Access (Load/Store) from Method Call.
