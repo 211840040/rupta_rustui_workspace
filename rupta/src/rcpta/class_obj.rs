@@ -52,7 +52,7 @@ pub struct ClassObj {
     /// Where this object was allocated
     pub alloc_site: AllocSite,
     /// Context for context-sensitive analysis (optional).
-    pub context: Option<Context>,
+    pub context: Context,
 }
 
 impl ClassObj {
@@ -61,18 +61,22 @@ impl ClassObj {
             id: id.into(),
             class_type: class_type.into(),
             alloc_site,
-            context: None,
+            context: Context::new_empty(),
         }
     }
 
     pub fn with_context(mut self, ctx: Context) -> Self {
-        self.context = Some(ctx);
+        self.context = ctx;
         self
     }
 }
 
 impl fmt::Display for ClassObj {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}@{}", self.id, self.class_type, self.alloc_site)
+        write!(
+            f,
+            "{}:{}:{}@{}",
+            self.context, self.id, self.class_type, self.alloc_site
+        )
     }
 }

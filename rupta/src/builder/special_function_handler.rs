@@ -618,10 +618,15 @@ fn handle_class_constructor<'tcx>(
     // Only create ClassObj when the *caller* is source-level (user code), not inside core/std/alloc/classes
     // or class ctor/DSL internal. Use is_source_level_context so we don't create ptrs/objs in DSL runtime.
     if class_analysis::is_source_level_context(&func_name_raw) {
-        use crate::rcpta::{AllocSite, ClassPtr};
+        use crate::rcpta::{AllocSite, ClassPtr, Context};
+        // Create a DSL context for class analysis (if needed)
+        let context: Context = class_analysis::make_dsl_context(fpb.acx);
         let alloc_site = AllocSite::new(&func_name_raw, format!("{:?}", location));
-        let obj_id_rcpta = fpb.acx.class_pag.create_obj(class_name.clone(), alloc_site);
-        let cptr = ClassPtr::new_local(ptr_id.clone(), class_name.clone());
+        let obj_id_rcpta =
+            fpb.acx
+                .class_pag
+                .create_obj_with_context(class_name.clone(), alloc_site, context.clone());
+        let cptr = ClassPtr::new_local(ptr_id.clone(), class_name.clone(), context.clone());
         fpb.acx.class_pag.get_or_create_ptr(cptr);
         fpb.acx.class_pag.add_alloc(&ptr_id, &obj_id_rcpta);
     }
@@ -721,11 +726,12 @@ pub fn handle_class_cast_call<'tcx>(
 
     // rcpta: ClassPAG — cast source = canonical(receiver).
     if class_analysis::is_source_level_context(&func_name) {
-        use crate::rcpta::ClassPtr;
+        use crate::rcpta::{ClassPtr, Context};
         debug!("Handling class cast: {} is source-level", func_name);
+        let context: Context = class_analysis::make_dsl_context(fpb.acx);
         let canonical_receiver = fpb.acx.get_canonical_rcpta_ptr(&receiver_ptr_id);
-        let receiver_cptr = ClassPtr::new_local(canonical_receiver.clone(), receiver_class);
-        let dest_cptr = ClassPtr::new_local(dest_ptr_id.clone(), dest_class);
+        let receiver_cptr = ClassPtr::new_local(canonical_receiver.clone(), receiver_class, context.clone());
+        let dest_cptr = ClassPtr::new_local(dest_ptr_id.clone(), dest_class, context.clone());
         debug!("Add class cast edge: {} -> {}", receiver_ptr_id, dest_ptr_id);
         fpb.acx.class_pag.get_or_create_ptr(receiver_cptr);
         fpb.acx.class_pag.get_or_create_ptr(dest_cptr);

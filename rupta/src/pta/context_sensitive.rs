@@ -127,6 +127,11 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
                     func_ref.to_string(),
                     self.get_context_by_id(func.cid),
                 );
+                if self.ctx_strategy.strategy_name() == "K-CallSite-Sensitive" {
+                    unsafe {
+                        self.acx.current_func_context = std::mem::transmute(self.get_context_by_id(func.cid))
+                    }
+                }
                 if self.pag.build_func_pag(self.acx, func.func_id) {
                     self.add_fpag_edges(func);
                     self.process_calls_in_fpag(func);

@@ -10,13 +10,13 @@
 //! A ClassPtr represents one of: local variable, parameter, return value,
 //! instance field, or static field — each holding a reference to a class instance.
 
-use std::{fmt, rc::Rc};
+use std::fmt;
 
 use rustc_middle::mir::Location;
 
 /// Placeholder for context-sensitive analysis. Replace with real context type (e.g. k-CFA stack) later.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-// 这里先采用k-callsites
+// k-callsites
 pub struct DSLContextElement {
     /// Function name (e.g. `main`, `Point::new`)
     pub func: String,
@@ -36,14 +36,14 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new_empty() -> Rc<Self> {
-        Rc::new(Context {
+    pub fn new_empty() -> Self {
+        Context {
             context_elems: Vec::new(),
-        })
+        }
     }
 
-    pub fn new(context_elems: Vec<DSLContextElement>) -> Rc<Self> {
-        Rc::new(Context { context_elems })
+    pub fn new(context_elems: Vec<DSLContextElement>) -> Self {
+        Context { context_elems }
     }
 
     #[inline]
@@ -51,9 +51,13 @@ impl Context {
         self.context_elems.len()
     }
 
+    pub fn empty(&self) -> bool {
+        self.context_elems.is_empty()
+    }
+
     /// Composes a new context from a given context and a new context element.
     /// Discard the last old context element if the length of context exceeds the depth limit.
-    pub fn new_k_limited_context(old_ctx: &Rc<Context>, elem: DSLContextElement, k: usize) -> Rc<Self> {
+    pub fn new_k_limited_context(old_ctx: Context, elem: DSLContextElement, k: usize) -> Self {
         let mut elems = Vec::with_capacity(k);
         if k > 0 {
             elems.push(elem);
@@ -63,7 +67,32 @@ impl Context {
                 elems.extend_from_slice(&old_ctx.context_elems[..k - 1])
             }
         }
-        Rc::new(Context { context_elems: elems })
+        Context { context_elems: elems }
+    }
+}
+
+impl fmt::Display for Context {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if !self.empty() {
+            write!(
+                f,
+                "[{}]",
+                self.context_elems
+                    .iter()
+                    .map(|elem| {
+                        format!(
+                            "{}:bb{}[{}]",
+                            elem.func,
+                            elem.location.block.index(),
+                            elem.location.statement_index
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join("->")
+            )
+        } else {
+            write!(f, "")
+        }
     }
 }
 
@@ -103,39 +132,39 @@ pub struct ClassPtr {
     pub class_type: String,
     /// Kind of pointer
     pub kind: ClassPtrKind,
-    /// Context for context-sensitive analysis (optional; unused when context-insensitive)
-    pub context: Option<Context>,
+    /// Context for context-sensitive analysis (empty when context-insensitive)
+    pub context: Context,
 }
 
 impl ClassPtr {
-    pub fn new_local(id: String, class_type: String) -> Self {
+    pub fn new_local(id: String, class_type: String, ctx: Context) -> Self {
         Self {
             id: id.clone(),
             class_type,
             kind: ClassPtrKind::Local,
-            context: None,
+            context: ctx,
         }
     }
 
-    pub fn new_param(func_name: &str, param_index: usize, class_type: String) -> Self {
+    pub fn new_param(func_name: &str, param_index: usize, class_type: String, ctx: Context) -> Self {
         Self {
             id: format!("{}::param_{}", func_name, param_index),
             class_type,
             kind: ClassPtrKind::Param,
-            context: None,
+            context: ctx,
         }
     }
 
-    pub fn new_return(func_name: &str, class_type: String) -> Self {
+    pub fn new_return(func_name: &str, class_type: String, ctx: Context) -> Self {
         Self {
             id: format!("{}::ret", func_name),
             class_type,
             kind: ClassPtrKind::Return,
-            context: None,
+            context: ctx,
         }
     }
 
-    pub fn new_instance_field(base_id: &str, field_name: &str, class_type: String) -> Self {
+    pub fn new_instance_field(base_id: &str, field_name: &str, class_type: String, ctx: Context) -> Self {
         Self {
             id: format!("{}.{}", base_id, field_name),
             class_type,
@@ -143,11 +172,11 @@ impl ClassPtr {
                 base: base_id.to_string(),
                 field_name: field_name.to_string(),
             },
-            context: None,
+            context: ctx,
         }
     }
 
-    pub fn new_static_field(class_name: &str, field_name: &str, class_type: String) -> Self {
+    pub fn new_static_field(class_name: &str, field_name: &str, class_type: String, ctx: Context) -> Self {
         Self {
             id: format!("{}::{}", class_name, field_name),
             class_type,
@@ -155,28 +184,28 @@ impl ClassPtr {
                 class_name: class_name.to_string(),
                 field_name: field_name.to_string(),
             },
-            context: None,
+            context: ctx,
         }
     }
 
-    pub fn new_temp(id: String, class_type: String) -> Self {
+    pub fn new_temp(id: String, class_type: String, ctx: Context) -> Self {
         Self {
             id: id.clone(),
             class_type,
             kind: ClassPtrKind::Temp,
-            context: None,
+            context: ctx,
         }
     }
 
-    /// Attach context (for context-sensitive analysis).
-    pub fn with_context(mut self, ctx: Context) -> Self {
-        self.context = Some(ctx);
-        self
-    }
+    // Attach context (for context-sensitive analysis).
+    // pub fn with_context(mut self, ctx: Context) -> Self {
+    //     self.context = ctx;
+    //     self
+    // }
 }
 
 impl fmt::Display for ClassPtr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}", self.id, self.class_type)
+        write!(f, "{}:{}:{}", self.context, self.id, self.class_type)
     }
 }

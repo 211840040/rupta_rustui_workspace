@@ -1167,7 +1167,7 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
             if let Some(ptr) = class_pag.get_ptr(id) {
                 let short = short_class_pag_name(&ptr.id);
                 writer
-                    .write_all(format!("  {}  [{}]\n", short, ptr.class_type).as_bytes())
+                    .write_all(format!("  {}  {}  [{}]\n", ptr.context, short, ptr.class_type).as_bytes())
                     .expect("Unable to write pointer");
             } else if solver_result.is_some() {
                 // obj.field pointer (materialized during PTS)
@@ -1194,7 +1194,13 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
             if let Some(obj) = class_pag.get_obj(id) {
                 let short_site = short_class_pag_name(&obj.alloc_site.to_string());
                 writer
-                    .write_all(format!("  {}  {}  @{}\n", obj.id, obj.class_type, short_site).as_bytes())
+                    .write_all(
+                        format!(
+                            "  {}  {}  {}  @{}\n",
+                            obj.context, obj.id, obj.class_type, short_site
+                        )
+                        .as_bytes(),
+                    )
                     .expect("Unable to write object");
             }
         }

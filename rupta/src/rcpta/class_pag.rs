@@ -12,6 +12,8 @@
 
 use std::collections::{HashMap, HashSet};
 
+use crate::rcpta::Context;
+
 use super::class_obj::ClassObj;
 use super::class_ptr::ClassPtr;
 
@@ -156,7 +158,13 @@ impl ClassPAG {
     ) -> String {
         let base = base_ptr_id.as_ref();
         let f = field.as_ref();
-        let ptr = ClassPtr::new_instance_field(base, f, field_class_type.into());
+        // field ptr and base ptr share the same context. Right?
+        let ctx = if let Some(base_ptr) = self.get_ptr(base) {
+            base_ptr.context.clone()
+        } else {
+            Context::new_empty()
+        };
+        let ptr = ClassPtr::new_instance_field(base, f, field_class_type.into(), ctx);
         self.get_or_create_ptr(ptr)
     }
 
@@ -176,6 +184,18 @@ impl ClassPAG {
         let id = format!("obj_{}", self.next_obj_counter);
         self.next_obj_counter += 1;
         let obj = ClassObj::new(id.clone(), class_type, alloc_site);
+        self.get_or_create_obj(obj)
+    }
+
+    pub fn create_obj_with_context(
+        &mut self,
+        class_type: impl Into<String>,
+        alloc_site: super::class_obj::AllocSite,
+        context: Context,
+    ) -> String {
+        let id = format!("obj_{}", self.next_obj_counter);
+        self.next_obj_counter += 1;
+        let obj = ClassObj::new(id.clone(), class_type, alloc_site).with_context(context);
         self.get_or_create_obj(obj)
     }
 
@@ -218,10 +238,7 @@ impl ClassPAG {
 
     /// Assign successors of a pointer (all dst such that dst = src).
     pub fn assign_successors(&self, src_ptr_id: &str) -> impl Iterator<Item = &String> {
-        self.assign
-            .get(src_ptr_id)
-            .into_iter()
-            .flat_map(|set| set.iter())
+        self.assign.get(src_ptr_id).into_iter().flat_map(|set| set.iter())
     }
 
     /// Iterate all assign edges (src_id, dst_id).
@@ -242,10 +259,7 @@ impl ClassPAG {
 
     /// Cast successors of a pointer (all dst such that dst = src.cast(...)).
     pub fn cast_successors(&self, src_ptr_id: &str) -> impl Iterator<Item = &String> {
-        self.cast
-            .get(src_ptr_id)
-            .into_iter()
-            .flat_map(|set| set.iter())
+        self.cast.get(src_ptr_id).into_iter().flat_map(|set| set.iter())
     }
 
     /// Iterate all cast edges (src_id, dst_id).
@@ -266,10 +280,7 @@ impl ClassPAG {
 
     /// Objects that this pointer is allocated to (initial points-to).
     pub fn alloc_targets(&self, ptr_id: &str) -> impl Iterator<Item = &String> {
-        self.alloc
-            .get(ptr_id)
-            .into_iter()
-            .flat_map(|set| set.iter())
+        self.alloc.get(ptr_id).into_iter().flat_map(|set| set.iter())
     }
 
     /// Iterate all alloc edges (ptr_id, obj_id).
@@ -295,11 +306,7 @@ impl ClassPAG {
     }
 
     /// Load successors: (base, field) → set of dst_ptr_id.
-    pub fn load_targets(
-        &self,
-        base_ptr_id: &str,
-        field: &str,
-    ) -> impl Iterator<Item = &String> {
+    pub fn load_targets(&self, base_ptr_id: &str, field: &str) -> impl Iterator<Item = &String> {
         self.load
             .get(&(base_ptr_id.to_string(), field.to_string()))
             .into_iter()
@@ -309,12 +316,11 @@ impl ClassPAG {
     /// Iterate all load edges.
     pub fn iter_load_edges(&self) -> impl Iterator<Item = LoadEdge> + '_ {
         self.load.iter().flat_map(|((base, field), dsts)| {
-            dsts.iter()
-                .map(move |dst| LoadEdge {
-                    base_ptr_id: base.clone(),
-                    field: field.clone(),
-                    dst_ptr_id: dst.clone(),
-                })
+            dsts.iter().map(move |dst| LoadEdge {
+                base_ptr_id: base.clone(),
+                field: field.clone(),
+                dst_ptr_id: dst.clone(),
+            })
         })
     }
 
@@ -334,11 +340,7 @@ impl ClassPAG {
     }
 
     /// Store sources: (base, field) ← set of src_ptr_id.
-    pub fn store_sources(
-        &self,
-        base_ptr_id: &str,
-        field: &str,
-    ) -> impl Iterator<Item = &String> {
+    pub fn store_sources(&self, base_ptr_id: &str, field: &str) -> impl Iterator<Item = &String> {
         self.store
             .get(&(base_ptr_id.to_string(), field.to_string()))
             .into_iter()
@@ -348,12 +350,11 @@ impl ClassPAG {
     /// Iterate all store edges.
     pub fn iter_store_edges(&self) -> impl Iterator<Item = StoreEdge> + '_ {
         self.store.iter().flat_map(|((base, field), srcs)| {
-            srcs.iter()
-                .map(move |src| StoreEdge {
-                    base_ptr_id: base.clone(),
-                    field: field.clone(),
-                    src_ptr_id: src.clone(),
-                })
+            srcs.iter().map(move |src| StoreEdge {
+                base_ptr_id: base.clone(),
+                field: field.clone(),
+                src_ptr_id: src.clone(),
+            })
         })
     }
 

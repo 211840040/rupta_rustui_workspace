@@ -8,7 +8,11 @@
 //! This module provides utilities to identify and analyze class-related operations
 //! in programs that use the classes DSL macro.
 
-use crate::mir::function::FunctionReference;
+use crate::{
+    mir::{call_site::BaseCallSite, function::FunctionReference},
+    pta::PTAType,
+    rcpta::class_ptr::DSLContextElement,
+};
 use log::*;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::{Ty, TyCtxt, TyKind};
@@ -782,6 +786,29 @@ pub fn extract_dsl_class_from_wrapper<'tcx>(
     }
 
     None
+}
+
+pub fn make_dsl_context(acx: &crate::mir::analysis_context::AnalysisContext) -> crate::rcpta::Context {
+    match acx.analysis_options.pta_type {
+        PTAType::CallSiteSensitive => {
+            let context_elems = acx.current_func_context.context_elems.clone();
+            let dsl_context_elems = context_elems
+                .into_iter()
+                .map(|elem| to_dsl_class_element(elem, acx))
+                .collect();
+            crate::rcpta::Context::new(dsl_context_elems)
+        }
+        _ => crate::rcpta::Context::new_empty(),
+    }
+}
+
+pub fn to_dsl_class_element(
+    callsite: BaseCallSite,
+    acx: &crate::mir::analysis_context::AnalysisContext,
+) -> DSLContextElement {
+    let func_ref = acx.get_function_reference(callsite.func);
+    let func_name = canonical_class_method_name(func_ref.to_string().as_str());
+    DSLContextElement::new(func_name, callsite.location)
 }
 
 #[cfg(test)]
