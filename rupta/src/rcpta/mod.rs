@@ -10,17 +10,16 @@
 //! Class-level pointer analysis built on rupta's MIR analysis.
 //! Core structures: ClassPtr, ClassObj, ClassPAG.
 
+pub mod class_cg;
 pub mod class_obj;
 pub mod class_pag;
-pub mod class_pts;
 pub mod class_ptr;
+pub mod class_pts;
 
+pub use class_cg::ClassCallGraph;
 pub use class_obj::{AllocSite, ClassObj};
 pub use class_pag::{
-    AllocEdge, AssignEdge, CallArgEdge, CallRetEdge, CallSiteId, ClassPAG, FieldId, LoadEdge,
-    StoreEdge,
-};
-pub use class_pts::{
-    solve_class_pts, ClassPTS, ClassPTSResult, MaterializedLoadEdge, MaterializedStoreEdge,
+    AllocEdge, AssignEdge, CallArgEdge, CallRetEdge, CallSiteId, ClassPAG, FieldId, LoadEdge, StoreEdge,
 };
 pub use class_ptr::{ClassPtr, ClassPtrKind, Context};
+pub use class_pts::{solve_class_pts, ClassPTS, ClassPTSResult, MaterializedLoadEdge, MaterializedStoreEdge};

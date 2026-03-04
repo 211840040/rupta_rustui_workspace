@@ -811,6 +811,62 @@ pub fn to_dsl_class_element(
     DSLContextElement::new(func_name, callsite.location)
 }
 
+pub fn path_to_cs_class_ptr_id(
+    path: &crate::mir::path::Path,
+    ctx: crate::rcpta::Context,
+    func_name: Option<&str>,
+    param_slots: Option<usize>,
+) -> String {
+    use crate::mir::path::{PathEnum, PathSelector};
+    use crate::rcpta::ClassPtr;
+
+    match &path.value {
+        PathEnum::LocalVariable { func_id: _, ordinal } => {
+            // In callee body, use param_N/ret for parameter slots so they match CallArg formals.
+            if param_slots.is_some() {
+                if *ordinal < param_slots.unwrap() {
+                    return if *ordinal == 0 {
+                        ClassPtr::make_return_id(func_name, ctx)
+                    } else {
+                        ClassPtr::make_param_id(ordinal, func_name, ctx)
+                    };
+                }
+            }
+            ClassPtr::make_local_id(ordinal, func_name, ctx)
+        }
+        PathEnum::Parameter { func_id: _, ordinal } => ClassPtr::make_param_id(ordinal, func_name, ctx),
+        PathEnum::ReturnValue { func_id: _ } => ClassPtr::make_return_id(func_name, ctx),
+        PathEnum::HeapObj { func_id: _, location } => {
+            format!("{}heap_{:?}", ctx, location)
+        }
+        PathEnum::QualifiedPath { base, projection } => {
+            // Option<CRc<T>>.Some.0: use the Option-holder local as the pointer id for consistency.
+            if projection.len() == 2 {
+                if let PathSelector::Downcast(1) = projection[0] {
+                    if let PathSelector::Field(0) = projection[1] {
+                        return path_to_cs_class_ptr_id(base, ctx, func_name, param_slots);
+                    }
+                }
+            }
+            let base_id = path_to_cs_class_ptr_id(base, ctx.clone(), func_name, param_slots);
+            // Simplify projection to field name if possible
+            let proj_str = projection
+                .iter()
+                .map(|sel| format!("{:?}", sel))
+                .collect::<Vec<_>>()
+                .join(".");
+            format!("{}{}.{}", ctx, base_id, proj_str)
+        }
+        PathEnum::OffsetPath { base, offset } => {
+            let base_id = path_to_cs_class_ptr_id(base, ctx.clone(), func_name, param_slots);
+            format!("{}{}.ofs({})", ctx, base_id, offset)
+        }
+        _ => {
+            format!("{}{:?}", ctx, path)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

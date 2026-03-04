@@ -55,6 +55,10 @@ impl Context {
         self.context_elems.is_empty()
     }
 
+    pub fn last_elem(&self) -> Option<&DSLContextElement> {
+        self.context_elems.last()
+    }
+
     /// Composes a new context from a given context and a new context element.
     /// Discard the last old context element if the length of context exceeds the depth limit.
     pub fn new_k_limited_context(old_ctx: Context, elem: DSLContextElement, k: usize) -> Self {
@@ -146,27 +150,48 @@ impl ClassPtr {
         }
     }
 
+    pub fn make_local_id(ordinal: &usize, func_name: Option<&str>, ctx: Context) -> String {
+        match func_name {
+            Some(name) => format!("{}{}::local_{}", ctx, name, ordinal),
+            None => format!("{}local_{}", ctx, ordinal),
+        }
+    }
+
     pub fn new_param(func_name: &str, param_index: usize, class_type: String, ctx: Context) -> Self {
         Self {
-            id: format!("{}::param_{}", func_name, param_index),
+            id: Self::make_param_id(&param_index, Some(func_name), ctx.clone()),
             class_type,
             kind: ClassPtrKind::Param,
             context: ctx,
         }
     }
 
+    pub fn make_param_id(param_index: &usize, func_name: Option<&str>, ctx: Context) -> String {
+        match func_name {
+            Some(name) => format!("{}{}::param_{}", ctx, name, param_index),
+            None => format!("{}param_{}", ctx, param_index),
+        }
+    }
+
     pub fn new_return(func_name: &str, class_type: String, ctx: Context) -> Self {
         Self {
-            id: format!("{}::ret", func_name),
+            id: Self::make_return_id(Some(func_name), ctx.clone()),
             class_type,
             kind: ClassPtrKind::Return,
             context: ctx,
         }
     }
 
+    pub fn make_return_id(func_name: Option<&str>, ctx: Context) -> String {
+        match func_name {
+            Some(name) => format!("{}{}::ret", ctx, name),
+            None => format!("{}ret", ctx),
+        }
+    }
+
     pub fn new_instance_field(base_id: &str, field_name: &str, class_type: String, ctx: Context) -> Self {
         Self {
-            id: format!("{}.{}", base_id, field_name),
+            id: Self::make_instance_field_id(base_id, field_name, ctx.clone()),
             class_type,
             kind: ClassPtrKind::InstanceField {
                 base: base_id.to_string(),
@@ -174,6 +199,10 @@ impl ClassPtr {
             },
             context: ctx,
         }
+    }
+
+    pub fn make_instance_field_id(base_id: &str, field_name: &str, ctx: Context) -> String {
+        format!("{}{}.{}", ctx, base_id, field_name)
     }
 
     pub fn new_static_field(class_name: &str, field_name: &str, class_type: String, ctx: Context) -> Self {
@@ -186,6 +215,10 @@ impl ClassPtr {
             },
             context: ctx,
         }
+    }
+
+    pub fn make_static_field_id(class_name: &str, field_name: &str, ctx: Context) -> String {
+        format!("{}{}::{}", ctx, class_name, field_name)
     }
 
     pub fn new_temp(id: String, class_type: String, ctx: Context) -> Self {

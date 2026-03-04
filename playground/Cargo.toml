@@ -54,3 +54,7 @@ path = "expanded/simple_method_call_expanded.rs"
 [[bin]]
 name = "simple_cast_expanded"
 path = "expanded/simple_cast_expanded.rs"
+
+[[bin]]
+name = "cs_test_example_expanded"
+path = "expanded/cs_test_example_expanded.rs"

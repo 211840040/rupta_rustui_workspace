@@ -617,6 +617,7 @@ fn handle_class_constructor<'tcx>(
     // ===== rcpta ClassPAG Alloc (source-level only). Author: Yan Wang, Date: 2026-02-02 =====
     // Only create ClassObj when the *caller* is source-level (user code), not inside core/std/alloc/classes
     // or class ctor/DSL internal. Use is_source_level_context so we don't create ptrs/objs in DSL runtime.
+    // Modify for CS
     if class_analysis::is_source_level_context(&func_name_raw) {
         use crate::rcpta::{AllocSite, ClassPtr, Context};
         // Create a DSL context for class analysis (if needed)
@@ -626,9 +627,12 @@ fn handle_class_constructor<'tcx>(
             fpb.acx
                 .class_pag
                 .create_obj_with_context(class_name.clone(), alloc_site, context.clone());
-        let cptr = ClassPtr::new_local(ptr_id.clone(), class_name.clone(), context.clone());
+        let class_ptr_id =
+            class_analysis::path_to_cs_class_ptr_id(&destination, context.clone(), Some(&func_name), None);
+        let cptr = ClassPtr::new_local(class_ptr_id.clone(), class_name.clone(), context);
         fpb.acx.class_pag.get_or_create_ptr(cptr);
-        fpb.acx.class_pag.add_alloc(&ptr_id, &obj_id_rcpta);
+        debug!("Add class alloc edge: {} -> {}", class_ptr_id, obj_id_rcpta);
+        fpb.acx.class_pag.add_alloc(&class_ptr_id, &obj_id_rcpta);
     }
     // ============================================
 
@@ -725,17 +729,40 @@ pub fn handle_class_cast_call<'tcx>(
         .propagate_points_to(&receiver_ptr_id, &dest_ptr_id);
 
     // rcpta: ClassPAG — cast source = canonical(receiver).
+    // Modity for CS: only create ClassPtr and cast edge when in source-level context
     if class_analysis::is_source_level_context(&func_name) {
         use crate::rcpta::{ClassPtr, Context};
         debug!("Handling class cast: {} is source-level", func_name);
         let context: Context = class_analysis::make_dsl_context(fpb.acx);
-        let canonical_receiver = fpb.acx.get_canonical_rcpta_ptr(&receiver_ptr_id);
+
+        let cs_receiver_ptr_id =
+            class_analysis::path_to_cs_class_ptr_id(receiver_path, context.clone(), Some(&func_name), None);
+        let canonical_receiver = fpb.acx.get_canonical_rcpta_ptr(&cs_receiver_ptr_id);
+        let cs_dest_ptr_id = if is_option_return {
+            let option_some_inner = Path::new_qualified(
+                destination.clone(),
+                vec![PathSelector::Downcast(1), PathSelector::Field(0)],
+            );
+            let ptr_id = class_analysis::path_to_cs_class_ptr_id(
+                &option_some_inner,
+                context.clone(),
+                Some(&func_name),
+                None,
+            );
+            ptr_id
+        } else {
+            class_analysis::path_to_cs_class_ptr_id(destination, context.clone(), Some(&func_name), None)
+        };
+
         let receiver_cptr = ClassPtr::new_local(canonical_receiver.clone(), receiver_class, context.clone());
-        let dest_cptr = ClassPtr::new_local(dest_ptr_id.clone(), dest_class, context.clone());
-        debug!("Add class cast edge: {} -> {}", receiver_ptr_id, dest_ptr_id);
+        let dest_cptr = ClassPtr::new_local(cs_dest_ptr_id.clone(), dest_class, context.clone());
+        debug!(
+            "Add class cast edge: {} -> {}",
+            canonical_receiver, cs_dest_ptr_id
+        );
         fpb.acx.class_pag.get_or_create_ptr(receiver_cptr);
         fpb.acx.class_pag.get_or_create_ptr(dest_cptr);
-        fpb.acx.class_pag.add_cast(&canonical_receiver, &dest_ptr_id);
+        fpb.acx.class_pag.add_cast(&canonical_receiver, &cs_dest_ptr_id);
     }
 
     debug!(

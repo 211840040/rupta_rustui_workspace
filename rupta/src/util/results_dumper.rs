@@ -29,11 +29,11 @@ use crate::mir::path::{Path, PathEnum};
 use crate::pta::strategies::context_strategy::ContextStrategy;
 use crate::pta::DiffPTDataTy;
 use crate::pts_set::points_to::PointsToSet;
-use crate::rcpta::{solve_class_pts, ClassPAG, ClassPTSResult};
+use crate::rcpta::{solve_class_pts, ClassCallGraph, ClassPAG, ClassPTSResult};
 use crate::util;
 use crate::util::class;
 use crate::util::class::analysis;
-use crate::util::class::{ClassCallGraph, ClassPtrSystem, ClassTypeSystem};
+use crate::util::class::{ClassPtrSystem, ClassTypeSystem};
 
 pub fn dump_results<P: PAGPath, F, S>(
     acx: &AnalysisContext,
@@ -1097,12 +1097,22 @@ fn is_wrapper_to_same_method_edge(caller_scope: &str, callee_scope: Option<&str>
 /// - Collapses _classes::_Entity -> Entity, {impl#0} -> removed, ::data:: -> ::
 fn short_class_pag_name(id: &str) -> String {
     let mut s = id.to_string();
+    let mut ctx = "".to_string();
+    // Split context
+    if let Some(i) = s.rfind("]") {
+        ctx = s[..i + 1].to_string();
+        s = s[i + 1..].to_string();
+    }
+    // debug!(
+    //     "Shortening ClassPAG name: original id: {}, after splitting context: {}, ctx: {}",
+    //     id, s, ctx
+    // );
     // Strip crate prefix: "crate::rest" -> "rest"
     if let Some(i) = s.find("::") {
         s = s[i + 2..].to_string();
     }
     // _classes::_ClassName -> ClassName
-    s = s.replace("::_classes::_", "");
+    s = s.replace("_classes::_", "");
     while let Some(off) = s.find("::_") {
         let rest = &s[off + 3..];
         if rest.starts_with(|c: char| c.is_ascii_uppercase()) {
@@ -1123,7 +1133,7 @@ fn short_class_pag_name(id: &str) -> String {
         break;
     }
     s = s.replace("::data::", "::");
-    s
+    format!("{}  {}", ctx, s)
 }
 
 /// Dumps rcpta ClassPAG (class-level pointer flow graph): ptrs, objs, assign/alloc/load/store/call edges.
@@ -1167,7 +1177,7 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
             if let Some(ptr) = class_pag.get_ptr(id) {
                 let short = short_class_pag_name(&ptr.id);
                 writer
-                    .write_all(format!("  {}  {}  [{}]\n", ptr.context, short, ptr.class_type).as_bytes())
+                    .write_all(format!("  {}  [{}]\n", short, ptr.class_type).as_bytes())
                     .expect("Unable to write pointer");
             } else if solver_result.is_some() {
                 // obj.field pointer (materialized during PTS)

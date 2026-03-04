@@ -4,17 +4,15 @@
 // LICENSE file in the root directory of this source tree.
 
 //! Class analysis module
-//! 
+//!
 //! This module contains all utilities for analyzing DSL class syntax,
 //! including class identification, type system, call graph, and pointer system.
 
 pub mod analysis;
-pub mod call_graph;
 pub mod ptr_system;
 pub mod type_system;
 
 // Re-export commonly used items for convenience
 pub use analysis::*;
-pub use call_graph::ClassCallGraph;
 pub use ptr_system::ClassPtrSystem;
 pub use type_system::ClassTypeSystem;
