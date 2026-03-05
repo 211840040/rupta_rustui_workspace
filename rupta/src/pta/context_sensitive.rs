@@ -158,24 +158,6 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
         //         func_ref.to_string()
         //     );
         // }
-        // for call_arg_edge in class_fpag.call_arg_edges() {
-        //     debug!(
-        //         "Adding class call arg edge {:?} -> {:?} in function {:?} at callsite {} to PAG",
-        //         call_arg_edge.actual_ptr_id,
-        //         call_arg_edge.formal_ptr_id,
-        //         func_ref.to_string(),
-        //         call_arg_edge.call_site
-        //     )
-        // }
-        // for call_ret_edge in class_fpag.call_ret_edges() {
-        //     debug!(
-        //         "Adding class call ret edge {:?} -> {:?} in function {:?} at callsite {} to PAG",
-        //         call_ret_edge.formal_ret_ptr_id,
-        //         call_ret_edge.actual_ret_ptr_id,
-        //         func_ref.to_string(),
-        //         call_ret_edge.call_site
-        //     )
-        // }
 
         let ctx = self
             .ctx_strategy
@@ -234,6 +216,61 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
                 func_ref.to_string(),
             );
             self.acx.class_pag.add_cast(cs_src_cptr_id, cs_dst_cptr_id);
+        }
+
+        for call_arg_edge in class_fpag.call_arg_edges() {
+            let fml_cptr = class_fpag.get_ptr(&call_arg_edge.formal_ptr_id).unwrap();
+            let act_cptr = class_fpag.get_ptr(&call_arg_edge.actual_ptr_id).unwrap();
+
+            let ctx_t = crate::rcpta::Context::new_k_limited_context(
+                &ctx,
+                call_arg_edge.call_site.clone(),
+                self.acx.analysis_options.context_depth as usize,
+            );
+
+            let cs_fml_cptr = fml_cptr.clone().with_context(ctx_t);
+            let cs_act_cptr = act_cptr.clone().with_context(ctx.clone());
+            let cs_fml_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_fml_cptr);
+            let cs_act_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_act_cptr);
+            debug!(
+                "Adding class call arg edge to pag {} -> {} in function {:?} at callsite {} ",
+                cs_act_cptr_id,
+                cs_fml_cptr_id,
+                func_ref.to_string(),
+                call_arg_edge.call_site
+            );
+            self.acx.class_pag.add_call_arg(
+                call_arg_edge.call_site.clone(),
+                call_arg_edge.arg_idx,
+                cs_act_cptr_id,
+                cs_fml_cptr_id,
+            );
+        }
+
+        for call_ret_edge in class_fpag.call_ret_edges() {
+            let fml_cptr = class_fpag.get_ptr(&call_ret_edge.formal_ret_ptr_id).unwrap();
+            let act_cptr = class_fpag.get_ptr(&call_ret_edge.actual_ret_ptr_id).unwrap();
+
+            let ctx_t = crate::rcpta::Context::new_k_limited_context(
+                &ctx,
+                call_ret_edge.call_site.clone(),
+                self.acx.analysis_options.context_depth as usize,
+            );
+
+            let cs_fml_cptr = fml_cptr.clone().with_context(ctx_t);
+            let cs_act_cptr = act_cptr.clone().with_context(ctx.clone());
+            let cs_fml_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_fml_cptr);
+            let cs_act_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_act_cptr);
+            debug!(
+                "Adding class call ret edge to pag {} -> {} in function {:?} at callsite {} ",
+                cs_fml_cptr_id,
+                cs_act_cptr_id,
+                func_ref.to_string(),
+                call_ret_edge.call_site
+            );
+            self.acx
+                .class_pag
+                .add_call_ret(call_ret_edge.call_site.clone(), cs_fml_cptr_id, cs_act_cptr_id);
         }
 
         let edges_iter = fpag.internal_edges_iter();
