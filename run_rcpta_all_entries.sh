@@ -20,6 +20,8 @@ set -o pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULTS_BASE="$SCRIPT_DIR/analysis_results/rcpta"
 
+export LD_LIBRARY_PATH=$(rustc --print sysroot)/lib:$LD_LIBRARY_PATH
+
 # Optional: only run this suite (e.g. vehicle_hierarchy)
 SUITE_FILTER=""
 ANALYZE_ONLY=""
