@@ -8,7 +8,10 @@
 //! This module provides utilities to identify and analyze class-related operations
 //! in programs that use the classes DSL macro.
 
-use crate::mir::function::FunctionReference;
+use crate::{
+    mir::{call_site::BaseCallSite, function::FunctionReference},
+    rcpta::class_ptr::DSLCallSite,
+};
 use log::*;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::{Ty, TyCtxt, TyKind};
@@ -782,6 +785,15 @@ pub fn extract_dsl_class_from_wrapper<'tcx>(
     }
 
     None
+}
+
+pub fn to_dsl_call_site(
+    callsite: BaseCallSite,
+    acx: &crate::mir::analysis_context::AnalysisContext,
+) -> DSLCallSite {
+    let func_ref = acx.get_function_reference(callsite.func);
+    let func_name = canonical_class_method_name(func_ref.to_string().as_str());
+    DSLCallSite::new(func_name, callsite.location)
 }
 
 #[cfg(test)]

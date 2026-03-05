@@ -151,30 +151,89 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
         let class_fpag = &fpag.class_fpag;
         let func_ref = self.acx.get_function_reference(func.func_id);
 
-        for ptr_id in class_fpag.ptr_ids() {
+        // for ptr_id in class_fpag.ptr_ids() {
+        //     debug!(
+        //         "Adding class pointer {:?} in function {:?} to PAG",
+        //         ptr_id,
+        //         func_ref.to_string()
+        //     );
+        // }
+        // for call_arg_edge in class_fpag.call_arg_edges() {
+        //     debug!(
+        //         "Adding class call arg edge {:?} -> {:?} in function {:?} at callsite {} to PAG",
+        //         call_arg_edge.actual_ptr_id,
+        //         call_arg_edge.formal_ptr_id,
+        //         func_ref.to_string(),
+        //         call_arg_edge.call_site
+        //     )
+        // }
+        // for call_ret_edge in class_fpag.call_ret_edges() {
+        //     debug!(
+        //         "Adding class call ret edge {:?} -> {:?} in function {:?} at callsite {} to PAG",
+        //         call_ret_edge.formal_ret_ptr_id,
+        //         call_ret_edge.actual_ret_ptr_id,
+        //         func_ref.to_string(),
+        //         call_ret_edge.call_site
+        //     )
+        // }
+
+        let ctx = self
+            .ctx_strategy
+            .get_dsl_ctx(&self.get_context_by_id(func.cid), self.acx);
+        debug!(
+            "Context for function {} is {}",
+            func_ref.to_string(),
+            ctx.to_string()
+        );
+
+        for (cptr_id, cobj_id) in class_fpag.iter_alloc_edges() {
+            let cptr = class_fpag.get_ptr(&cptr_id).unwrap();
+            let cobj = class_fpag.get_obj(&cobj_id).unwrap();
+            let cs_cptr = cptr.clone().with_context(ctx.clone());
+            let cs_cobj = cobj.clone().with_context(ctx.clone());
+            let cs_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_cptr);
+            let cs_cobj_id = self.acx.class_pag.get_or_create_obj(cs_cobj);
             debug!(
-                "Adding class pointer {:?} in function {:?} to PAG",
-                ptr_id,
-                func_ref.to_string()
+                "Adding class alloc edge to pag {} -> {} in function {} ",
+                cs_cptr_id,
+                cs_cobj_id,
+                func_ref.to_string(),
             );
+            self.acx.class_pag.add_alloc(cs_cptr_id, cs_cobj_id);
         }
-        for call_arg_edge in class_fpag.call_arg_edges() {
+
+        for (src_cptr_id, dst_cptr_id) in class_fpag.iter_assign_edges() {
+            let src_cptr = class_fpag.get_ptr(&src_cptr_id).unwrap();
+            let dst_cptr = class_fpag.get_ptr(&dst_cptr_id).unwrap();
+
+            let cs_src_cptr = src_cptr.clone().with_context(ctx.clone());
+            let cs_dst_cptr = dst_cptr.clone().with_context(ctx.clone());
+            let cs_src_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_src_cptr);
+            let cs_dst_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_dst_cptr);
             debug!(
-                "Adding class call arg edge {:?} -> {:?} in function {:?} at callsite {} to PAG",
-                call_arg_edge.actual_ptr_id,
-                call_arg_edge.formal_ptr_id,
+                "Adding class assign edge to pag {} -> {} in function {} ",
+                cs_src_cptr_id,
+                cs_dst_cptr_id,
                 func_ref.to_string(),
-                call_arg_edge.call_site
-            )
+            );
+            self.acx.class_pag.add_assign(cs_src_cptr_id, cs_dst_cptr_id);
         }
-        for call_ret_edge in class_fpag.call_ret_edges() {
+
+        for (src_cptr_id, dst_cptr_id) in class_fpag.iter_cast_edges() {
+            let src_cptr = class_fpag.get_ptr(&src_cptr_id).unwrap();
+            let dst_cptr = class_fpag.get_ptr(&dst_cptr_id).unwrap();
+
+            let cs_src_cptr = src_cptr.clone().with_context(ctx.clone());
+            let cs_dst_cptr = dst_cptr.clone().with_context(ctx.clone());
+            let cs_src_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_src_cptr);
+            let cs_dst_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_dst_cptr);
             debug!(
-                "Adding class call ret edge {:?} -> {:?} in function {:?} at callsite {} to PAG",
-                call_ret_edge.formal_ret_ptr_id,
-                call_ret_edge.actual_ret_ptr_id,
+                "Adding class cast edge to pag {} -> {} in function {} ",
+                cs_src_cptr_id,
+                cs_dst_cptr_id,
                 func_ref.to_string(),
-                call_ret_edge.call_site
-            )
+            );
+            self.acx.class_pag.add_cast(cs_src_cptr_id, cs_dst_cptr_id);
         }
 
         let edges_iter = fpag.internal_edges_iter();

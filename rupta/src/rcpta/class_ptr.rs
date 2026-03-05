@@ -10,7 +10,7 @@
 //! A ClassPtr represents one of: local variable, parameter, return value,
 //! instance field, or static field — each holding a reference to a class instance.
 
-use std::{fmt, rc::Rc};
+use std::fmt;
 
 use rustc_middle::mir::Location;
 
@@ -51,14 +51,14 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new_empty() -> Rc<Self> {
-        Rc::new(Context {
+    pub fn new_empty() -> Self {
+        Context {
             context_elems: Vec::new(),
-        })
+        }
     }
 
-    pub fn new(context_elems: Vec<DSLCallSite>) -> Rc<Self> {
-        Rc::new(Context { context_elems })
+    pub fn new(context_elems: Vec<DSLCallSite>) -> Self {
+        Context { context_elems }
     }
 
     #[inline]
@@ -73,7 +73,7 @@ impl Context {
 
     /// Composes a new context from a given context and a new context element.
     /// Discard the last old context element if the length of context exceeds the depth limit.
-    pub fn new_k_limited_context(old_ctx: &Rc<Context>, elem: DSLCallSite, k: usize) -> Rc<Self> {
+    pub fn new_k_limited_context(old_ctx: &Context, elem: DSLCallSite, k: usize) -> Self {
         let mut elems = Vec::with_capacity(k);
         if k > 0 {
             elems.push(elem);
@@ -83,32 +83,28 @@ impl Context {
                 elems.extend_from_slice(&old_ctx.context_elems[..k - 1])
             }
         }
-        Rc::new(Context { context_elems: elems })
+        Context { context_elems: elems }
+    }
+
+    pub fn to_string(&self) -> String {
+        format!(
+            "[{}]",
+            self.context_elems
+                .iter()
+                .rev()
+                .map(|elem| elem.to_string())
+                .collect::<Vec<_>>()
+                .join("->")
+        )
     }
 }
 
 impl fmt::Display for Context {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if !self.empty() {
-            write!(
-                f,
-                "[{}]",
-                self.context_elems
-                    .iter()
-                    .rev()
-                    .map(|elem| {
-                        format!(
-                            "{}:bb{}[{}]",
-                            elem.func,
-                            elem.location.block.index(),
-                            elem.location.statement_index
-                        )
-                    })
-                    .collect::<Vec<_>>()
-                    .join("->")
-            )
-        } else {
+        if self.empty() {
             write!(f, "")
+        } else {
+            write!(f, "{}", self.to_string())
         }
     }
 }

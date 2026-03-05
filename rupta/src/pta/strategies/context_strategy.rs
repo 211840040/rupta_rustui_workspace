@@ -3,19 +3,20 @@
 // This source code is licensed under the GNU license found in the
 // LICENSE file in the root directory of this source tree.
 
-//! Context strategies for context-sensitive pointer analyses, 
+//! Context strategies for context-sensitive pointer analyses,
 //! such as k-callsite-sensitive, k-object-sensitive, ...
-//! 
+//!
 //! Only k-callsite-sensitive pointer analyses have been thoroughly evaluated so far.
 
 use std::rc::Rc;
 
+use super::stack_filtering::{SFReachable, StackFilter};
 use crate::mir::call_site::{BaseCallSite, CSCallSite};
 use crate::mir::context::{Context, ContextCache, ContextElement, ContextId, HybridCtxElem};
 use crate::mir::function::FuncId;
 use crate::mir::path::{CSPath, Path};
 use crate::rustc_index::Idx;
-use super::stack_filtering::{StackFilter, SFReachable};
+use crate::util::class::analysis;
 
 pub trait ContextStrategy {
     type E: ContextElement;
@@ -23,16 +24,25 @@ pub trait ContextStrategy {
     fn get_empty_context_id(&mut self) -> ContextId;
     fn get_context_id(&mut self, context: &Rc<Context<Self::E>>) -> ContextId;
     fn get_context_by_id(&self, context_id: ContextId) -> Rc<Context<Self::E>>;
-    fn new_instance_call_context(&mut self, callsite: &Rc<CSCallSite>, receiver: Option<&Rc<CSPath>>) -> Option<ContextId>;
+    fn new_instance_call_context(
+        &mut self,
+        callsite: &Rc<CSCallSite>,
+        receiver: Option<&Rc<CSPath>>,
+    ) -> Option<ContextId>;
     fn new_static_call_context(&mut self, callsite: &Rc<CSCallSite>) -> ContextId;
-    fn with_stack_filter<F: SFReachable>(&mut self, _stack_filter: &mut StackFilter<F>) 
-    where 
-        F: Copy + Into<FuncId> + std::cmp::Eq + std::hash::Hash, 
-    {}
+    fn with_stack_filter<F: SFReachable>(&mut self, _stack_filter: &mut StackFilter<F>)
+    where
+        F: Copy + Into<FuncId> + std::cmp::Eq + std::hash::Hash,
+    {
+    }
+    fn get_dsl_ctx(
+        &mut self,
+        context: &Rc<Context<Self::E>>,
+        acx: &crate::mir::analysis_context::AnalysisContext,
+    ) -> crate::rcpta::Context;
 }
 
 pub struct ContextInsensitive {}
-
 
 impl ContextStrategy for ContextInsensitive {
     type E = BaseCallSite;
@@ -44,21 +54,33 @@ impl ContextStrategy for ContextInsensitive {
     fn get_empty_context_id(&mut self) -> ContextId {
         ContextId::new(0)
     }
-    
+
     fn get_context_id(&mut self, _context: &Rc<Context<BaseCallSite>>) -> ContextId {
         ContextId::new(0)
-    } 
+    }
 
     fn get_context_by_id(&self, _context_id: ContextId) -> Rc<Context<BaseCallSite>> {
         self.empty_context()
-    }  
+    }
 
-    fn new_instance_call_context(&mut self, _callsite: &Rc<CSCallSite>, _receiver: Option<&Rc<CSPath>>) -> Option<ContextId> {
+    fn new_instance_call_context(
+        &mut self,
+        _callsite: &Rc<CSCallSite>,
+        _receiver: Option<&Rc<CSPath>>,
+    ) -> Option<ContextId> {
         Some(ContextId::new(0))
     }
 
     fn new_static_call_context(&mut self, _callsite: &Rc<CSCallSite>) -> ContextId {
         ContextId::new(0)
+    }
+
+    fn get_dsl_ctx(
+        &mut self,
+        _context: &Rc<Context<Self::E>>,
+        _acx: &crate::mir::analysis_context::AnalysisContext,
+    ) -> crate::rcpta::Context {
+        crate::rcpta::Context::new_empty()
     }
 }
 
@@ -71,7 +93,7 @@ pub struct KCallSiteSensitive {
 impl KCallSiteSensitive {
     pub fn new(k: usize) -> Self {
         Self {
-            k, 
+            k,
             ctx_cache: ContextCache::new(),
         }
     }
@@ -79,11 +101,7 @@ impl KCallSiteSensitive {
     pub fn new_context(&mut self, callsite: &Rc<CSCallSite>) -> ContextId {
         let caller_ctx_id = callsite.func.cid;
         let caller_ctx = self.ctx_cache.get_context(caller_ctx_id).unwrap();
-        let callee_ctx = Context::new_k_limited_context(
-            &caller_ctx,
-            callsite.into(),
-            self.k,
-        );
+        let callee_ctx = Context::new_k_limited_context(&caller_ctx, callsite.into(), self.k);
         let callee_ctx_id = self.ctx_cache.get_context_id(&callee_ctx);
         callee_ctx_id
     }
@@ -95,20 +113,26 @@ impl ContextStrategy for KCallSiteSensitive {
     fn empty_context(&self) -> Rc<Context<BaseCallSite>> {
         Context::new_empty()
     }
-    
+
     fn get_context_id(&mut self, context: &Rc<Context<BaseCallSite>>) -> ContextId {
         self.ctx_cache.get_context_id(context)
-    } 
+    }
 
     fn get_context_by_id(&self, context_id: ContextId) -> Rc<Context<BaseCallSite>> {
-        self.ctx_cache.get_context(context_id).unwrap_or(Context::new_empty())
-    }  
+        self.ctx_cache
+            .get_context(context_id)
+            .unwrap_or(Context::new_empty())
+    }
 
     fn get_empty_context_id(&mut self) -> ContextId {
         self.get_context_id(&Context::new_empty())
     }
 
-    fn new_instance_call_context(&mut self, callsite: &Rc<CSCallSite>, _receiver: Option<&Rc<CSPath>>) -> Option<ContextId> {
+    fn new_instance_call_context(
+        &mut self,
+        callsite: &Rc<CSCallSite>,
+        _receiver: Option<&Rc<CSPath>>,
+    ) -> Option<ContextId> {
         Some(self.new_context(callsite))
     }
 
@@ -116,14 +140,26 @@ impl ContextStrategy for KCallSiteSensitive {
         self.new_context(callsite)
     }
 
-    fn with_stack_filter<F: SFReachable>(&mut self, stack_filter: &mut StackFilter<F>) 
-    where 
+    fn with_stack_filter<F: SFReachable>(&mut self, stack_filter: &mut StackFilter<F>)
+    where
         F: Copy + Into<FuncId> + std::cmp::Eq + std::hash::Hash,
     {
         stack_filter.with_kcs_context_strategy(self);
     }
-}
 
+    fn get_dsl_ctx(
+        &mut self,
+        context: &Rc<Context<Self::E>>,
+        acx: &crate::mir::analysis_context::AnalysisContext,
+    ) -> crate::rcpta::Context {
+        let dsl_ctx_elems = context
+            .context_elems
+            .iter()
+            .map(|callsite| analysis::to_dsl_call_site(*callsite, acx))
+            .collect();
+        crate::rcpta::Context::new(dsl_ctx_elems)
+    }
+}
 
 pub struct KObjectSensitive {
     /// Context length limit for methods
@@ -134,7 +170,7 @@ pub struct KObjectSensitive {
 impl KObjectSensitive {
     pub fn new(k: usize) -> Self {
         Self {
-            k, 
+            k,
             ctx_cache: ContextCache::new(),
         }
     }
@@ -142,11 +178,7 @@ impl KObjectSensitive {
     pub fn new_context(&mut self, receiver: Rc<CSPath>) -> ContextId {
         let receiver_ctx_id = receiver.cid;
         let receiver_ctx = self.ctx_cache.get_context(receiver_ctx_id).unwrap();
-        let callee_ctx = Context::new_k_limited_context(
-            &receiver_ctx,
-            receiver.path.clone(),
-            self.k,
-        );
+        let callee_ctx = Context::new_k_limited_context(&receiver_ctx, receiver.path.clone(), self.k);
         let callee_ctx_id = self.ctx_cache.get_context_id(&callee_ctx);
         callee_ctx_id
     }
@@ -158,20 +190,26 @@ impl ContextStrategy for KObjectSensitive {
     fn empty_context(&self) -> Rc<Context<Rc<Path>>> {
         Context::new_empty()
     }
-    
+
     fn get_context_id(&mut self, context: &Rc<Context<Rc<Path>>>) -> ContextId {
         self.ctx_cache.get_context_id(context)
-    } 
+    }
 
     fn get_context_by_id(&self, context_id: ContextId) -> Rc<Context<Rc<Path>>> {
-        self.ctx_cache.get_context(context_id).unwrap_or(Context::new_empty())
-    }  
+        self.ctx_cache
+            .get_context(context_id)
+            .unwrap_or(Context::new_empty())
+    }
 
     fn get_empty_context_id(&mut self) -> ContextId {
         self.get_context_id(&Context::new_empty())
     }
 
-    fn new_instance_call_context(&mut self, _callsite: &Rc<CSCallSite>, receiver: Option<&Rc<CSPath>>) -> Option<ContextId> {
+    fn new_instance_call_context(
+        &mut self,
+        _callsite: &Rc<CSCallSite>,
+        receiver: Option<&Rc<CSPath>>,
+    ) -> Option<ContextId> {
         if let Some(cs_path) = receiver {
             Some(self.new_context(cs_path.clone()))
         } else {
@@ -183,10 +221,18 @@ impl ContextStrategy for KObjectSensitive {
         // use the same context as the caller function
         callsite.func.cid
     }
+
+    fn get_dsl_ctx(
+        &mut self,
+        _context: &Rc<Context<Self::E>>,
+        _acx: &crate::mir::analysis_context::AnalysisContext,
+    ) -> crate::rcpta::Context {
+        // TODO: convert object-sensitive context to DSL context
+        crate::rcpta::Context::new_empty()
+    }
 }
 
-
-// A simple hybrid context sensitive approach, which analyzes instance-invoked methods in a object-sensitive way 
+// A simple hybrid context sensitive approach, which analyzes instance-invoked methods in a object-sensitive way
 // and statically invoked functions in a callsite-sensitive way
 pub struct SimpleHybridContextSensitive {
     /// Context length limit for methods
@@ -197,7 +243,7 @@ pub struct SimpleHybridContextSensitive {
 impl SimpleHybridContextSensitive {
     pub fn new(k: usize) -> Self {
         Self {
-            k, 
+            k,
             ctx_cache: ContextCache::new(),
         }
     }
@@ -217,11 +263,8 @@ impl SimpleHybridContextSensitive {
     pub fn new_static_call_context(&mut self, callsite: &Rc<CSCallSite>) -> ContextId {
         let caller_ctx_id = callsite.func.cid;
         let caller_ctx = self.ctx_cache.get_context(caller_ctx_id).unwrap();
-        let callee_ctx = Context::new_k_limited_context(
-            &caller_ctx,
-            HybridCtxElem::CallSite(callsite.into()),
-            self.k,
-        );
+        let callee_ctx =
+            Context::new_k_limited_context(&caller_ctx, HybridCtxElem::CallSite(callsite.into()), self.k);
         let callee_ctx_id = self.ctx_cache.get_context_id(&callee_ctx);
         callee_ctx_id
     }
@@ -233,20 +276,26 @@ impl ContextStrategy for SimpleHybridContextSensitive {
     fn empty_context(&self) -> Rc<Context<HybridCtxElem>> {
         Context::new_empty()
     }
-    
+
     fn get_context_id(&mut self, context: &Rc<Context<HybridCtxElem>>) -> ContextId {
         self.ctx_cache.get_context_id(context)
-    } 
+    }
 
     fn get_context_by_id(&self, context_id: ContextId) -> Rc<Context<HybridCtxElem>> {
-        self.ctx_cache.get_context(context_id).unwrap_or(Context::new_empty())
-    }  
+        self.ctx_cache
+            .get_context(context_id)
+            .unwrap_or(Context::new_empty())
+    }
 
     fn get_empty_context_id(&mut self) -> ContextId {
         self.get_context_id(&Context::new_empty())
     }
 
-    fn new_instance_call_context(&mut self, _callsite: &Rc<CSCallSite>, receiver: Option<&Rc<CSPath>>) -> Option<ContextId> {
+    fn new_instance_call_context(
+        &mut self,
+        _callsite: &Rc<CSCallSite>,
+        receiver: Option<&Rc<CSPath>>,
+    ) -> Option<ContextId> {
         if let Some(cs_path) = receiver {
             Some(self.new_instance_call_context(cs_path.clone()))
         } else {
@@ -257,5 +306,14 @@ impl ContextStrategy for SimpleHybridContextSensitive {
     fn new_static_call_context(&mut self, callsite: &Rc<CSCallSite>) -> ContextId {
         // use the same context as the caller function
         self.new_static_call_context(callsite)
+    }
+
+    fn get_dsl_ctx(
+        &mut self,
+        _context: &Rc<Context<Self::E>>,
+        _acx: &crate::mir::analysis_context::AnalysisContext,
+    ) -> crate::rcpta::Context {
+        // TODO: convert hybrid context to DSL context
+        crate::rcpta::Context::new_empty()
     }
 }
