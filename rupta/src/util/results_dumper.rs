@@ -994,39 +994,49 @@ pub fn dump_class_ptr_system(class_ptr_system: &ClassPtrSystem, output_path: &st
 
 /// Normalizes a function path to a key for grouping: strip leading crate segment so that
 /// `rcpta_full_hierarchy::entry_complex_call_chain_demo` and `entry_complex_call_chain_demo` become the same key.
-fn normalize_func_key(name: &str) -> String {
-    if let Some(i) = name.find("::") {
-        name[i + 2..].to_string()
-    } else {
-        name.to_string()
-    }
-}
+// fn normalize_func_key(name: &str) -> String {
+//     if let Some(i) = name.find("::") {
+//         name[i + 2..].to_string()
+//     } else {
+//         name.to_string()
+//     }
+// }
 
 /// Extracts the function scope from a pointer id (e.g. `main::local_1` -> `main`, `Holder::get_and_wrap::param_1` -> `Holder::get_and_wrap`).
 /// Used to group edges by the function body they belong to.
 /// Result is normalized (leading crate stripped) so it matches caller_from_call_site and all edges for one function land in one section.
-fn func_scope_from_ptr_id(ptr_id: &str) -> String {
-    let base = ptr_id.split('.').next().unwrap_or(ptr_id);
-    let scope = if let Some(i) = base.rfind("::param_") {
-        base[..i].to_string()
-    } else if let Some(i) = base.rfind("::ret") {
-        let after = base.get(i + 5..).unwrap_or("");
-        if after.is_empty()
-            || !after
-                .chars()
-                .next()
-                .map_or(false, |c| c.is_ascii_alphanumeric() || c == '_')
-        {
-            base[..i].to_string()
-        } else {
-            base.to_string()
-        }
-    } else if let Some(i) = base.rfind("::local_") {
-        base[..i].to_string()
-    } else {
-        base.to_string()
-    };
-    normalize_func_key(&scope)
+// fn func_scope_from_ptr_id(mut ptr_id: &str) -> String {
+//     if let Some(i) = ptr_id.rfind("]") {
+//         ptr_id = &ptr_id[i + 1..];
+//     }
+//     let base = ptr_id.split('.').next().unwrap_or(ptr_id);
+//     let scope = if let Some(i) = base.rfind("::param_") {
+//         base[..i].to_string()
+//     } else if let Some(i) = base.rfind("::ret") {
+//         let after = base.get(i + 5..).unwrap_or("");
+//         if after.is_empty()
+//             || !after
+//                 .chars()
+//                 .next()
+//                 .map_or(false, |c| c.is_ascii_alphanumeric() || c == '_')
+//         {
+//             base[..i].to_string()
+//         } else {
+//             base.to_string()
+//         }
+//     } else if let Some(i) = base.rfind("::local_") {
+//         base[..i].to_string()
+//     } else {
+//         base.to_string()
+//     };
+//     normalize_func_key(&scope)
+// }
+
+fn func_scope_from_ptr_id(ptr_id: &str, class_pag: &ClassPAG) -> String {
+    return class_pag
+        .get_ptr_func(ptr_id)
+        .unwrap_or(&"unknown".into())
+        .clone();
 }
 
 /// Strips "::{impl#N}::" and "::data::" from a function scope so trait method and impl wrapper
@@ -1049,13 +1059,21 @@ fn collapse_impl_and_data_in_scope(scope: &str) -> String {
 /// rcpta: Canonical section key so that one source-level class method gets one section (merge impl#0 / impl#1 / data::).
 /// If scope is a DSL class method (has _classes::_ and we can get class+method), returns "ClassName::method_name".
 /// Otherwise normalizes scope by collapsing {impl#N} and data:: so "Entity::{impl#1}::chain_with" and "Entity::chain_with" map to the same key.
-fn canonical_section_key_for_scope(scope: &str) -> String {
-    if let Some(class) = analysis::extract_class_name_from_func(scope) {
-        if let Some(method) = analysis::extract_method_name_from_func(scope) {
-            return format!("{}::{}", class.trim_start_matches('_'), method);
+fn canonical_section_key_for_scope(func_tag: &str) -> String {
+    // Split context
+    let (ctx, scope) = if let Some(i) = func_tag.rfind("]") {
+        let ctx_str = func_tag[..i + 1].to_string();
+        let scope_str = func_tag[i + 1..].to_string();
+        (ctx_str, scope_str)
+    } else {
+        ("".to_string(), func_tag.to_string())
+    };
+    if let Some(class) = analysis::extract_class_name_from_func(&scope) {
+        if let Some(method) = analysis::extract_method_name_from_func(&scope) {
+            return format!("{}{}::{}", ctx, class.trim_start_matches('_'), method);
         }
     }
-    collapse_impl_and_data_in_scope(scope)
+    return format!("{}{}", ctx, collapse_impl_and_data_in_scope(&scope));
 }
 
 /// Extracts the caller function from a call_site id.
@@ -1236,17 +1254,17 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
     };
 
     for (src, dst) in class_pag.iter_assign_edges() {
-        let scope = func_scope_from_ptr_id(&dst);
+        let scope = func_scope_from_ptr_id(&dst, class_pag);
         let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).0.push((src, dst));
     }
     for (src, dst) in class_pag.iter_cast_edges() {
-        let scope = func_scope_from_ptr_id(&dst);
+        let scope = func_scope_from_ptr_id(&dst, class_pag);
         let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).1.push((src, dst));
     }
     for (ptr_id, obj_id) in class_pag.iter_alloc_edges() {
-        let scope = func_scope_from_ptr_id(&ptr_id);
+        let scope = func_scope_from_ptr_id(&ptr_id, class_pag);
         let func = canonical_section_key_for_scope(&scope);
         by_func
             .entry(func)
@@ -1255,12 +1273,12 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
             .push((ptr_id, obj_id));
     }
     for e in class_pag.iter_load_edges() {
-        let scope = func_scope_from_ptr_id(&e.dst_ptr_id);
+        let scope = func_scope_from_ptr_id(&e.dst_ptr_id, class_pag);
         let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).3.push(e);
     }
     for e in class_pag.iter_store_edges() {
-        let scope = func_scope_from_ptr_id(&e.base_ptr_id);
+        let scope = func_scope_from_ptr_id(&e.base_ptr_id, class_pag);
         let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).4.push(e);
     }
@@ -1268,7 +1286,7 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
     // Do not hide real calls from method bodies (e.g. chain_with -> with_partner).
     let call_arg = class_pag.call_arg_edges();
     for e in call_arg.iter() {
-        let scope = &e.call_site.func;
+        let scope = func_scope_from_ptr_id(&e.actual_ptr_id, class_pag);
         let callee_scope = callee_scope_from_formal_ptr_id(&e.formal_ptr_id);
         if is_wrapper_to_same_method_edge(&scope, callee_scope.as_deref()) {
             continue;
@@ -1283,7 +1301,7 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
     }
     let call_ret = class_pag.call_ret_edges();
     for e in call_ret.iter() {
-        let scope = &e.call_site.func;
+        let scope = func_scope_from_ptr_id(&e.actual_ret_ptr_id, class_pag);
         let callee_scope = callee_scope_from_formal_ptr_id(&e.formal_ret_ptr_id);
         if is_wrapper_to_same_method_edge(&scope, callee_scope.as_deref()) {
             continue;
@@ -1298,7 +1316,7 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
 
     // rcpta: ensure every function that has any ptr in ClassPAG gets a section (even if no edges yet).
     for ptr_id in class_pag.ptr_ids() {
-        let scope = func_scope_from_ptr_id(ptr_id);
+        let scope = func_scope_from_ptr_id(ptr_id, class_pag);
         let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges);
     }

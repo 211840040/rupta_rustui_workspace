@@ -92,6 +92,8 @@ pub struct ClassPAG {
     ptrs: HashMap<String, ClassPtr>,
     /// All class objects: obj_id → ClassObj
     objs: HashMap<String, ClassObj>,
+    /// pointers' func tag
+    ptrs_func: HashMap<String, String>,
 
     /// Assign: src_ptr_id → set of dst_ptr_id (copy/move)
     assign: HashMap<String, HashSet<String>>,
@@ -124,6 +126,7 @@ impl ClassPAG {
         Self {
             ptrs: HashMap::new(),
             objs: HashMap::new(),
+            ptrs_func: HashMap::new(),
             assign: HashMap::new(),
             cast: HashMap::new(),
             alloc: HashMap::new(),
@@ -207,6 +210,14 @@ impl ClassPAG {
     }
     pub fn num_objs(&self) -> usize {
         self.objs.len()
+    }
+
+    pub fn set_ptr_func(&mut self, ptr_id: impl Into<String>, func_tag: impl Into<String>) {
+        self.ptrs_func.insert(ptr_id.into(), func_tag.into());
+    }
+
+    pub fn get_ptr_func(&self, ptr_id: &str) -> Option<&String> {
+        self.ptrs_func.get(ptr_id)
     }
 
     // ---------- Assign ----------

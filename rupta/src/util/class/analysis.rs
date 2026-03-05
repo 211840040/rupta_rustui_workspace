@@ -13,6 +13,7 @@ use crate::{
     rcpta::class_ptr::DSLCallSite,
 };
 use log::*;
+use regex::Regex;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::{Ty, TyCtxt, TyKind};
 use std::rc::Rc;
@@ -794,6 +795,40 @@ pub fn to_dsl_call_site(
     let func_ref = acx.get_function_reference(callsite.func);
     let func_name = canonical_class_method_name(func_ref.to_string().as_str());
     DSLCallSite::new(func_name, callsite.location)
+}
+
+// e.g. cs_test_example::_classes::_Cross::{impl#0}::id
+// -> cs_test_example::_classes::_Cross::data::{impl#0}::id
+pub fn is_ctx_should_be_compressed(
+    callsite: &Rc<crate::mir::call_site::CSCallSite>,
+    callee: &crate::mir::function::FuncId,
+    acx: &crate::mir::analysis_context::AnalysisContext,
+) -> bool {
+    let caller_func_ref = acx.get_function_reference(callsite.func.func_id);
+    let callee_func_ref = acx.get_function_reference(*callee);
+    if !is_class_related(&caller_func_ref) || !is_class_related(&callee_func_ref) {
+        return false;
+    }
+    let caller_name = caller_func_ref.to_string();
+    let callee_name = callee_func_ref.to_string();
+    let re = Regex::new(r"impl#\d+").unwrap();
+    if re.replace_all(&callee_name.replace("::data::", "::"), "") == re.replace_all(&caller_name, "") {
+        if caller_name.ends_with("id") || callee_name.ends_with("id") {
+            debug!(
+                "is_ctx_should_be_compressed: caller={} callee={} -> should compress",
+                caller_name, callee_name
+            );
+        }
+        true
+    } else {
+        if caller_name.ends_with("id") || callee_name.ends_with("id") {
+            debug!(
+                "is_ctx_should_be_compressed: caller={} callee={} -> should NOT compress",
+                caller_name, callee_name
+            );
+        }
+        false
+    }
 }
 
 #[cfg(test)]
