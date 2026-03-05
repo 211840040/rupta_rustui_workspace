@@ -34,6 +34,7 @@ use crate::mir::function::{FuncId, FunctionReference};
 use crate::mir::known_names::KnownNames;
 use crate::mir::analysis_context::AnalysisContext;
 use crate::mir::path::{Path, PathEnum, PathSelector, PathSupport, ProjectionElems};
+use crate::rcpta::class_ptr::DSLCallSite;
 use crate::util::{self, type_util};
 use crate::util::class::analysis;
 
@@ -653,15 +654,15 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                     if let Some(inner_ty) = analysis::extract_dsl_class_from_wrapper(self.tcx(), rh_type, None) {
                         if let Some(class_name) = analysis::class_name_of_dsl_type(self.tcx(), inner_ty) {
                             use crate::rcpta::ClassPtr;
-                            self.acx.class_pag.get_or_create_ptr(ClassPtr::new_local(
+                            self.fpag.class_fpag.get_or_create_ptr(ClassPtr::new_local(
                                 src_ptr_id.clone(),
                                 class_name.clone(),
                             ));
-                            self.acx.class_pag.get_or_create_ptr(ClassPtr::new_local(
+                            self.fpag.class_fpag.get_or_create_ptr(ClassPtr::new_local(
                                 ret_ptr_id.clone(),
                                 class_name,
                             ));
-                            self.acx.class_pag.add_assign(&src_ptr_id, &ret_ptr_id);
+                            self.fpag.class_fpag.add_assign(&src_ptr_id, &ret_ptr_id);
                         }
                     }
                 }
@@ -1481,10 +1482,10 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                             let base_ptr_id = path_to_ptr_id(&base_path, Some(&func_name), param_slots);
                             let value_ptr_id = path_to_ptr_id(value_path, Some(&func_name), param_slots);
                             let field_class = self.acx.class_type_system.get_field_class_type(&class_name, &field_name).unwrap_or_else(|| class_name.clone());
-                            self.acx.class_pag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(base_ptr_id.clone(), class_name.clone()));
-                            self.acx.class_pag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(value_ptr_id.clone(), field_class.clone()));
+                            self.fpag.class_fpag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(base_ptr_id.clone(), class_name.clone()));
+                            self.fpag.class_fpag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(value_ptr_id.clone(), field_class.clone()));
                             // Store recorded as constraint (base, field, src); obj-level store edges materialized during PTS solve
-                            self.acx.class_pag.add_store(&base_ptr_id, &field_name, &value_ptr_id);
+                            self.fpag.class_fpag.add_store(&base_ptr_id, &field_name, &value_ptr_id);
                             info!(
                                 "rcpta ClassPAG: add_store (cell_option_set) func={} base={} field={}",
                                 func_name, base_ptr_id, field_name
@@ -1522,10 +1523,10 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                             let base_ptr_id = path_to_class_ptr_id(&base_path, Some(&func_name), param_slots);
                             let dst_ptr_id = path_to_class_ptr_id(&destination, Some(&func_name), param_slots);
                             let dst_class = self.acx.class_type_system.get_field_class_type(&class_name, &field_name).unwrap_or_else(|| class_name.clone());
-                            self.acx.class_pag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(base_ptr_id.clone(), class_name.clone()));
-                            self.acx.class_pag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(dst_ptr_id.clone(), dst_class.clone()));
+                            self.fpag.class_fpag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(base_ptr_id.clone(), class_name.clone()));
+                            self.fpag.class_fpag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(dst_ptr_id.clone(), dst_class.clone()));
                             // Load recorded as constraint (base, field, dst); obj-level load edges materialized during PTS solve
-                            self.acx.class_pag.add_load(&base_ptr_id, &field_name, &dst_ptr_id);
+                            self.fpag.class_fpag.add_load(&base_ptr_id, &field_name, &dst_ptr_id);
                             info!(
                                 "rcpta ClassPAG: add_load (cell_option_get) func={} base={} field={}",
                                 func_name, base_ptr_id, field_name
@@ -1735,12 +1736,7 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                 // in data::get_id (self.get_entity_id()). Do not add CallArg/CallRet for this shim.
             } else if analysis::is_source_level_context(&caller_func_name) {
                 use crate::util::class::ptr_system::path_to_class_ptr_id;
-                let call_site_id: crate::rcpta::CallSiteId = format!(
-                    "{}:bb{}[{}]",
-                    caller_func_name,
-                    location.block.index(),
-                    location.statement_index
-                );
+                let call_site = DSLCallSite::new(caller_func_name.clone(), location);
                 // CallArg: actual → formal for each class-typed argument.
                 // rcpta: receiver ptr → this ptr (TAIE-style). For method calls like holder_1.get_and_wrap(),
                 // we must add an edge from the caller's receiver ptr to the callee's self (param_1; MIR ordinals are 1-based).
@@ -1784,8 +1780,8 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                     };
                     debug!("[rcpta] Adding CallArg for arg {}: actual_ptr={} formal_ptr={} class_ty={}, arg_ty={}", arg_idx, actual_canonical_ptr_id, formal_ptr_id, class_ty, arg_ty);
                     let formal_ptr = crate::rcpta::ClassPtr::new_local(formal_ptr_id.clone(), class_ty);
-                    self.acx.class_pag.get_or_create_ptr(formal_ptr);
-                    self.acx.class_pag.add_call_arg(&call_site_id, arg_idx, &actual_canonical_ptr_id, &formal_ptr_id);
+                    self.fpag.class_fpag.get_or_create_ptr(formal_ptr);
+                    self.fpag.class_fpag.add_call_arg(call_site.clone(), arg_idx, &actual_canonical_ptr_id, &formal_ptr_id);
                     
                     // if caller_func_name.contains("apply_twice") {
                     //     eprintln!("[rcpta] Added CallArg in apply_twice: {} -> {}", actual_ptr_id, formal_ptr_id);
@@ -1806,9 +1802,9 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                     debug!("[rcpta] Adding CallRet: actual_ret={} formal_ret={} class_ty={}", actual_ret_id, formal_ret_id, class_ty);
                     let ret_ptr = crate::rcpta::ClassPtr::new_return(&callee_func_name, class_ty.clone());
                     let actual_ptr = crate::rcpta::ClassPtr::new_local(actual_ret_id.clone(), class_ty);
-                    self.acx.class_pag.get_or_create_ptr(ret_ptr);
-                    self.acx.class_pag.get_or_create_ptr(actual_ptr);
-                    self.acx.class_pag.add_call_ret(&call_site_id, &formal_ret_id, &actual_ret_id);
+                    self.fpag.class_fpag.get_or_create_ptr(ret_ptr);
+                    self.fpag.class_fpag.get_or_create_ptr(actual_ptr);
+                    self.fpag.class_fpag.add_call_ret(call_site, &formal_ret_id, &actual_ret_id);
                 }
             }
             
@@ -1958,9 +1954,9 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                         use crate::rcpta::ClassPtr;
                         let source_cptr = ClassPtr::new_local(canonical_source.clone(), class_name.clone());
                         let dest_cptr = ClassPtr::new_local(dest_ptr_id.clone(), class_name);
-                        self.acx.class_pag.get_or_create_ptr(source_cptr);
-                        self.acx.class_pag.get_or_create_ptr(dest_cptr);
-                        self.acx.class_pag.add_assign(&canonical_source, &dest_ptr_id);
+                        self.fpag.class_fpag.get_or_create_ptr(source_cptr);
+                        self.fpag.class_fpag.get_or_create_ptr(dest_cptr);
+                        self.fpag.class_fpag.add_assign(&canonical_source, &dest_ptr_id);
                     }
                 }
             }
@@ -1993,9 +1989,9 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                             use crate::rcpta::ClassPtr;
                             let receiver_cptr = ClassPtr::new_local(canonical_receiver.clone(), class_name.clone());
                             let dest_cptr = ClassPtr::new_local(dest_ptr_id.clone(), class_name);
-                            self.acx.class_pag.get_or_create_ptr(receiver_cptr);
-                            self.acx.class_pag.get_or_create_ptr(dest_cptr);
-                            self.acx.class_pag.add_assign(&canonical_receiver, &dest_ptr_id);
+                            self.fpag.class_fpag.get_or_create_ptr(receiver_cptr);
+                            self.fpag.class_fpag.get_or_create_ptr(dest_cptr);
+                            self.fpag.class_fpag.add_assign(&canonical_receiver, &dest_ptr_id);
                         }
                     }
                 }
@@ -3022,10 +3018,10 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                     .unwrap_or_else(|| gs.class_name.clone());
                 let base_cptr = crate::rcpta::ClassPtr::new_local(base_ptr_id.clone(), gs.class_name.clone());
                 let dst_cptr = crate::rcpta::ClassPtr::new_local(dst_ptr_id.clone(), dst_class_type.clone());
-                self.acx.class_pag.get_or_create_ptr(base_cptr);
-                self.acx.class_pag.get_or_create_ptr(dst_cptr);
+                self.fpag.class_fpag.get_or_create_ptr(base_cptr);
+                self.fpag.class_fpag.get_or_create_ptr(dst_cptr);
                 // Load as constraint; obj-level edges materialized during PTS solve
-                self.acx.class_pag.add_load(&base_ptr_id, &gs.field_name, &dst_ptr_id);
+                self.fpag.class_fpag.add_load(&base_ptr_id, &gs.field_name, &dst_ptr_id);
                 info!(
                     "rcpta ClassPAG: add_load in callee func={} base={} field={} dst={}",
                     func_name, base_ptr_id, gs.field_name, dst_ptr_id
@@ -3093,10 +3089,10 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                     .unwrap_or_else(|| gs.class_name.clone());
                 let base_cptr = crate::rcpta::ClassPtr::new_local(base_ptr_id.clone(), gs.class_name.clone());
                 let value_cptr = crate::rcpta::ClassPtr::new_local(value_ptr_id.clone(), value_class_type.clone());
-                self.acx.class_pag.get_or_create_ptr(base_cptr);
-                self.acx.class_pag.get_or_create_ptr(value_cptr);
+                self.fpag.class_fpag.get_or_create_ptr(base_cptr);
+                self.fpag.class_fpag.get_or_create_ptr(value_cptr);
                 // Store as constraint; obj-level edges materialized during PTS solve
-                self.acx.class_pag.add_store(&base_ptr_id, &gs.field_name, &value_ptr_id);
+                self.fpag.class_fpag.add_store(&base_ptr_id, &gs.field_name, &value_ptr_id);
                 info!(
                     "rcpta ClassPAG: add_store in callee func={} base={} field={} src={}",
                     func_name, base_ptr_id, gs.field_name, value_ptr_id

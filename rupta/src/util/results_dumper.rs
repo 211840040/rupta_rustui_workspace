@@ -1061,14 +1061,14 @@ fn canonical_section_key_for_scope(scope: &str) -> String {
 /// Extracts the caller function from a call_site id.
 /// Format is `[crate::]func_name:bbN[M]` (e.g. `rcpta_full_hierarchy::entry_complex_call_chain_demo:bb8[1]`).
 /// Returns the function name normalized (leading crate stripped) so it matches func_scope_from_ptr_id and all edges land in one section.
-fn caller_from_call_site(call_site: &str) -> String {
-    let before_bb = if let Some(i) = call_site.rfind(':') {
-        &call_site[..i]
-    } else {
-        call_site
-    };
-    normalize_func_key(before_bb)
-}
+// fn caller_from_call_site(call_site: &str) -> String {
+//     let before_bb = if let Some(i) = call_site.rfind(':') {
+//         &call_site[..i]
+//     } else {
+//         call_site
+//     };
+//     normalize_func_key(before_bb)
+// }
 
 /// Extracts callee scope from a formal ptr id (e.g. `entityEntity::with_partner::param_1` -> `entityEntity::with_partner`,
 /// `entityEntity::with_partner::ret` -> `entityEntity::with_partner`). Used to detect "wrapper -> same-name body" calls.
@@ -1258,14 +1258,14 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
     // Do not hide real calls from method bodies (e.g. chain_with -> with_partner).
     let call_arg = class_pag.call_arg_edges();
     for e in call_arg.iter() {
-        let scope = caller_from_call_site(&e.call_site);
+        let scope = &e.call_site.func;
         let callee_scope = callee_scope_from_formal_ptr_id(&e.formal_ptr_id);
         if is_wrapper_to_same_method_edge(&scope, callee_scope.as_deref()) {
             continue;
         }
         let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).5.push((
-            e.call_site.clone(),
+            e.call_site.to_string(),
             e.arg_idx,
             e.actual_ptr_id.clone(),
             e.formal_ptr_id.clone(),
@@ -1273,14 +1273,14 @@ pub fn dump_class_pag(class_pag: &ClassPAG, output_path: &str, solver_result: Op
     }
     let call_ret = class_pag.call_ret_edges();
     for e in call_ret.iter() {
-        let scope = caller_from_call_site(&e.call_site);
+        let scope = &e.call_site.func;
         let callee_scope = callee_scope_from_formal_ptr_id(&e.formal_ret_ptr_id);
         if is_wrapper_to_same_method_edge(&scope, callee_scope.as_deref()) {
             continue;
         }
         let func = canonical_section_key_for_scope(&scope);
         by_func.entry(func).or_insert_with(empty_edges).6.push((
-            e.call_site.clone(),
+            e.call_site.to_string(),
             e.formal_ret_ptr_id.clone(),
             e.actual_ret_ptr_id.clone(),
         ));

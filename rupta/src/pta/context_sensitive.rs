@@ -141,12 +141,42 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
 
     /// Adds internal edges of a function pag to the whole program's pag.
     /// The function pag for the given def_id should be built before calling this function.
+    /// rcpta: we only add the class pag edges here(with context). The internal edges in the function pag will be added when processing the function body.
     pub fn add_fpag_edges(&mut self, func: CSFuncId) {
         if self.processed_funcs.contains(&func) {
             return;
         }
 
         let fpag = unsafe { &*(self.pag.func_pags.get(&func.func_id).unwrap() as *const FuncPAG) };
+        let class_fpag = &fpag.class_fpag;
+        let func_ref = self.acx.get_function_reference(func.func_id);
+
+        for ptr_id in class_fpag.ptr_ids() {
+            debug!(
+                "Adding class pointer {:?} in function {:?} to PAG",
+                ptr_id,
+                func_ref.to_string()
+            );
+        }
+        for call_arg_edge in class_fpag.call_arg_edges() {
+            debug!(
+                "Adding class call arg edge {:?} -> {:?} in function {:?} at callsite {} to PAG",
+                call_arg_edge.actual_ptr_id,
+                call_arg_edge.formal_ptr_id,
+                func_ref.to_string(),
+                call_arg_edge.call_site
+            )
+        }
+        for call_ret_edge in class_fpag.call_ret_edges() {
+            debug!(
+                "Adding class call ret edge {:?} -> {:?} in function {:?} at callsite {} to PAG",
+                call_ret_edge.formal_ret_ptr_id,
+                call_ret_edge.actual_ret_ptr_id,
+                func_ref.to_string(),
+                call_ret_edge.call_site
+            )
+        }
+
         let edges_iter = fpag.internal_edges_iter();
         for (src, dst, kind) in edges_iter {
             let cs_src = self.mk_cs_path(src, func.cid);

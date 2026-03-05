@@ -12,11 +12,13 @@
 
 use std::collections::{HashMap, HashSet};
 
+use crate::rcpta::class_ptr::DSLCallSite;
+
 use super::class_obj::ClassObj;
 use super::class_ptr::ClassPtr;
 
 /// Unique identifier for a call site (e.g. `main:bb1[2]`, `Container::get_point:bb0[3]`).
-pub type CallSiteId = String;
+// pub type CallSiteId = String;
 
 /// Field name (e.g. `point`, `data`).
 pub type FieldId = String;
@@ -65,7 +67,7 @@ pub struct StoreEdge {
 /// Call argument: actual → formal at a call site.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct CallArgEdge {
-    pub call_site: CallSiteId,
+    pub call_site: DSLCallSite,
     pub arg_idx: usize,
     pub actual_ptr_id: String,
     pub formal_ptr_id: String,
@@ -74,7 +76,7 @@ pub struct CallArgEdge {
 /// Call return: formal_ret → actual_ret at a call site.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct CallRetEdge {
-    pub call_site: CallSiteId,
+    pub call_site: DSLCallSite,
     pub formal_ret_ptr_id: String,
     pub actual_ret_ptr_id: String,
 }
@@ -138,11 +140,11 @@ impl ClassPAG {
     /// Register or get a class pointer. Returns its id.
     pub fn get_or_create_ptr(&mut self, ptr: ClassPtr) -> String {
         let id = ptr.id.clone();
-        let is_new = !self.ptrs.contains_key(&id);
+        // let is_new = !self.ptrs.contains_key(&id);
         self.ptrs.entry(id.clone()).or_insert(ptr);
-        if is_new && (id.contains("get_and_wrap::local_2") || id.contains("get_and_wrap::local_3")) {
-            eprintln!("[rcpta dedup] ClassPAG new ptr id={}", id);
-        }
+        // if is_new && (id.contains("get_and_wrap::local_2") || id.contains("get_and_wrap::local_3")) {
+        //     eprintln!("[rcpta dedup] ClassPAG new ptr id={}", id);
+        // }
         id
     }
 
@@ -218,10 +220,7 @@ impl ClassPAG {
 
     /// Assign successors of a pointer (all dst such that dst = src).
     pub fn assign_successors(&self, src_ptr_id: &str) -> impl Iterator<Item = &String> {
-        self.assign
-            .get(src_ptr_id)
-            .into_iter()
-            .flat_map(|set| set.iter())
+        self.assign.get(src_ptr_id).into_iter().flat_map(|set| set.iter())
     }
 
     /// Iterate all assign edges (src_id, dst_id).
@@ -242,10 +241,7 @@ impl ClassPAG {
 
     /// Cast successors of a pointer (all dst such that dst = src.cast(...)).
     pub fn cast_successors(&self, src_ptr_id: &str) -> impl Iterator<Item = &String> {
-        self.cast
-            .get(src_ptr_id)
-            .into_iter()
-            .flat_map(|set| set.iter())
+        self.cast.get(src_ptr_id).into_iter().flat_map(|set| set.iter())
     }
 
     /// Iterate all cast edges (src_id, dst_id).
@@ -266,10 +262,7 @@ impl ClassPAG {
 
     /// Objects that this pointer is allocated to (initial points-to).
     pub fn alloc_targets(&self, ptr_id: &str) -> impl Iterator<Item = &String> {
-        self.alloc
-            .get(ptr_id)
-            .into_iter()
-            .flat_map(|set| set.iter())
+        self.alloc.get(ptr_id).into_iter().flat_map(|set| set.iter())
     }
 
     /// Iterate all alloc edges (ptr_id, obj_id).
@@ -295,11 +288,7 @@ impl ClassPAG {
     }
 
     /// Load successors: (base, field) → set of dst_ptr_id.
-    pub fn load_targets(
-        &self,
-        base_ptr_id: &str,
-        field: &str,
-    ) -> impl Iterator<Item = &String> {
+    pub fn load_targets(&self, base_ptr_id: &str, field: &str) -> impl Iterator<Item = &String> {
         self.load
             .get(&(base_ptr_id.to_string(), field.to_string()))
             .into_iter()
@@ -309,12 +298,11 @@ impl ClassPAG {
     /// Iterate all load edges.
     pub fn iter_load_edges(&self) -> impl Iterator<Item = LoadEdge> + '_ {
         self.load.iter().flat_map(|((base, field), dsts)| {
-            dsts.iter()
-                .map(move |dst| LoadEdge {
-                    base_ptr_id: base.clone(),
-                    field: field.clone(),
-                    dst_ptr_id: dst.clone(),
-                })
+            dsts.iter().map(move |dst| LoadEdge {
+                base_ptr_id: base.clone(),
+                field: field.clone(),
+                dst_ptr_id: dst.clone(),
+            })
         })
     }
 
@@ -334,11 +322,7 @@ impl ClassPAG {
     }
 
     /// Store sources: (base, field) ← set of src_ptr_id.
-    pub fn store_sources(
-        &self,
-        base_ptr_id: &str,
-        field: &str,
-    ) -> impl Iterator<Item = &String> {
+    pub fn store_sources(&self, base_ptr_id: &str, field: &str) -> impl Iterator<Item = &String> {
         self.store
             .get(&(base_ptr_id.to_string(), field.to_string()))
             .into_iter()
@@ -348,12 +332,11 @@ impl ClassPAG {
     /// Iterate all store edges.
     pub fn iter_store_edges(&self) -> impl Iterator<Item = StoreEdge> + '_ {
         self.store.iter().flat_map(|((base, field), srcs)| {
-            srcs.iter()
-                .map(move |src| StoreEdge {
-                    base_ptr_id: base.clone(),
-                    field: field.clone(),
-                    src_ptr_id: src.clone(),
-                })
+            srcs.iter().map(move |src| StoreEdge {
+                base_ptr_id: base.clone(),
+                field: field.clone(),
+                src_ptr_id: src.clone(),
+            })
         })
     }
 
@@ -362,7 +345,7 @@ impl ClassPAG {
     /// Add call argument edge: actual → formal at call_site, arg_idx.
     pub fn add_call_arg(
         &mut self,
-        call_site: impl Into<CallSiteId>,
+        call_site: DSLCallSite,
         arg_idx: usize,
         actual_ptr_id: impl Into<String>,
         formal_ptr_id: impl Into<String>,
@@ -378,7 +361,7 @@ impl ClassPAG {
     /// Add call return edge: formal_ret → actual_ret at call_site.
     pub fn add_call_ret(
         &mut self,
-        call_site: impl Into<CallSiteId>,
+        call_site: DSLCallSite,
         formal_ret_ptr_id: impl Into<String>,
         actual_ret_ptr_id: impl Into<String>,
     ) {

@@ -620,10 +620,10 @@ fn handle_class_constructor<'tcx>(
     if class_analysis::is_source_level_context(&func_name_raw) {
         use crate::rcpta::{AllocSite, ClassPtr};
         let alloc_site = AllocSite::new(&func_name_raw, format!("{:?}", location));
-        let obj_id_rcpta = fpb.acx.class_pag.create_obj(class_name.clone(), alloc_site);
+        let obj_id_rcpta = fpb.fpag.class_fpag.create_obj(class_name.clone(), alloc_site);
         let cptr = ClassPtr::new_local(ptr_id.clone(), class_name.clone());
-        fpb.acx.class_pag.get_or_create_ptr(cptr);
-        fpb.acx.class_pag.add_alloc(&ptr_id, &obj_id_rcpta);
+        fpb.fpag.class_fpag.get_or_create_ptr(cptr);
+        fpb.fpag.class_fpag.add_alloc(&ptr_id, &obj_id_rcpta);
     }
     // ============================================
 
@@ -727,9 +727,9 @@ pub fn handle_class_cast_call<'tcx>(
         let receiver_cptr = ClassPtr::new_local(canonical_receiver.clone(), receiver_class);
         let dest_cptr = ClassPtr::new_local(dest_ptr_id.clone(), dest_class);
         debug!("Add class cast edge: {} -> {}", receiver_ptr_id, dest_ptr_id);
-        fpb.acx.class_pag.get_or_create_ptr(receiver_cptr);
-        fpb.acx.class_pag.get_or_create_ptr(dest_cptr);
-        fpb.acx.class_pag.add_cast(&canonical_receiver, &dest_ptr_id);
+        fpb.fpag.class_fpag.get_or_create_ptr(receiver_cptr);
+        fpb.fpag.class_fpag.get_or_create_ptr(dest_cptr);
+        fpb.fpag.class_fpag.add_cast(&canonical_receiver, &dest_ptr_id);
     }
 
     debug!(
