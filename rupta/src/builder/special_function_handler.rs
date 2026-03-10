@@ -620,9 +620,16 @@ fn handle_class_constructor<'tcx>(
     if class_analysis::is_source_level_context(&func_name_raw) {
         use crate::rcpta::{AllocSite, ClassPtr};
         let alloc_site = AllocSite::new(&func_name_raw, format!("{:?}", location));
-        let obj_id_rcpta = fpb.fpag.class_fpag.create_obj(class_name.clone(), alloc_site);
+        let obj_id_rcpta = fpb
+            .fpag
+            .class_fpag
+            .create_obj(class_name.clone(), alloc_site.clone());
         let cptr = ClassPtr::new_local(ptr_id.clone(), class_name.clone());
         fpb.fpag.class_fpag.get_or_create_ptr(cptr);
+        debug!(
+            "Add alloc edge: {} -> {} in at allocsite {}",
+            ptr_id, obj_id_rcpta, alloc_site
+        );
         fpb.fpag.class_fpag.add_alloc(&ptr_id, &obj_id_rcpta);
     }
     // ============================================

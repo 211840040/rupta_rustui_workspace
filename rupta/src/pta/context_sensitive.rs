@@ -237,6 +237,9 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
                 .class_pag
                 .set_ptr_func(&cs_base_cptr_id, func_tag.clone());
             self.acx.class_pag.set_ptr_func(&cs_dst_cptr_id, func_tag.clone());
+            self.acx
+                .class_pag
+                .set_ptr_func(&cs_base_cptr_id, func_tag.clone());
             debug!(
                 "Adding class load edge to pag {} -> {} in function {} ",
                 cs_base_cptr_id,
@@ -244,9 +247,9 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
                 func_ref.to_string(),
             );
             self.acx.class_pag.add_load(
-                load_edge.base_ptr_id.clone(),
+                cs_base_cptr_id.clone(),
                 load_edge.field.clone(),
-                load_edge.dst_ptr_id.clone(),
+                cs_dst_cptr_id.clone(),
             );
         }
 
@@ -262,6 +265,9 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
                 .class_pag
                 .set_ptr_func(&cs_base_cptr_id, func_tag.clone());
             self.acx.class_pag.set_ptr_func(&cs_src_cptr_id, func_tag.clone());
+            self.acx
+                .class_pag
+                .set_ptr_func(&cs_base_cptr_id, func_tag.clone());
             debug!(
                 "Adding class store edge to pag {} -> {} in function {} ",
                 cs_src_cptr_id,
@@ -269,9 +275,9 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
                 func_ref.to_string(),
             );
             self.acx.class_pag.add_store(
-                store_edge.base_ptr_id.clone(),
+                cs_base_cptr_id.clone(),
                 store_edge.field.clone(),
-                store_edge.src_ptr_id.clone(),
+                cs_src_cptr_id.clone(),
             );
         }
 

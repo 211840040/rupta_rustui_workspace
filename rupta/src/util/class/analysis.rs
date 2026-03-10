@@ -90,13 +90,34 @@ pub fn canonical_class_method_name(func_name: &str) -> String {
 
 /// Extracts the method name from a DSL function path (e.g. "crate::_classes::_Entity::{impl#0}::apply_twice" -> "apply_twice").
 /// Used for rcpta: deduplicate callees by (class_name, method_name) so we only build func PAG once per source-level method.
+/// modify by hxy: 当函数泛型参数里也包含路径访问符"::"时，原有处理逻辑会出现问题
 pub fn extract_method_name_from_func(func_name: &str) -> Option<String> {
-    let after_last = func_name.rsplit("::").next()?;
-    let method = after_last.split('<').next()?.to_string();
-    if method.is_empty() {
-        None
+    // let after_last = func_name.rsplit("::").next()?;
+    // let method = after_last.split('<').next()?.to_string();
+    // if method.is_empty() {
+    //     None
+    // } else {
+    //     Some(method)
+    // }
+    // 先去除泛型参数<>
+    let remove_angle_brackets = |input: &str| -> String {
+        let mut out = String::with_capacity(input.len());
+        let mut depth = 0;
+        for c in input.chars() {
+            match c {
+                '<' => depth += 1,
+                '>' if depth > 0 => depth -= 1,
+                _ if depth == 0 => out.push(c),
+                _ => {} // 在尖括号内部，忽略
+            }
+        }
+        out
+    };
+    let input = remove_angle_brackets(func_name);
+    if let Some(method) = input.rsplit("::").next() {
+        Some(method.to_string())
     } else {
-        Some(method)
+        None
     }
 }
 
@@ -131,27 +152,7 @@ pub fn is_source_level_allocation_caller(caller_func_name: &str) -> bool {
 /// - A cast method implementation (caller name contains into_superclass, try_into_subtype, cast_mixin)
 /// - DSL internal (e.g. classes::ptr::, _delegate_ctor) — not user-visible cast
 pub fn is_source_level_cast_caller(caller_func_name: &str) -> bool {
-    let cast_methods = [
-        "as_superclass",
-        "to_superclass",
-        "into_superclass",
-        "to_supertype",
-        "into_supertype",
-        "as_subclass",
-        "to_subclass",
-        "into_subclass",
-        "to_subtype",
-        "into_subtype",
-        "as_super",
-        "to_super",
-        "into_super",
-        "to_impl",
-        "into_impl",
-        "upcast",
-        "downcast",
-        "cast_mixin",
-    ];
-    for m in cast_methods {
+    for m in CAST_METHODS {
         if caller_func_name.contains(m) {
             return false;
         }
@@ -193,6 +194,11 @@ pub fn is_source_level_context(caller_func_name: &str) -> bool {
     {
         return false;
     }
+    if caller_func_name.contains("_classes::_")
+        && extract_method_name_from_func(caller_func_name).is_some_and(|m| m == "deref")
+    {
+        return false;
+    }
     // Do not model pointers/edges inside internal trait method bodies (e.g. downgrade_from).
     if is_internal_dsl_trait_method(caller_func_name) {
         return false;
@@ -210,6 +216,15 @@ pub fn is_impl_of_core_clone_trait<'tcx>(tcx: TyCtxt<'tcx>, def_id: DefId) -> bo
     let crate_name = tcx.crate_name(trait_did.krate).to_string();
     let path = tcx.def_path_str(trait_did);
     (crate_name == "core" || crate_name == "std") && path.contains("Clone")
+}
+
+pub fn is_impl_of_core_deref_trait<'tcx>(tcx: TyCtxt<'tcx>, def_id: DefId) -> bool {
+    let Some(trait_did) = tcx.trait_of_item(def_id) else {
+        return false;
+    };
+    let crate_name = tcx.crate_name(trait_did.krate).to_string();
+    let path = tcx.def_path_str(trait_did);
+    (crate_name == "core" || crate_name == "std") && path.contains("Deref")
 }
 
 /// Whether the callee is Option::unwrap (core::option::Option::unwrap or std::option::Option::unwrap).
@@ -262,34 +277,37 @@ pub fn type_is_option_containing_dsl_class<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>
     false
 }
 
+static CAST_METHODS: &[&str] = &[
+    "as_superclass",
+    "to_superclass",
+    "into_superclass",
+    "to_supertype",
+    "into_supertype",
+    "as_super",
+    "to_super",
+    "into_super",
+    "upcast",
+    "to_impl",
+    "into_impl",
+    "as_subclass",
+    "to_subclass",
+    "into_subclass",
+    "to_subtype",
+    "into_subtype",
+    "downcast",
+    "cast_mixin",
+    "to_mixin",
+    "mixin_to_impl",
+];
+
 /// Whether the callee is a source-level class cast method (same object, different type view).
 /// rcpta: add Assign edge receiver → destination. Author: Yan Wang, Date: 2026-02-02
 ///
 /// Recognized: into_superclass, try_into_subtype, cast_mixin (classes crate / _classes).
 pub fn identify_class_cast_method(func_ref: &Rc<FunctionReference>) -> bool {
     let name = func_ref.to_string();
-    let cast_methods = [
-        "as_superclass",
-        "to_superclass",
-        "into_superclass",
-        "to_supertype",
-        "into_supertype",
-        "as_subclass",
-        "to_subclass",
-        "into_subclass",
-        "to_subtype",
-        "into_subtype",
-        "as_super",
-        "to_super",
-        "into_super",
-        "to_impl",
-        "into_impl",
-        "upcast",
-        "downcast",
-        "cast_mixin",
-    ];
     let mut is_cast_name = false;
-    for m in cast_methods {
+    for m in CAST_METHODS {
         if name.contains(m) {
             is_cast_name = true;
         }
@@ -812,23 +830,35 @@ pub fn is_ctx_should_be_compressed(
     let caller_name = caller_func_ref.to_string();
     let callee_name = callee_func_ref.to_string();
     let re = Regex::new(r"impl#\d+").unwrap();
+    let mut compressed = false;
     if re.replace_all(&callee_name.replace("::data::", "::"), "") == re.replace_all(&caller_name, "") {
-        if caller_name.ends_with("id") || callee_name.ends_with("id") {
-            debug!(
-                "is_ctx_should_be_compressed: caller={} callee={} -> should compress",
-                caller_name, callee_name
-            );
-        }
-        true
-    } else {
-        if caller_name.ends_with("id") || callee_name.ends_with("id") {
-            debug!(
-                "is_ctx_should_be_compressed: caller={} callee={} -> should NOT compress",
-                caller_name, callee_name
-            );
-        }
-        false
+        compressed = true;
     }
+    if !is_source_level_cast_caller(&callee_name) || !is_source_level_cast_caller(&caller_name) {
+        compressed = true;
+    }
+    let caller_method_name = extract_method_name_from_func(&caller_name).unwrap_or("UnKnownM".to_string());
+    let callee_method_name = extract_method_name_from_func(&callee_name).unwrap_or("UnKnownM".to_string());
+    // debug!(
+    //     "caller_method_name: {}, callee_method_name: {}",
+    //     caller_method_name, callee_method_name
+    // );
+    if caller_method_name == callee_method_name
+        && !caller_name.contains("interfaces::")
+        && callee_name.contains("interfaces::")
+    {
+        compressed = true;
+    }
+    if caller_method_name == callee_method_name && callee_name != caller_name {
+        compressed = true;
+    }
+    debug!(
+        "is_ctx_should_be_compressed: caller={} callee={} -> should {}compress",
+        caller_name,
+        callee_name,
+        if compressed { "" } else { "NOT " }
+    );
+    compressed
 }
 
 #[cfg(test)]

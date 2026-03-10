@@ -186,6 +186,9 @@ impl ClassPAG {
 
     /// Get a pointer by id.
     pub fn get_ptr(&self, id: &str) -> Option<&ClassPtr> {
+        if !self.ptrs.contains_key(id) {
+            eprintln!("[rcpta] ClassPAG get_ptr: id={} not found", id);
+        }
         self.ptrs.get(id)
     }
 
@@ -226,6 +229,20 @@ impl ClassPAG {
     pub fn add_assign(&mut self, src_ptr_id: impl Into<String>, dst_ptr_id: impl Into<String>) {
         let src = src_ptr_id.into();
         let dst = dst_ptr_id.into();
+        if !self.ptrs.contains_key(&src) {
+            eprintln!(
+                "[rcpta] src_ptr_id: {} in assign {} -> {} not found",
+                src, src, dst
+            );
+            return;
+        }
+        if !self.ptrs.contains_key(&dst) {
+            eprintln!(
+                "[rcpta] dst_ptr_id: {} in assign {} -> {} not found",
+                dst, src, dst
+            );
+            return;
+        }
         self.assign.entry(src).or_default().insert(dst);
     }
 
@@ -247,6 +264,14 @@ impl ClassPAG {
     pub fn add_cast(&mut self, src_ptr_id: impl Into<String>, dst_ptr_id: impl Into<String>) {
         let src = src_ptr_id.into();
         let dst = dst_ptr_id.into();
+        if !self.ptrs.contains_key(&src) {
+            eprintln!("[rcpta] src_ptr_id: {} in cast {} -> {} not found", src, src, dst);
+            return;
+        }
+        if !self.ptrs.contains_key(&dst) {
+            eprintln!("[rcpta] dst_ptr_id: {} in cast {} -> {} not found", dst, src, dst);
+            return;
+        }
         self.cast.entry(src).or_default().insert(dst);
     }
 
@@ -268,6 +293,14 @@ impl ClassPAG {
     pub fn add_alloc(&mut self, ptr_id: impl Into<String>, obj_id: impl Into<String>) {
         let ptr = ptr_id.into();
         let obj = obj_id.into();
+        if !self.ptrs.contains_key(&ptr) {
+            eprintln!("[rcpta] ptr_id: {} in alloc {} -> {} not found", ptr, ptr, obj);
+            return;
+        }
+        if !self.objs.contains_key(&obj) {
+            eprintln!("[rcpta] obj_id: {} in alloc {} -> {} not found", obj, ptr, obj);
+            return;
+        }
         self.alloc.entry(ptr).or_default().insert(obj);
     }
 
@@ -295,6 +328,20 @@ impl ClassPAG {
         let base = base_ptr_id.into();
         let field = field.into();
         let dst = dst_ptr_id.into();
+        if !self.ptrs.contains_key(&base) {
+            eprintln!(
+                "[rcpta] base_ptr_id: {} in load {}.{} -> {} not found",
+                base, base, field, dst
+            );
+            return;
+        }
+        if !self.ptrs.contains_key(&dst) {
+            eprintln!(
+                "[rcpta] dst_ptr_id: {} in load {}.{} -> {} not found",
+                dst, base, field, dst
+            );
+            return;
+        }
         self.load.entry((base, field)).or_default().insert(dst);
     }
 
@@ -329,6 +376,20 @@ impl ClassPAG {
         let base = base_ptr_id.into();
         let field = field.into();
         let src = src_ptr_id.into();
+        if !self.ptrs.contains_key(&base) {
+            eprintln!(
+                "[rcpta] base_ptr_id: {} in store {}.{} <- {} not found",
+                base, base, field, src
+            );
+            return;
+        }
+        if !self.ptrs.contains_key(&src) {
+            eprintln!(
+                "[rcpta] src_ptr_id: {} in store {}.{} <- {} not found",
+                src, base, field, src
+            );
+            return;
+        }
         self.store.entry((base, field)).or_default().insert(src);
     }
 
@@ -361,11 +422,27 @@ impl ClassPAG {
         actual_ptr_id: impl Into<String>,
         formal_ptr_id: impl Into<String>,
     ) {
+        let act_ptr = actual_ptr_id.into();
+        let fml_ptr = formal_ptr_id.into();
+        if !self.ptrs.contains_key(&act_ptr) {
+            eprintln!(
+                "[rcpta] actual_ptr_id: {} in call_arg at site {:?}, arg_idx {} not found",
+                act_ptr, call_site, arg_idx
+            );
+            return;
+        }
+        if !self.ptrs.contains_key(&fml_ptr) {
+            eprintln!(
+                "[rcpta] formal_ptr_id: {} in call_arg at site {:?}, arg_idx {} not found",
+                act_ptr, call_site, arg_idx
+            );
+            return;
+        }
         self.call_arg.push(CallArgEdge {
             call_site: call_site.into(),
             arg_idx,
-            actual_ptr_id: actual_ptr_id.into(),
-            formal_ptr_id: formal_ptr_id.into(),
+            actual_ptr_id: act_ptr,
+            formal_ptr_id: fml_ptr,
         });
     }
 
@@ -376,10 +453,26 @@ impl ClassPAG {
         formal_ret_ptr_id: impl Into<String>,
         actual_ret_ptr_id: impl Into<String>,
     ) {
+        let fml_ret_ptr = formal_ret_ptr_id.into();
+        let act_ret_ptr = actual_ret_ptr_id.into();
+        if !self.ptrs.contains_key(&fml_ret_ptr) {
+            eprintln!(
+                "[rcpta] formal_ret_ptr_id: {} in call_ret at site {:?} not found",
+                fml_ret_ptr, call_site
+            );
+            return;
+        }
+        if !self.ptrs.contains_key(&act_ret_ptr) {
+            eprintln!(
+                "[rcpta] actual_ret_ptr_id: {} in call_ret at site {:?} not found",
+                act_ret_ptr, call_site
+            );
+            return;
+        }
         self.call_ret.push(CallRetEdge {
             call_site: call_site.into(),
-            formal_ret_ptr_id: formal_ret_ptr_id.into(),
-            actual_ret_ptr_id: actual_ret_ptr_id.into(),
+            formal_ret_ptr_id: fml_ret_ptr,
+            actual_ret_ptr_id: act_ret_ptr,
         });
     }
 

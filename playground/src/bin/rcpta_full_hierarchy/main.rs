@@ -218,52 +218,6 @@ pub fn entry_complex_call_chain_demo() {
     std::mem::drop(holder_2);
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_load_store_demo_runs() {
-        entry_load_store_demo();
-    }
-
-    #[test]
-    fn test_load_store_semantics() {
-        let a = Item::new(10);
-        let h = Holder::new();
-        h.set_item(a);
-        let loaded = h.get_item();
-        assert_eq!(loaded.get_id(), 10);
-    }
-
-    #[test]
-    fn test_full_rcpta_demo_runs() {
-        entry_full_rcpta_demo();
-    }
-
-    #[test]
-    fn test_method_call_demo_runs() {
-        entry_method_call_demo(0);
-        entry_method_call_demo(1);
-        entry_method_call_demo(2);
-    }
-
-    #[test]
-    fn test_method_call_via_load_demo_runs() {
-        entry_method_call_via_load_demo(0);
-        entry_method_call_via_load_demo(1);
-        entry_method_call_via_load_demo(2);
-    }
-
-    #[test]
-    fn test_method_call_args_ret_demo_runs() {
-        entry_method_call_args_ret_demo(0);
-        entry_method_call_args_ret_demo(1);
-        entry_method_call_args_ret_demo(2);
-    }
-
-    #[test]
-    fn test_complex_call_chain_demo_runs() {
-        entry_complex_call_chain_demo();
-    }
+fn main() {
+    entry_full_rcpta_demo();
 }

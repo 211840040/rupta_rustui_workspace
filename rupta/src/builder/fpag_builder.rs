@@ -1779,8 +1779,10 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                         None=> class_method.class_name.clone(),
                     };
                     debug!("[rcpta] Adding CallArg for arg {}: actual_ptr={} formal_ptr={} class_ty={}, arg_ty={}", arg_idx, actual_canonical_ptr_id, formal_ptr_id, class_ty, arg_ty);
-                    let formal_ptr = crate::rcpta::ClassPtr::new_local(formal_ptr_id.clone(), class_ty);
+                    let formal_ptr = crate::rcpta::ClassPtr::new_local(formal_ptr_id.clone(), class_ty.clone());
+                    let actual_ptr = crate::rcpta::ClassPtr::new_local(actual_canonical_ptr_id.clone(), class_ty);
                     self.fpag.class_fpag.get_or_create_ptr(formal_ptr);
+                    self.fpag.class_fpag.get_or_create_ptr(actual_ptr);
                     self.fpag.class_fpag.add_call_arg(call_site.clone(), arg_idx, &actual_canonical_ptr_id, &formal_ptr_id);
                     
                     // if caller_func_name.contains("apply_twice") {
@@ -1827,9 +1829,9 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
             }
             
             // DEBUG: track added static dispatch
-            if self.acx.get_function_reference(resolved_callee_func_id).to_string().contains("apply_twice") {
-                eprintln!("[rcpta] Added static dispatch to apply_twice in func {:?}. Total callsites: {}", self.fpag.func_id, self.fpag.static_dispatch_callsites.len());
-            }
+            // if self.acx.get_function_reference(resolved_callee_func_id).to_string().contains("apply_twice") {
+            //     eprintln!("[rcpta] Added static dispatch to apply_twice in func {:?}. Total callsites: {}", self.fpag.func_id, self.fpag.static_dispatch_callsites.len());
+            // }
             // Continue with normal call handling to build call graph
         } else if let Some(gs) = analysis::identify_getter_setter(&func_ref) {
             // Generalizable Logic: Distinguish Field Access (Load/Store) from Method Call.
@@ -1917,7 +1919,7 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                 &destination,
                 location,
             );
-            
+            return;
         }
 
         // rcpta: Option::unwrap() on Option<CRc<T>> — build Assign(option_inner_ptr, lhs_ptr).
@@ -1994,6 +1996,26 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                             self.fpag.class_fpag.add_assign(&canonical_receiver, &dest_ptr_id);
                         }
                     }
+                }
+            }
+        }
+
+        // rcpta: process core::ops::Deref trait
+        // e.g. entry_full_rcpta_demo::item::_classes::_Item::{impl#49}::deref<classes::class::Virtual>
+        if analysis::is_impl_of_core_deref_trait(self.tcx(), *callee_def_id) && !args.is_empty(){
+            let receiver_ty = args[0].try_eval_path_type(self.acx);
+            let dest_ty = destination.try_eval_path_type(self.acx);
+            let receiver_has_dsl = analysis::extract_dsl_class_from_wrapper(self.tcx(), receiver_ty, None).is_some();
+            let dest_has_dsl = analysis::extract_dsl_class_from_wrapper(self.tcx(), dest_ty, None).is_some();
+            if receiver_has_dsl && dest_has_dsl {
+                let func_name = self.rcpta_canonical_func_name();
+                if analysis::is_source_level_context(&func_name){
+                    use crate::util::class::ptr_system::path_to_class_ptr_id;
+                    let receiver_ptr_id = path_to_class_ptr_id(&args[0], Some(&func_name), None);
+                    let dest_ptr_id = path_to_class_ptr_id(&destination, Some(&func_name), None);
+                    let canonical_base = self.acx.get_canonical_rcpta_ptr(&receiver_ptr_id);
+                    self.acx.rcpta_alias_map.insert(dest_ptr_id.clone(), canonical_base);
+                    self.acx.rcpta_ref_ptr_to_base_path.insert(dest_ptr_id,args[0].clone());
                 }
             }
         }
