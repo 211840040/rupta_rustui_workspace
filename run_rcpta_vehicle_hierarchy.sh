@@ -9,6 +9,9 @@
 
 set -o pipefail
 
+export PTA_LOG=debug
+export LD_LIBRARY_PATH=$(rustc --print sysroot)/lib:$LD_LIBRARY_PATH
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULTS_BASE="$SCRIPT_DIR/analysis_results/rcpta/vehicle_hierarchy"
 MAIN_RS="rustdsl/classes/tests/vehicle_hierarchy/main.rs"

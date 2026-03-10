@@ -66,13 +66,23 @@ impl ClassObj {
     }
 
     pub fn with_context(mut self, ctx: Context) -> Self {
-        self.context = Some(ctx);
+        self.context = Some(ctx.clone());
+        self.id = format!("{}{}", ctx, self.id);
         self
     }
 }
 
 impl fmt::Display for ClassObj {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}@{}", self.id, self.class_type, self.alloc_site)
+        write!(
+            f,
+            "{}{}:{}@{}",
+            self.context
+                .as_ref()
+                .map_or_else(|| "".into(), |ctx| format!("{} ", ctx)),
+            self.id,
+            self.class_type,
+            self.alloc_site
+        )
     }
 }

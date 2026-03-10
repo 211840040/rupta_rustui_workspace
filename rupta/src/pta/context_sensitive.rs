@@ -12,25 +12,28 @@ use itertools::Itertools;
 use log::*;
 use rustc_middle::ty::TyCtxt;
 
-use super::*;
+use super::propagator::propagator::Propagator;
 use super::strategies::context_strategy::{ContextStrategy, KObjectSensitive};
 use super::strategies::stack_filtering::StackFilter;
-use super::propagator::propagator::Propagator;
 use super::PointerAnalysis;
-use crate::graph::func_pag::FuncPAG;
+use super::*;
 use crate::graph::call_graph::CSCallGraph;
+use crate::graph::func_pag::FuncPAG;
+use crate::mir::analysis_context::AnalysisContext;
 use crate::mir::call_site::{AssocCallGroup, CSCallSite, CallSite, CallType};
 use crate::mir::context::{Context, ContextId};
-use crate::mir::function::{FuncId, CSFuncId};
-use crate::mir::analysis_context::AnalysisContext;
-use crate::mir::path::{Path, CSPath, PathEnum};
+use crate::mir::function::{CSFuncId, FuncId};
+use crate::mir::path::{CSPath, Path, PathEnum};
 use crate::rta::rta::RapidTypeAnalysis;
+use crate::util::class::analysis;
 use crate::util::pta_statistics::ContextSensitiveStat;
 use crate::util::{self, chunked_queue, results_dumper};
 
-pub type CallSiteSensitivePTA<'pta, 'tcx, 'compilation> = ContextSensitivePTA<'pta, 'tcx, 'compilation, KCallSiteSensitive>;
+pub type CallSiteSensitivePTA<'pta, 'tcx, 'compilation> =
+    ContextSensitivePTA<'pta, 'tcx, 'compilation, KCallSiteSensitive>;
 /// The object-sensitive pointer analysis for Rust has not been throughly evaluated so far.
-pub type ObjectSensitivePTA<'pta, 'tcx, 'compilation> = ContextSensitivePTA<'pta, 'tcx, 'compilation, KObjectSensitive>;
+pub type ObjectSensitivePTA<'pta, 'tcx, 'compilation> =
+    ContextSensitivePTA<'pta, 'tcx, 'compilation, KObjectSensitive>;
 
 pub struct ContextSensitivePTA<'pta, 'tcx, 'compilation, S: ContextStrategy> {
     /// The analysis context
@@ -60,7 +63,9 @@ pub struct ContextSensitivePTA<'pta, 'tcx, 'compilation, S: ContextStrategy> {
     pub pre_analysis_time: Duration,
 }
 
-impl<'pta, 'tcx, 'compilation, S: ContextStrategy> Debug for ContextSensitivePTA<'pta, 'tcx, 'compilation, S> {
+impl<'pta, 'tcx, 'compilation, S: ContextStrategy> Debug
+    for ContextSensitivePTA<'pta, 'tcx, 'compilation, S>
+{
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         "ContextSensitivePTA".fmt(f)
     }
@@ -100,13 +105,12 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
     #[inline]
     pub fn get_context_by_id(&self, context_id: ContextId) -> Rc<Context<S::E>> {
         self.ctx_strategy.get_context_by_id(context_id)
-        
     }
     #[inline]
     pub fn get_empty_context_id(&mut self) -> ContextId {
         self.ctx_strategy.get_empty_context_id()
     }
-    
+
     /// Process statements in reachable functions.
     /// Iteratively process until no new callee is discovered (Tai-e style).
     fn process_reach_funcs(&mut self) {
@@ -138,12 +142,202 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
 
     /// Adds internal edges of a function pag to the whole program's pag.
     /// The function pag for the given def_id should be built before calling this function.
+    /// rcpta: we only add the class pag edges here(with context). The internal edges in the function pag will be added when processing the function body.
     pub fn add_fpag_edges(&mut self, func: CSFuncId) {
         if self.processed_funcs.contains(&func) {
             return;
         }
 
         let fpag = unsafe { &*(self.pag.func_pags.get(&func.func_id).unwrap() as *const FuncPAG) };
+        let class_fpag = &fpag.class_fpag;
+        let func_ref = self.acx.get_function_reference(func.func_id);
+
+        for ptr_id in class_fpag.ptr_ids() {
+            debug!(
+                "Adding class pointer {:?} in function {:?} to PAG",
+                ptr_id,
+                func_ref.to_string()
+            );
+        }
+
+        let ctx = self
+            .ctx_strategy
+            .get_dsl_ctx(&self.get_context_by_id(func.cid), self.acx);
+        debug!(
+            "Context for function {} is {}",
+            func_ref.to_string(),
+            ctx.to_string()
+        );
+        let func_tag = format!("{}{}", ctx, func_ref.to_string());
+
+        for (cptr_id, cobj_id) in class_fpag.iter_alloc_edges() {
+            let cptr = class_fpag.get_ptr(&cptr_id).unwrap();
+            let cobj = class_fpag.get_obj(&cobj_id).unwrap();
+            let cs_cptr = cptr.clone().with_context(ctx.clone());
+            let cs_cobj = cobj.clone().with_context(ctx.clone());
+            let cs_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_cptr);
+            let cs_cobj_id = self.acx.class_pag.get_or_create_obj(cs_cobj);
+            self.acx.class_pag.set_ptr_func(&cs_cptr_id, func_tag.clone());
+            debug!(
+                "Adding class alloc edge to pag {} -> {} in function {} ",
+                cs_cptr_id,
+                cs_cobj_id,
+                func_ref.to_string(),
+            );
+            self.acx.class_pag.add_alloc(cs_cptr_id, cs_cobj_id);
+        }
+
+        for (src_cptr_id, dst_cptr_id) in class_fpag.iter_assign_edges() {
+            let src_cptr = class_fpag.get_ptr(&src_cptr_id).unwrap();
+            let dst_cptr = class_fpag.get_ptr(&dst_cptr_id).unwrap();
+
+            let cs_src_cptr = src_cptr.clone().with_context(ctx.clone());
+            let cs_dst_cptr = dst_cptr.clone().with_context(ctx.clone());
+            let cs_src_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_src_cptr);
+            let cs_dst_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_dst_cptr);
+            self.acx.class_pag.set_ptr_func(&cs_src_cptr_id, func_tag.clone());
+            self.acx.class_pag.set_ptr_func(&cs_dst_cptr_id, func_tag.clone());
+            debug!(
+                "Adding class assign edge to pag {} -> {} in function {} ",
+                cs_src_cptr_id,
+                cs_dst_cptr_id,
+                func_ref.to_string(),
+            );
+            self.acx.class_pag.add_assign(cs_src_cptr_id, cs_dst_cptr_id);
+        }
+
+        for (src_cptr_id, dst_cptr_id) in class_fpag.iter_cast_edges() {
+            let src_cptr = class_fpag.get_ptr(&src_cptr_id).unwrap();
+            let dst_cptr = class_fpag.get_ptr(&dst_cptr_id).unwrap();
+
+            let cs_src_cptr = src_cptr.clone().with_context(ctx.clone());
+            let cs_dst_cptr = dst_cptr.clone().with_context(ctx.clone());
+            let cs_src_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_src_cptr);
+            let cs_dst_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_dst_cptr);
+            self.acx.class_pag.set_ptr_func(&cs_src_cptr_id, func_tag.clone());
+            self.acx.class_pag.set_ptr_func(&cs_dst_cptr_id, func_tag.clone());
+            debug!(
+                "Adding class cast edge to pag {} -> {} in function {} ",
+                cs_src_cptr_id,
+                cs_dst_cptr_id,
+                func_ref.to_string(),
+            );
+            self.acx.class_pag.add_cast(cs_src_cptr_id, cs_dst_cptr_id);
+        }
+
+        for load_edge in class_fpag.iter_load_edges() {
+            let base_cptr = class_fpag.get_ptr(&load_edge.base_ptr_id).unwrap();
+            let dst_cptr = class_fpag.get_ptr(&load_edge.dst_ptr_id).unwrap();
+
+            let cs_base_cptr = base_cptr.clone().with_context(ctx.clone());
+            let cs_dst_cptr = dst_cptr.clone().with_context(ctx.clone());
+            let cs_base_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_base_cptr);
+            let cs_dst_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_dst_cptr);
+            self.acx
+                .class_pag
+                .set_ptr_func(&cs_base_cptr_id, func_tag.clone());
+            self.acx.class_pag.set_ptr_func(&cs_dst_cptr_id, func_tag.clone());
+            self.acx
+                .class_pag
+                .set_ptr_func(&cs_base_cptr_id, func_tag.clone());
+            debug!(
+                "Adding class load edge to pag {} -> {} in function {} ",
+                cs_base_cptr_id,
+                cs_dst_cptr_id,
+                func_ref.to_string(),
+            );
+            self.acx.class_pag.add_load(
+                cs_base_cptr_id.clone(),
+                load_edge.field.clone(),
+                cs_dst_cptr_id.clone(),
+            );
+        }
+
+        for store_edge in class_fpag.iter_store_edges() {
+            let base_cptr = class_fpag.get_ptr(&store_edge.base_ptr_id).unwrap();
+            let src_cptr = class_fpag.get_ptr(&store_edge.src_ptr_id).unwrap();
+
+            let cs_base_cptr = base_cptr.clone().with_context(ctx.clone());
+            let cs_src_cptr = src_cptr.clone().with_context(ctx.clone());
+            let cs_base_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_base_cptr);
+            let cs_src_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_src_cptr);
+            self.acx
+                .class_pag
+                .set_ptr_func(&cs_base_cptr_id, func_tag.clone());
+            self.acx.class_pag.set_ptr_func(&cs_src_cptr_id, func_tag.clone());
+            self.acx
+                .class_pag
+                .set_ptr_func(&cs_base_cptr_id, func_tag.clone());
+            debug!(
+                "Adding class store edge to pag {} -> {} in function {} ",
+                cs_src_cptr_id,
+                cs_base_cptr_id,
+                func_ref.to_string(),
+            );
+            self.acx.class_pag.add_store(
+                cs_base_cptr_id.clone(),
+                store_edge.field.clone(),
+                cs_src_cptr_id.clone(),
+            );
+        }
+
+        for call_arg_edge in class_fpag.call_arg_edges() {
+            let fml_cptr = class_fpag.get_ptr(&call_arg_edge.formal_ptr_id).unwrap();
+            let act_cptr = class_fpag.get_ptr(&call_arg_edge.actual_ptr_id).unwrap();
+
+            let ctx_t = crate::rcpta::Context::new_k_limited_context(
+                &ctx,
+                call_arg_edge.call_site.clone(),
+                self.acx.analysis_options.context_depth as usize,
+            );
+
+            let cs_fml_cptr = fml_cptr.clone().with_context(ctx_t);
+            let cs_act_cptr = act_cptr.clone().with_context(ctx.clone());
+            let cs_fml_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_fml_cptr);
+            let cs_act_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_act_cptr);
+            self.acx.class_pag.set_ptr_func(&cs_act_cptr_id, func_tag.clone());
+            debug!(
+                "Adding class call arg edge to pag {} -> {} in function {:?} at callsite {} ",
+                cs_act_cptr_id,
+                cs_fml_cptr_id,
+                func_ref.to_string(),
+                call_arg_edge.call_site
+            );
+            self.acx.class_pag.add_call_arg(
+                call_arg_edge.call_site.clone(),
+                call_arg_edge.arg_idx,
+                cs_act_cptr_id,
+                cs_fml_cptr_id,
+            );
+        }
+
+        for call_ret_edge in class_fpag.call_ret_edges() {
+            let fml_cptr = class_fpag.get_ptr(&call_ret_edge.formal_ret_ptr_id).unwrap();
+            let act_cptr = class_fpag.get_ptr(&call_ret_edge.actual_ret_ptr_id).unwrap();
+
+            let ctx_t = crate::rcpta::Context::new_k_limited_context(
+                &ctx,
+                call_ret_edge.call_site.clone(),
+                self.acx.analysis_options.context_depth as usize,
+            );
+
+            let cs_fml_cptr = fml_cptr.clone().with_context(ctx_t);
+            let cs_act_cptr = act_cptr.clone().with_context(ctx.clone());
+            let cs_fml_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_fml_cptr);
+            let cs_act_cptr_id = self.acx.class_pag.get_or_create_ptr(cs_act_cptr);
+            self.acx.class_pag.set_ptr_func(&cs_act_cptr_id, func_tag.clone());
+            debug!(
+                "Adding class call ret edge to pag {} -> {} in function {:?} at callsite {} ",
+                cs_fml_cptr_id,
+                cs_act_cptr_id,
+                func_ref.to_string(),
+                call_ret_edge.call_site
+            );
+            self.acx
+                .class_pag
+                .add_call_ret(call_ret_edge.call_site.clone(), cs_fml_cptr_id, cs_act_cptr_id);
+        }
+
         let edges_iter = fpag.internal_edges_iter();
         for (src, dst, kind) in edges_iter {
             let cs_src = self.mk_cs_path(src, func.cid);
@@ -183,7 +377,8 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
         for (callsite, callee) in &fpag.static_dispatch_callsites {
             let cs_callsite = self.mk_cs_callsite(callsite, func.cid);
             self.process_new_call(&cs_callsite, callee);
-            self.call_graph.set_callsite_type(callsite.into(), CallType::StaticDispatch);
+            self.call_graph
+                .set_callsite_type(callsite.into(), CallType::StaticDispatch);
         }
 
         // For special callsites, we have summary the effects. Therefore we only add call edge
@@ -195,7 +390,8 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
             let cs_callee = self.mk_cs_func(*callee, empty_cid);
             self.call_graph.add_edge(cs_callsite.into(), func, cs_callee);
             // This may classify some special dynamic calls into static calls
-            self.call_graph.set_callsite_type(callsite.into(), CallType::StaticDispatch);
+            self.call_graph
+                .set_callsite_type(callsite.into(), CallType::StaticDispatch);
         }
 
         // For std::ops::call, dynamic and fnptr callsites, add them to the dynamic_calls and fnptr_calls maps.
@@ -203,21 +399,27 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
             let cs_dyn_fn_obj = self.mk_cs_path(dyn_fn_obj, func.cid);
             let cs_callsite = self.mk_cs_callsite(callsite, func.cid);
             let dyn_node_id = self.dyn_node_id(&cs_dyn_fn_obj);
-            self.assoc_calls.add_dynamic_fntrait_call(dyn_node_id, cs_callsite);
-            self.call_graph.set_callsite_type(callsite.into(), CallType::DynamicFnTrait);
+            self.assoc_calls
+                .add_dynamic_fntrait_call(dyn_node_id, cs_callsite);
+            self.call_graph
+                .set_callsite_type(callsite.into(), CallType::DynamicFnTrait);
         }
         for (dyn_var, callsite) in &fpag.dynamic_dispatch_callsites {
             let cs_dyn_var = self.mk_cs_path(dyn_var, func.cid);
             let cs_callsite = self.mk_cs_callsite(callsite, func.cid);
             let dyn_node_id = self.dyn_node_id(&cs_dyn_var);
-            self.assoc_calls.add_dynamic_dispatch_call(dyn_node_id, cs_callsite);
-            self.call_graph.set_callsite_type(callsite.into(), CallType::DynamicDispatch);
+            self.assoc_calls
+                .add_dynamic_dispatch_call(dyn_node_id, cs_callsite);
+            self.call_graph
+                .set_callsite_type(callsite.into(), CallType::DynamicDispatch);
         }
         for (fn_ptr, callsite) in &fpag.fnptr_callsites {
             let cs_fn_ptr = self.mk_cs_path(fn_ptr, func.cid);
             let cs_callsite = self.mk_cs_callsite(callsite, func.cid);
-            self.assoc_calls.add_fnptr_call(self.pag.get_or_insert_node(&cs_fn_ptr), cs_callsite);
-            self.call_graph.set_callsite_type(callsite.into(), CallType::FnPtr);
+            self.assoc_calls
+                .add_fnptr_call(self.pag.get_or_insert_node(&cs_fn_ptr), cs_callsite);
+            self.call_graph
+                .set_callsite_type(callsite.into(), CallType::FnPtr);
         }
     }
 
@@ -233,26 +435,42 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
             // borrow self (&self or &mut self)
             if util::has_self_ref_parameter(self.tcx(), callee_def_id) {
                 // the instance should be the pointed-to object of the self pointer
-                let callee_cid = self.ctx_strategy.new_instance_call_context(callsite, None).unwrap_or_else(|| {
-                    // rcpta: ensure callee is always in call graph so its body is built (Load/Cast edges).
-                    // When strategy returns None (e.g. object-sensitive with no receiver), use static context.
-                    self.ctx_strategy.new_static_call_context(callsite)
-                });
+                let callee_cid = if analysis::is_ctx_should_be_compressed(callsite, callee, self.acx) {
+                    callsite.func.cid
+                } else {
+                    self.ctx_strategy
+                        .new_instance_call_context(callsite, None)
+                        .unwrap_or_else(|| {
+                            // rcpta: ensure callee is always in call graph so its body is built (Load/Cast edges).
+                            // When strategy returns None (e.g. object-sensitive with no receiver), use static context.
+                            self.ctx_strategy.new_static_call_context(callsite)
+                        })
+                };
                 let cs_callee = CSFuncId::new(callee_cid, *callee);
                 self.add_call_edge(callsite, &cs_callee);
                 let self_ref: &Rc<CSPath> = callsite.args.get(0).expect("invalid arguments");
                 let self_ref_id = self.pag.get_or_insert_node(self_ref);
-                self.assoc_calls.add_static_dispatch_instance_call(self_ref_id, callsite.clone(), *callee);
-            } else { // move self
+                self.assoc_calls
+                    .add_static_dispatch_instance_call(self_ref_id, callsite.clone(), *callee);
+            } else {
+                // move self
                 let instance = callsite.args.get(0).expect("invalid arguments");
-                let callee_cid = self.ctx_strategy.new_instance_call_context(callsite, Some(instance)).unwrap_or_else(|| {
-                    self.ctx_strategy.new_static_call_context(callsite)
-                });
+                let callee_cid = if analysis::is_ctx_should_be_compressed(callsite, callee, self.acx) {
+                    callsite.func.cid
+                } else {
+                    self.ctx_strategy
+                        .new_instance_call_context(callsite, Some(instance))
+                        .unwrap_or_else(|| self.ctx_strategy.new_static_call_context(callsite))
+                };
                 let cs_callee = CSFuncId::new(callee_cid, *callee);
                 self.add_call_edge(callsite, &cs_callee);
             }
         } else {
-            let callee_cid = self.ctx_strategy.new_static_call_context(callsite);
+            let callee_cid = if analysis::is_ctx_should_be_compressed(callsite, callee, self.acx) {
+                callsite.func.cid
+            } else {
+                self.ctx_strategy.new_static_call_context(callsite)
+            };
             let cs_callee = CSFuncId::new(callee_cid, *callee);
             self.add_call_edge(callsite, &cs_callee);
         }
@@ -273,7 +491,13 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
 
     fn process_new_call_instances(&mut self, new_call_instances: &Vec<(Rc<CSCallSite>, Rc<CSPath>, FuncId)>) {
         for (callsite, instance, callee_id) in new_call_instances {
-            if let Some(callee_cid) = self.ctx_strategy.new_instance_call_context(callsite, Some(instance)) {
+            if let Some(callee_cid) = if analysis::is_ctx_should_be_compressed(callsite, callee_id, self.acx)
+            {
+                Some(callsite.func.cid)
+            } else {
+                self.ctx_strategy
+                    .new_instance_call_context(callsite, Some(instance))
+            } {
                 let cs_callee = CSFuncId::new(callee_cid, *callee_id);
                 self.add_call_edge(callsite, &cs_callee);
             }
@@ -293,25 +517,22 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
         }
     }
 
-
     fn mk_cs_path(&mut self, path: &Rc<Path>, cid: ContextId) -> Rc<CSPath> {
         match path.value() {
             PathEnum::Parameter { .. }
             | PathEnum::LocalVariable { .. }
-            | PathEnum::ReturnValue { .. } 
+            | PathEnum::ReturnValue { .. }
             | PathEnum::Auxiliary { .. }
             | PathEnum::QualifiedPath { .. }
-            | PathEnum::OffsetPath { .. } => {
-                CSPath::new_cs_path(cid, path.clone())
-            }
+            | PathEnum::OffsetPath { .. } => CSPath::new_cs_path(cid, path.clone()),
             PathEnum::HeapObj { .. } => {
-                // Directly use the context of the method for the heap objects 
+                // Directly use the context of the method for the heap objects
                 CSPath::new_cs_path(cid, path.clone())
             }
             PathEnum::Constant
             | PathEnum::StaticVariable { .. }
             | PathEnum::PromotedConstant { .. }
-            | PathEnum::Function(..) 
+            | PathEnum::Function(..)
             | PathEnum::PromotedStrRefArray
             | PathEnum::PromotedArgumentV1Array
             | PathEnum::Type(..) => {
@@ -328,7 +549,10 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
 
     fn mk_cs_callsite(&mut self, callsite: &Rc<CallSite>, cid: ContextId) -> Rc<CSCallSite> {
         Rc::new(CSCallSite::new(
-            CSFuncId { cid, func_id: callsite.func },
+            CSFuncId {
+                cid,
+                func_id: callsite.func,
+            },
             callsite.location,
             callsite
                 .args
@@ -349,7 +573,6 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
     pub fn get_pt_data(&self) -> &DiffPTDataTy {
         &self.pt_data
     }
-
 }
 
 impl<'pta, 'tcx, 'compilation, S: ContextStrategy> PointerAnalysis<'tcx, 'compilation>
@@ -364,9 +587,11 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> PointerAnalysis<'tcx, 'compil
         rta.analyze();
         self.pre_analysis_time += rta.analysis_time;
         self.stack_filter = Some(StackFilter::new(rta.call_graph));
-        self.ctx_strategy.with_stack_filter(self.stack_filter.as_mut().unwrap());
+        self.ctx_strategy
+            .with_stack_filter(self.stack_filter.as_mut().unwrap());
         self.pre_analysis_time += self.stack_filter.as_ref().unwrap().fra_time();
-        println!("Pre-analysis time {}", 
+        println!(
+            "Pre-analysis time {}",
             humantime::format_duration(self.pre_analysis_time).to_string()
         );
     }
@@ -377,7 +602,8 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> PointerAnalysis<'tcx, 'compil
         let entry_point = self.acx.entry_point;
         let empty_context_id = self.get_empty_context_id();
         let entry_func_id = self.acx.get_func_id(entry_point, self.tcx().mk_args(&[]));
-        self.call_graph.add_node(CSFuncId::new(empty_context_id, entry_func_id));
+        self.call_graph
+            .add_node(CSFuncId::new(empty_context_id, entry_func_id));
 
         // process statements of reachable functions
         self.process_reach_funcs();
@@ -421,7 +647,7 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> PointerAnalysis<'tcx, 'compil
     fn finalize(&self) {
         // dump call graph, points-to results
         results_dumper::dump_results(self.acx, &self.call_graph, &self.pt_data, &self.pag);
-        
+
         // dump pta statistics
         let pta_stat = ContextSensitiveStat::new(self);
         pta_stat.dump_stats();

@@ -12,13 +12,100 @@
 
 use std::fmt;
 
+use rustc_middle::mir::Location;
+
 /// Placeholder for context-sensitive analysis. Replace with real context type (e.g. k-CFA stack) later.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
-pub struct Context(());
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+// 这里先采用k-callsites
+pub struct DSLCallSite {
+    /// Function name (e.g. `main`, `Point::new`)
+    pub func: String,
+    /// MIR location (e.g. `bb0[6]`, `bb1[0]`)
+    pub location: Location,
+}
+
+impl DSLCallSite {
+    pub fn new(func: String, location: Location) -> Self {
+        Self { func, location }
+    }
+
+    pub fn to_string(&self) -> String {
+        format!(
+            "{}:bb{}[{}]",
+            self.func,
+            self.location.block.index(),
+            self.location.statement_index
+        )
+    }
+}
+
+impl fmt::Display for DSLCallSite {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct Context {
+    pub context_elems: Vec<DSLCallSite>,
+}
 
 impl Context {
-    pub fn new() -> Self {
-        Context(())
+    pub fn new_empty() -> Self {
+        Context {
+            context_elems: Vec::new(),
+        }
+    }
+
+    pub fn new(context_elems: Vec<DSLCallSite>) -> Self {
+        Context { context_elems }
+    }
+
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.context_elems.len()
+    }
+
+    #[inline]
+    pub fn empty(&self) -> bool {
+        self.context_elems.is_empty()
+    }
+
+    /// Composes a new context from a given context and a new context element.
+    /// Discard the last old context element if the length of context exceeds the depth limit.
+    pub fn new_k_limited_context(old_ctx: &Context, elem: DSLCallSite, k: usize) -> Self {
+        let mut elems = Vec::with_capacity(k);
+        if k > 0 {
+            elems.push(elem);
+            if old_ctx.len() < k {
+                elems.extend_from_slice(&old_ctx.context_elems[..])
+            } else {
+                elems.extend_from_slice(&old_ctx.context_elems[..k - 1])
+            }
+        }
+        Context { context_elems: elems }
+    }
+
+    pub fn to_string(&self) -> String {
+        format!(
+            "[{}]",
+            self.context_elems
+                .iter()
+                .rev()
+                .map(|elem| elem.to_string())
+                .collect::<Vec<_>>()
+                .join("->")
+        )
+    }
+}
+
+impl fmt::Display for Context {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.empty() {
+            write!(f, "")
+        } else {
+            write!(f, "{}", self.to_string())
+        }
     }
 }
 
@@ -125,13 +212,22 @@ impl ClassPtr {
 
     /// Attach context (for context-sensitive analysis).
     pub fn with_context(mut self, ctx: Context) -> Self {
-        self.context = Some(ctx);
+        self.context = Some(ctx.clone());
+        self.id = format!("{}{}", ctx, self.id);
         self
     }
 }
 
 impl fmt::Display for ClassPtr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}", self.id, self.class_type)
+        write!(
+            f,
+            "{}{}:[{}]",
+            self.context
+                .as_ref()
+                .map_or_else(|| "".into(), |ctx| format!("{} ", ctx)),
+            self.id,
+            self.class_type
+        )
     }
 }

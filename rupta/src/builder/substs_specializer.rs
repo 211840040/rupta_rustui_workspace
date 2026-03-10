@@ -109,7 +109,7 @@ impl<'tcx> SubstsSpecializer<'tcx> {
     }
 
     pub fn specialize_generic_argument_type(&self, gen_arg_type: Ty<'tcx>) -> Ty<'tcx> {
-        debug!("Specializing generic arg ty {:?}", gen_arg_type);
+        // debug!("Specializing generic arg ty {:?}", gen_arg_type);
         // The projection of an associated type. For example,
         // `<T as Trait<..>>::N`.
         // struct ProjectionTy<'tcx> {
@@ -340,11 +340,9 @@ impl<'tcx> SubstsSpecializer<'tcx> {
                                 args,
                                 term,
                                 ..
-                            }) => {
-                                ExistentialPredicate::Projection(ExistentialProjection::new_from_args(
-                                    self.tcx, def_id, args, term,
-                                ))
-                            }
+                            }) => ExistentialPredicate::Projection(ExistentialProjection::new_from_args(
+                                self.tcx, def_id, args, term,
+                            )),
                             ExistentialPredicate::AutoTrait(_) => pred,
                         })
                     },

@@ -10,6 +10,7 @@ use super::pag::PAGEdgeEnum;
 use crate::mir::call_site::CallSite;
 use crate::mir::function::FuncId;
 use crate::mir::path::Path;
+use crate::rcpta::ClassPAG;
 use crate::util::chunked_queue::{self, ChunkedQueue};
 
 /// An edge consists of the source path, the destination path and the PAG edge type.
@@ -22,19 +23,22 @@ pub struct FuncPAG {
     pub(crate) internal_edges: ChunkedQueue<InternalEdge>,
     pub(crate) static_variables_involved: HashSet<Rc<Path>>,
 
-    // Calls that can be statically resolved, including the Fn* trait calls that can 
-    // be directly resolved. 
+    // Calls that can be statically resolved, including the Fn* trait calls that can
+    // be directly resolved.
     pub(crate) static_dispatch_callsites: Vec<(Rc<CallSite>, FuncId)>,
     // Special calls like alloc().
     pub(crate) special_callsites: Vec<(Rc<CallSite>, FuncId)>,
     // Pairs of dynamic type receivers and their corresponding callsites.
     pub(crate) dynamic_dispatch_callsites: Vec<(Rc<Path>, Rc<CallSite>)>,
-    // Pairs of the first arguments of dynamic `Fn::call`, `FnMut::call_mut`, 
+    // Pairs of the first arguments of dynamic `Fn::call`, `FnMut::call_mut`,
     // `FnOnce::call_once` calls and the callsites.
     pub(crate) dynamic_fntrait_callsites: Vec<(Rc<Path>, Rc<CallSite>)>,
     // Pairs of function pointers and their callsites, including the fnptr
     // callsites that are speciallized from a Fn* trait callsite.
     pub(crate) fnptr_callsites: Vec<(Rc<Path>, Rc<CallSite>)>,
+
+    /// rcpta: class-level pointer flow graph for this function, used for class-level points-to analysis (rcpta)
+    pub class_fpag: ClassPAG,
 }
 
 impl FuncPAG {
@@ -48,6 +52,7 @@ impl FuncPAG {
             dynamic_fntrait_callsites: Vec::new(),
             dynamic_dispatch_callsites: Vec::new(),
             fnptr_callsites: Vec::new(),
+            class_fpag: ClassPAG::new(),
         }
     }
 
@@ -67,19 +72,12 @@ impl FuncPAG {
         self.static_dispatch_callsites.push((callsite, callee));
     }
 
-    pub fn add_dynamic_fntrait_callsite(
-        &mut self,
-        dynamic_fn_obj: Rc<Path>,
-        std_ops_callsite: Rc<CallSite>,
-    ) {
-        self.dynamic_fntrait_callsites.push((dynamic_fn_obj, std_ops_callsite));
+    pub fn add_dynamic_fntrait_callsite(&mut self, dynamic_fn_obj: Rc<Path>, std_ops_callsite: Rc<CallSite>) {
+        self.dynamic_fntrait_callsites
+            .push((dynamic_fn_obj, std_ops_callsite));
     }
 
-    pub fn add_dynamic_dispatch_callsite(
-        &mut self,
-        dynamic_obj: Rc<Path>,
-        dyn_callsite: Rc<CallSite>,
-    ) {
+    pub fn add_dynamic_dispatch_callsite(&mut self, dynamic_obj: Rc<Path>, dyn_callsite: Rc<CallSite>) {
         self.dynamic_dispatch_callsites.push((dynamic_obj, dyn_callsite));
     }
 

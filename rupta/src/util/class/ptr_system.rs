@@ -4,7 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 //! Class-level Pointer and Object Abstraction System
-//! 
+//!
 //! This module provides a simplified abstraction for class pointers and objects,
 //! independent of RUPTA's Path abstraction. It allows us to verify that our analysis
 //! correctly models class references as pointers and heap allocations as objects.
@@ -14,9 +14,9 @@
 //! - ClassObj: A heap-allocated class instance
 //! - ClassPointsTo: Points-to relationships between pointers and objects
 
+use log::*;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
-use log::*;
 
 /// Represents a class-level pointer (variable, parameter, return value, field)
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -123,13 +123,13 @@ impl fmt::Display for ClassObj {
 pub struct ClassPtrSystem {
     /// All class pointers: ptr_id -> ClassPtr
     ptrs: HashMap<String, ClassPtr>,
-    
+
     /// All class objects: obj_id -> ClassObj
     objs: HashMap<String, ClassObj>,
-    
+
     /// Points-to relationships: ptr_id -> set of obj_ids
     points_to: HashMap<String, HashSet<String>>,
-    
+
     /// Object counter for generating unique IDs
     obj_counter: usize,
 }
@@ -162,10 +162,10 @@ impl ClassPtrSystem {
     pub fn create_obj(&mut self, class_type: String, alloc_location: String) -> String {
         let obj_id = format!("obj_{}", self.obj_counter);
         self.obj_counter += 1;
-        
+
         let obj = ClassObj::new(obj_id.clone(), class_type.clone(), alloc_location);
         self.objs.insert(obj_id.clone(), obj.clone());
-        
+
         debug!("ClassPtrSystem: Created object {}", obj);
         obj_id
     }
@@ -183,7 +183,7 @@ impl ClassPtrSystem {
             .entry(ptr_id.to_string())
             .or_insert_with(HashSet::new)
             .insert(obj_id.to_string());
-        
+
         debug!("ClassPtrSystem: {} -> {}", ptr_id, obj_id);
     }
 
@@ -191,32 +191,36 @@ impl ClassPtrSystem {
     /// (called during assign operations)
     pub fn propagate_points_to(&mut self, src_ptr_id: &str, dst_ptr_id: &str) {
         // Clone the source objects to avoid borrowing issues
-        let src_objs: Vec<String> = self.points_to.get(src_ptr_id)
+        let src_objs: Vec<String> = self
+            .points_to
+            .get(src_ptr_id)
             .map(|objs| objs.iter().cloned().collect())
             .unwrap_or_default();
-        
+
         if !src_objs.is_empty() {
-            let dst_objs = self.points_to
+            let dst_objs = self
+                .points_to
                 .entry(dst_ptr_id.to_string())
                 .or_insert_with(HashSet::new);
-            
+
             for obj_id in &src_objs {
                 dst_objs.insert(obj_id.clone());
             }
-            
-            debug!("ClassPtrSystem: Propagated {} -> {} ({} objects)", 
-                   src_ptr_id, dst_ptr_id, src_objs.len());
+
+            debug!(
+                "ClassPtrSystem: Propagated {} -> {} ({} objects)",
+                src_ptr_id,
+                dst_ptr_id,
+                src_objs.len()
+            );
         }
     }
 
     /// Get all objects a pointer points to
     pub fn get_points_to(&self, ptr_id: &str) -> Vec<&ClassObj> {
-        self.points_to.get(ptr_id)
-            .map(|obj_ids| {
-                obj_ids.iter()
-                    .filter_map(|id| self.objs.get(id))
-                    .collect()
-            })
+        self.points_to
+            .get(ptr_id)
+            .map(|obj_ids| obj_ids.iter().filter_map(|id| self.objs.get(id)).collect())
             .unwrap_or_default()
     }
 
@@ -290,7 +294,7 @@ pub fn path_to_class_ptr_id(
     param_slots: Option<usize>,
 ) -> String {
     use crate::mir::path::{PathEnum, PathSelector};
-    
+
     match &path.value {
         PathEnum::LocalVariable { func_id: _, ordinal } => {
             // In callee body, use param_N/ret for parameter slots so they match CallArg formals.
@@ -336,7 +340,8 @@ pub fn path_to_class_ptr_id(
             }
             let base_id = path_to_class_ptr_id(base, func_name, param_slots);
             // Simplify projection to field name if possible
-            let proj_str = projection.iter()
+            let proj_str = projection
+                .iter()
                 .map(|sel| format!("{:?}", sel))
                 .collect::<Vec<_>>()
                 .join(".");
