@@ -43,13 +43,13 @@ use crate::mir::function::{FuncId, FunctionReference, GenericArgE};
 use crate::mir::known_names::{KnownNames, KnownNamesCache};
 use crate::mir::path::Path;
 use crate::mir::path::{PathEnum, ProjectionElems};
-use crate::util;
-use crate::util::options::AnalysisOptions;
-use crate::util::type_util::{self, FieldByteOffsetCache, PathCastCache, PointerProjectionsCache, TypeCache};
 use crate::rcpta::ClassPAG;
+use crate::util;
 use crate::util::class::ClassCallGraph;
 use crate::util::class::ClassPtrSystem;
 use crate::util::class::ClassTypeSystem;
+use crate::util::options::AnalysisOptions;
+use crate::util::type_util::{self, FieldByteOffsetCache, PathCastCache, PointerProjectionsCache, TypeCache};
 
 /// Global information of the analysis
 pub struct AnalysisContext<'tcx, 'compilation> {
@@ -113,7 +113,7 @@ pub struct AnalysisContext<'tcx, 'compilation> {
     /// Class Type System for tracking DSL class types independently of rustc's type system.
     /// This provides a simplified view of class types, instances, references, and field types.
     pub class_type_system: ClassTypeSystem,
-    
+
     /// Class call graph that only tracks class method calls (filters out DSL internal details)
     pub class_call_graph: ClassCallGraph,
 
@@ -258,6 +258,7 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
     pub fn get_canonical_rcpta_ptr(&self, ptr_id: &str) -> String {
         let mut id = ptr_id.to_string();
         while let Some(canonical) = self.rcpta_alias_map.get(&id) {
+            // debug!("{}", id);
             id = canonical.clone();
         }
         id
@@ -271,7 +272,8 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
             return index;
         }
         let index = self.class_field_index_counter;
-        self.class_field_name_to_index.insert(field_name.to_string(), index);
+        self.class_field_name_to_index
+            .insert(field_name.to_string(), index);
         self.class_field_index_counter += 1;
         index
     }
@@ -374,7 +376,10 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
                 return Some(*func_id);
             }
             let n = name.len();
-            if target_name.len() >= n && target_name.as_bytes().get(n) == Some(&b'<') && target_name.starts_with(name.as_ref()) {
+            if target_name.len() >= n
+                && target_name.as_bytes().get(n) == Some(&b'<')
+                && target_name.starts_with(name.as_ref())
+            {
                 return Some(*func_id);
             }
         }
@@ -393,7 +398,9 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
                 return Some(self.get_or_add_function_reference(func_ref));
             }
             let n = name.len();
-            if target_name.starts_with(&name) && (target_name.len() == n || target_name.as_bytes().get(n) == Some(&b'<')) {
+            if target_name.starts_with(&name)
+                && (target_name.len() == n || target_name.as_bytes().get(n) == Some(&b'<'))
+            {
                 return Some(self.get_or_add_function_reference(func_ref));
             }
         }
@@ -424,7 +431,8 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
             }
             let func_ref = FunctionReference::new_function_reference(def_id, vec![]);
             let name = func_ref.to_string();
-            if name.contains(&class_prefix) && (name.contains(&method_suffix) || name.ends_with(method_name)) {
+            if name.contains(&class_prefix) && (name.contains(&method_suffix) || name.ends_with(method_name))
+            {
                 let id = self.get_or_add_function_reference(func_ref);
                 if !out.contains(&id) {
                     out.push(id);
@@ -475,8 +483,7 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
     pub fn flush_pending_class_cg_edges(&mut self) {
         use crate::util::class::analysis;
         let pending = std::mem::take(&mut self.pending_class_cg_edges);
-        for (caller_class, caller_method, callee_class, callee_method, callee_func_id) in pending
-        {
+        for (caller_class, caller_method, callee_class, callee_method, callee_func_id) in pending {
             let is_self_edge = caller_class == callee_class && caller_method == callee_method;
             if is_self_edge {
                 continue;
@@ -484,14 +491,17 @@ impl<'tcx, 'compilation> AnalysisContext<'tcx, 'compilation> {
             let callee_func_ref = self.get_function_reference(callee_func_id);
             // Skip edge when caller and callee have the same method name but different classes:
             // e.g. Entity::get_id -> Identifiable::get_id is the impl "calling" the trait/interface declaration, not a real call.
-            let same_method_different_class = !caller_method.is_empty()
-                && caller_method == callee_method
-                && caller_class != callee_class;
+            let same_method_different_class =
+                !caller_method.is_empty() && caller_method == callee_method && caller_class != callee_class;
             if same_method_different_class {
                 continue;
             }
             let is_getter_setter_actual = analysis::identify_getter_setter(&callee_func_ref)
-                .map(|gs| self.class_type_system.get_field_index(&gs.class_name, &gs.field_name).is_some())
+                .map(|gs| {
+                    self.class_type_system
+                        .get_field_index(&gs.class_name, &gs.field_name)
+                        .is_some()
+                })
                 .unwrap_or(false);
             if !is_getter_setter_actual {
                 self.class_call_graph.add_call_edge(

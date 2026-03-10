@@ -66,3 +66,7 @@ path = "src/bin/rcpta_full_hierarchy/entry_full_rcpta_demo.rs"
 [[bin]]
 name = "entry_full_rcpta_demo_expanded"
 path = "expanded/entry_full_rcpta_demo_expanded.rs"
+
+[[bin]]
+name = "prop_drivable_interface_polymorphism"
+path = "src/bin/vehicle_hierarchy/prop_drivable_interface_polymorphism.rs"
