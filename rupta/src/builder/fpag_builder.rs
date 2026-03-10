@@ -662,6 +662,7 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                                 ret_ptr_id.clone(),
                                 class_name,
                             ));
+                            debug!("Add call-ret assign edge: {} -> {}, in func: {}", src_ptr_id, ret_ptr_id, func_name);
                             self.fpag.class_fpag.add_assign(&src_ptr_id, &ret_ptr_id);
                         }
                     }
