@@ -54,6 +54,7 @@ echo "开始分析..."
   --entry-func main \
   --pta-type cs \
   --context-depth 1 \
+  --dsl-pta-type ci \
   --dump-pts "$OUTPUT_DIR/${BIN_TARGET}_pts.txt" \
   --dump-mir "$OUTPUT_DIR/${BIN_TARGET}_mir.txt" \
   --dump-call-graph "$OUTPUT_DIR/call_graph.dot" \

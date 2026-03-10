@@ -47,12 +47,24 @@ fn make_options_parser() -> Command<'static> {
             .default_value("callsite-sensitive")
             .help("The type of pointer analysis.")
             .long_help("Andersen and callsite-sensitive pointer analyses are supported now."))
+        .arg(Arg::new("dsl-pta-type")
+            .long("dsl-pta-type")
+            .takes_value(true)
+            .value_parser(["ci","cs"])
+            .default_value("cs")
+            .help("The type of DSL pointer analysis, default cs"))
         .arg(Arg::new("context-depth")
             .long("context-depth")
             .takes_value(true)
             .value_parser(clap::value_parser!(u32))
             .default_value("1")
             .help("The context depth limit for a context-sensitive pointer analysis."))
+        .arg(Arg::new("dsl-cs-depth")
+            .long("dsl-cs-depth")
+            .takes_value(true)
+            .value_parser(clap::value_parser!(u32))
+            .default_value("1")
+            .help("The context depth limit for a dsl cs pointer analysis."))
         .arg(Arg::new("no-cast-constraint")
             .long("no-cast-constraint")
             .takes_value(false)
@@ -134,8 +146,10 @@ pub struct AnalysisOptions {
     pub entry_func: String,
     pub entry_def_id: Option<u32>,
     pub pta_type: PTAType,
+    pub dsl_pta_type: Option<String>,
     // options for context-sensitive analysis
     pub context_depth: u32,
+    pub dsl_cs_depth: u32,
     // options for handling cast propagation
     pub cast_constraint: bool,
     pub stack_filtering: bool,
@@ -167,7 +181,9 @@ impl Default for AnalysisOptions {
             entry_func: String::new(),
             entry_def_id: None,
             pta_type: PTAType::CallSiteSensitive,
+            dsl_pta_type: Some(String::from("cs")),
             context_depth: 1,
+            dsl_cs_depth: 1,
             cast_constraint: true,
             stack_filtering: true,
             dump_stats: true,
@@ -254,9 +270,16 @@ impl AnalysisOptions {
                 _ => unreachable!(),
             }
         }
+
+        
+        self.dsl_pta_type = matches.get_one::<String>("dsl-pta-type").cloned();
         
         if let Some(depth) = matches.get_one::<u32>("context-depth") {
             self.context_depth = *depth;
+        }
+
+        if let Some(dsl_depth) = matches.get_one::<u32>("dsl-cs-depth") {
+            self.dsl_cs_depth = *dsl_depth;
         }
 
         self.cast_constraint = !matches.contains_id("no-cast-constraint");

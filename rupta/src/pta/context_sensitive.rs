@@ -160,9 +160,7 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
             );
         }
 
-        let ctx = self
-            .ctx_strategy
-            .get_dsl_ctx(&self.get_context_by_id(func.cid), self.acx);
+        let ctx = analysis::make_dsl_ctx(&self.get_context_by_id(func.cid), self.acx, &self.ctx_strategy);
         debug!(
             "Context for function {} is {}",
             func_ref.to_string(),
@@ -285,11 +283,7 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
             let fml_cptr = class_fpag.get_ptr(&call_arg_edge.formal_ptr_id).unwrap();
             let act_cptr = class_fpag.get_ptr(&call_arg_edge.actual_ptr_id).unwrap();
 
-            let ctx_t = crate::rcpta::Context::new_k_limited_context(
-                &ctx,
-                call_arg_edge.call_site.clone(),
-                self.acx.analysis_options.context_depth as usize,
-            );
+            let ctx_t = analysis::make_dsl_kcallsite_ctx(&ctx, call_arg_edge.call_site.clone(), self.acx);
 
             let cs_fml_cptr = fml_cptr.clone().with_context(ctx_t);
             let cs_act_cptr = act_cptr.clone().with_context(ctx.clone());
@@ -315,11 +309,7 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
             let fml_cptr = class_fpag.get_ptr(&call_ret_edge.formal_ret_ptr_id).unwrap();
             let act_cptr = class_fpag.get_ptr(&call_ret_edge.actual_ret_ptr_id).unwrap();
 
-            let ctx_t = crate::rcpta::Context::new_k_limited_context(
-                &ctx,
-                call_ret_edge.call_site.clone(),
-                self.acx.analysis_options.context_depth as usize,
-            );
+            let ctx_t = analysis::make_dsl_kcallsite_ctx(&ctx, call_ret_edge.call_site.clone(), self.acx);
 
             let cs_fml_cptr = fml_cptr.clone().with_context(ctx_t);
             let cs_act_cptr = act_cptr.clone().with_context(ctx.clone());
