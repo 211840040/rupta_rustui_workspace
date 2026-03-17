@@ -10,7 +10,8 @@
 
 use crate::{
     mir::{call_site::BaseCallSite, function::FunctionReference},
-    rcpta::class_ptr::DSLCallSite,
+    pta::strategies::context_strategy::ContextStrategy,
+    rcpta::{class_ptr::DSLCallSite, Context},
 };
 use log::*;
 use regex::Regex;
@@ -225,6 +226,24 @@ pub fn is_impl_of_core_deref_trait<'tcx>(tcx: TyCtxt<'tcx>, def_id: DefId) -> bo
     let crate_name = tcx.crate_name(trait_did.krate).to_string();
     let path = tcx.def_path_str(trait_did);
     (crate_name == "core" || crate_name == "std") && path.contains("Deref")
+}
+
+pub fn is_impl_of_core_into_trait<'tcx>(tcx: TyCtxt<'tcx>, def_id: DefId) -> bool {
+    let Some(trait_did) = tcx.trait_of_item(def_id) else {
+        return false;
+    };
+    let crate_name = tcx.crate_name(trait_did.krate).to_string();
+    let path = tcx.def_path_str(trait_did);
+    (crate_name == "core" || crate_name == "std") && path.contains("Into")
+}
+
+pub fn is_impl_of_core_from_trait<'tcx>(tcx: TyCtxt<'tcx>, def_id: DefId) -> bool {
+    let Some(trait_did) = tcx.trait_of_item(def_id) else {
+        return false;
+    };
+    let crate_name = tcx.crate_name(trait_did.krate).to_string();
+    let path = tcx.def_path_str(trait_did);
+    (crate_name == "core" || crate_name == "std") && path.contains("From")
 }
 
 /// Whether the callee is Option::unwrap (core::option::Option::unwrap or std::option::Option::unwrap).
@@ -815,6 +834,46 @@ pub fn to_dsl_call_site(
     DSLCallSite::new(func_name, callsite.location)
 }
 
+pub fn make_dsl_ctx<S: ContextStrategy>(
+    context: &Rc<crate::mir::context::Context<S::E>>,
+    acx: &crate::mir::analysis_context::AnalysisContext,
+    ctx_strategy: &S,
+) -> Context {
+    if acx
+        .analysis_options
+        .dsl_pta_type
+        .clone()
+        .unwrap_or_else(|| "Unknown".to_string())
+        == "cs"
+    {
+        ctx_strategy.get_dsl_ctx(context, acx)
+    } else {
+        crate::rcpta::Context::new_empty()
+    }
+}
+
+pub fn make_dsl_kcallsite_ctx(
+    old_ctx: &Context,
+    elem: DSLCallSite,
+    acx: &crate::mir::analysis_context::AnalysisContext,
+) -> crate::rcpta::Context {
+    if acx
+        .analysis_options
+        .dsl_pta_type
+        .clone()
+        .unwrap_or_else(|| "Unknown".to_string())
+        == "cs"
+    {
+        crate::rcpta::Context::new_k_limited_context(
+            old_ctx,
+            elem,
+            acx.analysis_options.dsl_cs_depth as usize,
+        )
+    } else {
+        crate::rcpta::Context::new_empty()
+    }
+}
+
 // e.g. cs_test_example::_classes::_Cross::{impl#0}::id
 // -> cs_test_example::_classes::_Cross::data::{impl#0}::id
 pub fn is_ctx_should_be_compressed(
@@ -822,6 +881,15 @@ pub fn is_ctx_should_be_compressed(
     callee: &crate::mir::function::FuncId,
     acx: &crate::mir::analysis_context::AnalysisContext,
 ) -> bool {
+    if acx
+        .analysis_options
+        .dsl_pta_type
+        .clone()
+        .unwrap_or_else(|| "Unknown".to_string())
+        != "cs"
+    {
+        return false;
+    }
     let caller_func_ref = acx.get_function_reference(callsite.func.func_id);
     let callee_func_ref = acx.get_function_reference(*callee);
     if !is_class_related(&caller_func_ref) || !is_class_related(&callee_func_ref) {

@@ -211,6 +211,7 @@ impl ClassPtr {
     }
 
     /// Attach context (for context-sensitive analysis).
+    /// modify: add context to id
     pub fn with_context(mut self, ctx: Context) -> Self {
         self.context = Some(ctx.clone());
         self.id = format!("{}{}", ctx, self.id);

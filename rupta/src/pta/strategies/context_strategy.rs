@@ -36,10 +36,11 @@ pub trait ContextStrategy {
     {
     }
     fn get_dsl_ctx(
-        &mut self,
+        &self,
         context: &Rc<Context<Self::E>>,
         acx: &crate::mir::analysis_context::AnalysisContext,
     ) -> crate::rcpta::Context;
+    fn get_strategy_name(&self) -> String;
 }
 
 pub struct ContextInsensitive {}
@@ -76,11 +77,15 @@ impl ContextStrategy for ContextInsensitive {
     }
 
     fn get_dsl_ctx(
-        &mut self,
+        &self,
         _context: &Rc<Context<Self::E>>,
         _acx: &crate::mir::analysis_context::AnalysisContext,
     ) -> crate::rcpta::Context {
         crate::rcpta::Context::new_empty()
+    }
+
+    fn get_strategy_name(&self) -> String {
+        return String::from("ContextInsensitive");
     }
 }
 
@@ -148,7 +153,7 @@ impl ContextStrategy for KCallSiteSensitive {
     }
 
     fn get_dsl_ctx(
-        &mut self,
+        &self,
         context: &Rc<Context<Self::E>>,
         acx: &crate::mir::analysis_context::AnalysisContext,
     ) -> crate::rcpta::Context {
@@ -158,6 +163,10 @@ impl ContextStrategy for KCallSiteSensitive {
             .map(|callsite| analysis::to_dsl_call_site(*callsite, acx))
             .collect();
         crate::rcpta::Context::new(dsl_ctx_elems)
+    }
+
+    fn get_strategy_name(&self) -> String {
+        return String::from("KCallSiteSensitive");
     }
 }
 
@@ -223,12 +232,16 @@ impl ContextStrategy for KObjectSensitive {
     }
 
     fn get_dsl_ctx(
-        &mut self,
+        &self,
         _context: &Rc<Context<Self::E>>,
         _acx: &crate::mir::analysis_context::AnalysisContext,
     ) -> crate::rcpta::Context {
         // TODO: convert object-sensitive context to DSL context
         crate::rcpta::Context::new_empty()
+    }
+
+    fn get_strategy_name(&self) -> String {
+        return String::from("KObjectSensitive");
     }
 }
 
@@ -309,11 +322,15 @@ impl ContextStrategy for SimpleHybridContextSensitive {
     }
 
     fn get_dsl_ctx(
-        &mut self,
+        &self,
         _context: &Rc<Context<Self::E>>,
         _acx: &crate::mir::analysis_context::AnalysisContext,
     ) -> crate::rcpta::Context {
         // TODO: convert hybrid context to DSL context
         crate::rcpta::Context::new_empty()
+    }
+
+    fn get_strategy_name(&self) -> String {
+        return String::from("SimpleHybridContextSensitive");
     }
 }

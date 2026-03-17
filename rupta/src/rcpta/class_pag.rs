@@ -92,7 +92,8 @@ pub struct ClassPAG {
     ptrs: HashMap<String, ClassPtr>,
     /// All class objects: obj_id → ClassObj
     objs: HashMap<String, ClassObj>,
-    /// pointers' func tag
+    /// modify: pointers' func tag
+    /// 方便输出时分类
     ptrs_func: HashMap<String, String>,
 
     /// Assign: src_ptr_id → set of dst_ptr_id (copy/move)
