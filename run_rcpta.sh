@@ -104,7 +104,7 @@ if [[ -z "${RCPTA_SKIP_STACK_LIMIT:-}" ]]; then
 fi
 # Rust threads get stack from RUST_MIN_STACK (default 2 MiB); raise for deep recursion.
 export RUST_MIN_STACK=67108864   # 64 MiB per thread
-DSL_PTA_TYPE="ci"
+DSL_PTA_TYPE="cs"
 
 if [[ -n "$USE_LIB" ]]; then
   "$CARGO_PTA" pta \

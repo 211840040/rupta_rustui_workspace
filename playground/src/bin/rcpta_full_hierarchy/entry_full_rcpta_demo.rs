@@ -44,30 +44,30 @@ pub fn main() {
     let item_c = item_a.clone();
     let _ = item_c.get_id();
 
-    // --- Upcast: Item -> Entity, KeyedItem -> Item -> Entity ---
-    let entity_a: CRc<Entity> = item_a.clone().into_superclass();
-    let _ = entity_a.describe();
-    let item_view: CRc<Item> = keyed.clone().into_superclass();
-    let _ = item_view.get_id();
+    // // --- Upcast: Item -> Entity, KeyedItem -> Item -> Entity ---
+    // let entity_a: CRc<Entity> = item_a.clone().into_superclass();
+    // let _ = entity_a.describe();
+    // let item_view: CRc<Item> = keyed.clone().into_superclass();
+    // let _ = item_view.get_id();
 
-    // --- Downcast + Option::unwrap ---
-    let back_to_item = entity_a.clone().try_into_subtype::<CRc<Item>>();
-    let item_again = back_to_item.unwrap();
-    let _ = item_again.describe();
+    // // --- Downcast + Option::unwrap ---
+    // let back_to_item = entity_a.clone().try_into_subtype::<CRc<Item>>();
+    // let item_again = back_to_item.unwrap();
+    // let _ = item_again.describe();
 
     // --- Cast to mixin (Item has Tagged) ---
     let tagged: CRc<Tagged> = item_b.clone().cast_mixin();
     let _ = tagged.describe_tagged();
 
-    // --- Interface conversion (Entity implements Identifiable; into CRc<Identifiable>) ---
-    let as_entity: CRc<Entity> = item_b.clone().into_superclass();
-    let identifiable: CRc<Identifiable> = as_entity.into();
-    let _ = identifiable.get_id();
+    // // --- Interface conversion (Entity implements Identifiable; into CRc<Identifiable>) ---
+    // let as_entity: CRc<Entity> = item_b.clone().into_superclass();
+    // let identifiable: CRc<Identifiable> = as_entity.into();
+    // let _ = identifiable.get_id();
 
-    // --- Load / Store ---
-    holder.set_item(item_b);
-    let loaded = holder.get_item();
-    let _ = loaded.get_id();
+    // // --- Load / Store ---
+    // holder.set_item(item_b);
+    // let loaded = holder.get_item();
+    // let _ = loaded.get_id();
 
     std::mem::drop(holder);
 }

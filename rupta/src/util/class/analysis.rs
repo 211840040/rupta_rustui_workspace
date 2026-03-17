@@ -228,6 +228,24 @@ pub fn is_impl_of_core_deref_trait<'tcx>(tcx: TyCtxt<'tcx>, def_id: DefId) -> bo
     (crate_name == "core" || crate_name == "std") && path.contains("Deref")
 }
 
+pub fn is_impl_of_core_into_trait<'tcx>(tcx: TyCtxt<'tcx>, def_id: DefId) -> bool {
+    let Some(trait_did) = tcx.trait_of_item(def_id) else {
+        return false;
+    };
+    let crate_name = tcx.crate_name(trait_did.krate).to_string();
+    let path = tcx.def_path_str(trait_did);
+    (crate_name == "core" || crate_name == "std") && path.contains("Into")
+}
+
+pub fn is_impl_of_core_from_trait<'tcx>(tcx: TyCtxt<'tcx>, def_id: DefId) -> bool {
+    let Some(trait_did) = tcx.trait_of_item(def_id) else {
+        return false;
+    };
+    let crate_name = tcx.crate_name(trait_did.krate).to_string();
+    let path = tcx.def_path_str(trait_did);
+    (crate_name == "core" || crate_name == "std") && path.contains("From")
+}
+
 /// Whether the callee is Option::unwrap (core::option::Option::unwrap or std::option::Option::unwrap).
 /// Used for Class PAG: unwrap() on Option<CRc<T>> should add Assign(option_inner_ptr, lhs_ptr).
 pub fn is_option_unwrap<'tcx>(tcx: TyCtxt<'tcx>, callee_def_id: DefId) -> bool {

@@ -2001,9 +2001,9 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
             }
         }
 
-        // rcpta: process core::ops::Deref trait
+        // rcpta: process core::ops::Deref, core::convert::Into, std::convert::From trait
         // e.g. entry_full_rcpta_demo::item::_classes::_Item::{impl#49}::deref<classes::class::Virtual>
-        if analysis::is_impl_of_core_deref_trait(self.tcx(), *callee_def_id) && !args.is_empty(){
+        if (analysis::is_impl_of_core_deref_trait(self.tcx(), *callee_def_id) || analysis::is_impl_of_core_into_trait(self.tcx(), *callee_def_id) || analysis::is_impl_of_core_from_trait(self.tcx(), *callee_def_id)) && !args.is_empty(){
             let receiver_ty = args[0].try_eval_path_type(self.acx);
             let dest_ty = destination.try_eval_path_type(self.acx);
             let receiver_has_dsl = analysis::extract_dsl_class_from_wrapper(self.tcx(), receiver_ty, None).is_some();
@@ -2017,6 +2017,7 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                     let canonical_base = self.acx.get_canonical_rcpta_ptr(&receiver_ptr_id);
                     self.acx.rcpta_alias_map.insert(dest_ptr_id.clone(), canonical_base);
                     self.acx.rcpta_ref_ptr_to_base_path.insert(dest_ptr_id,args[0].clone());
+                    return;
                 }
             }
         }
