@@ -119,19 +119,46 @@ pub fn is_source_level_allocation_caller(caller_func_name: &str) -> bool {
     true
 }
 
+/// Substrings that appear in rustc `def_path_str` for DSL type-view conversions (class / mixin / supertype).
+/// Use `::method` style so we do not match e.g. `get_into_super` (would match bare `into_super`).
+///
+/// Covers macros in `classes` DSL (`into_super`, `into_superclass`, `try_into_subtype`, `cast_mixin`, …)
+/// and `classes::ptr::RcDyn::*` delegates. Test suites: `shape_hierarchy`, `animal_hierarchy`, `rcpta_full_hierarchy`, `vehicle_hierarchy`, etc.
+pub const DSL_CLASS_CAST_CALLEE_MARKERS: &[&str] = &[
+    "::try_into_subtype",
+    "::try_into_superclass",
+    "::try_into_supertype",
+    "::try_cast_mixin",
+    "::try_downcast_ty",
+    "::try_as_superclass",
+    "::try_to_supertype",
+    "::try_as_subclass",
+    "::cast_mixin_unchecked",
+    "::into_superclass_unchecked",
+    "::into_superclass",
+    "::into_supertype",
+    "::cast_mixin",
+    "::into_super",
+];
+
+/// True when the **caller** function is a DSL-generated cast/mixin shim (body delegates to `RcDyn` / ptr).
+/// Cast edges must be recorded at the user callsite, not inside these wrappers.
+pub fn is_dsl_cast_shim_caller(caller_func_name: &str) -> bool {
+    DSL_CLASS_CAST_CALLEE_MARKERS
+        .iter()
+        .any(|m| caller_func_name.contains(m))
+}
+
 /// Whether the **caller** is a "source-level cast context" for rcpta.
 /// Only when this is true should we add Cast edge and ClassPtr in ClassPAG for a class cast Call.
 /// Author: Yan Wang, Date: 2026-02-02
 ///
 /// Returns false (do not add rcpta Cast/ClassPtr) when the call is from:
-/// - A cast method implementation (caller name contains into_superclass, try_into_subtype, cast_mixin)
-/// - DSL internal (e.g. classes::ptr::, _delegate_ctor) — not user-visible cast
+/// - A DSL cast shim body (same markers as [`identify_class_cast_method`]: upcast/downcast/mixin/…)
+/// - Other DSL internal (e.g. classes::ptr::, _delegate_ctor) — not user-visible cast
 pub fn is_source_level_cast_caller(caller_func_name: &str) -> bool {
-    if caller_func_name.contains("into_superclass")
-        || caller_func_name.contains("try_into_subtype")
-        || caller_func_name.contains("cast_mixin")
-    {
-        return false; // inside a cast method implementation
+    if is_dsl_cast_shim_caller(caller_func_name) {
+        return false;
     }
     if caller_func_name.contains("classes::ptr::") || caller_func_name.contains("_delegate_ctor") {
         return false; // DSL internal
@@ -237,15 +264,17 @@ pub fn type_is_option_containing_dsl_class<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>
     false
 }
 
-/// Whether the callee is a source-level class cast method (same object, different type view).
-/// rcpta: add Assign edge receiver → destination. Author: Yan Wang, Date: 2026-02-02
+/// Whether the callee is a DSL class type-view conversion (same object, different static type / mixin / interface view).
+/// rcpta: [`crate::builder::special_function_handler::handle_class_cast_call`]. Author: Yan Wang, Date: 2026-02-02
 ///
-/// Recognized: into_superclass, try_into_subtype, cast_mixin (classes crate / _classes).
+/// Matches [`DSL_CLASS_CAST_CALLEE_MARKERS`] on the callee path, and only when the callee lives under
+/// `classes::ptr` or `_classes::_` (user class shims or `RcDyn` runtime).
+///
+/// For `CRc<T> -> CRc<Interface>` via `Into::into`, see `StdConvertInto` handling in `fpag_builder::resolve_call`
+/// (callee is `core::convert`, not `_classes::_`).
 pub fn identify_class_cast_method(func_ref: &Rc<FunctionReference>) -> bool {
     let name = func_ref.to_string();
-    let is_cast_name = name.contains("into_superclass")
-        || name.contains("try_into_subtype")
-        || name.contains("cast_mixin");
+    let is_cast_name = DSL_CLASS_CAST_CALLEE_MARKERS.iter().any(|m| name.contains(m));
     let is_classes = name.contains("classes::ptr") || name.contains("_classes::_");
     is_cast_name && is_classes
 }

@@ -33,6 +33,8 @@ use crate::util;
 use crate::util::class;
 use crate::util::class::analysis;
 use crate::util::class::{ClassCallGraph, ClassTypeSystem, ClassPtrSystem};
+use crate::util::class::dsl_inheritance_graph::dump_inheritance_graph_from_entry_types;
+use crate::util::class::cast_safety_log::dump_cast_safety_log;
 use crate::rcpta::{solve_class_pts, ClassPAG, ClassPTSResult};
 
 pub fn dump_results<P: PAGPath, F, S>(
@@ -103,10 +105,22 @@ pub fn dump_results<P: PAGPath, F, S>(
         dump_class_ptr_system(&acx.class_ptr_system, class_ptr_system_output);
     }
 
+    // dump DSL inheritance graph (direct edges + transitive closure), filtered to entry-related types
+    if let Some(path) = &acx.analysis_options.inheritance_graph_output {
+        info!("Dumping DSL inheritance graph (direct + closure)...");
+        dump_inheritance_graph_from_entry_types(&acx.class_type_system, path);
+    }
+
     // dump rcpta ClassPAG and/or class PTS. Run solver once so PAG can show materialized store/load.
     let class_pag_output = acx.analysis_options.class_pag_output.as_ref();
     let class_pts_output = acx.analysis_options.class_pts_output.as_ref();
-    if class_pag_output.is_some() || class_pts_output.is_some() {
+    let type_info_output = acx.analysis_options.type_info_output.as_ref();
+    let cast_safety_log_output = acx.analysis_options.cast_safety_log_output.as_ref();
+    if class_pag_output.is_some()
+        || class_pts_output.is_some()
+        || type_info_output.is_some()
+        || cast_safety_log_output.is_some()
+    {
         let result = solve_class_pts(&acx.class_pag);
         if let Some(path) = class_pag_output {
             info!("Dumping rcpta ClassPAG...");
@@ -115,6 +129,14 @@ pub fn dump_results<P: PAGPath, F, S>(
         if let Some(path) = class_pts_output {
             info!("Dumping rcpta class PTS...");
             dump_class_pts_from_result(&result, path);
+        }
+        if let Some(path) = type_info_output {
+            info!("Dumping rcpta inferred type ranges (Type-info)...");
+            dump_type_info_from_result(&acx.class_pag, &result, path);
+        }
+        if let Some(path) = cast_safety_log_output {
+            info!("Dumping cast safety log...");
+            dump_cast_safety_log(&acx.class_type_system, &acx.class_pag, &result, path);
         }
     }
 }
@@ -1380,6 +1402,75 @@ pub fn dump_class_pts_from_result(result: &ClassPTSResult, output_path: &str) {
     let ptrs_with_objs = pts.values().filter(|s| !s.is_empty()).count();
     writer
         .write_all(format!("  ptrs: {}  ptrs_with_objs: {}\n", total_ptrs, ptrs_with_objs).as_bytes())
+        .expect("Unable to write statistics");
+}
+
+/// Dumps rcpta inferred type ranges (Type-info).
+///
+/// Principle: heap object `obj_id` has a source-level class type `class_type`.
+/// After PTS propagation, each pointer `ptr_id` may point to a set of heap objects `PTS(ptr_id)`,
+/// hence its type range is the corresponding set of class types:
+///   TypeRange(ptr) = { class_type(obj) | obj in PTS(ptr) }.
+pub fn dump_type_info_from_result(class_pag: &ClassPAG, result: &ClassPTSResult, output_path: &str) {
+    let pts = &result.pts;
+    let mut writer = BufWriter::new(match output_path {
+        "stdout" => Box::new(std::io::stdout()) as Box<dyn Write>,
+        _ => {
+            ensure_parent_dir(output_path);
+            Box::new(File::create(output_path).expect("Unable to create file")) as Box<dyn Write>
+        }
+    });
+
+    writer
+        .write_all(b"# Type-info (inferred type ranges per class pointer)\n\n")
+        .expect("Unable to write header");
+    writer
+        .write_all(b"# For each pointer, infer the set of source-level class types it may refer to, using PTS.\n\n")
+        .expect("Unable to write description");
+
+    writer
+        .write_all(b"## Pointer -> Type Range\n\n")
+        .expect("Unable to write section header");
+
+    let mut ptr_ids: Vec<_> = pts.keys().cloned().collect();
+    ptr_ids.sort();
+
+    for ptr_id in &ptr_ids {
+        let objs = pts.get(ptr_id).unwrap();
+        let short_ptr = short_class_pag_name(ptr_id);
+        if objs.is_empty() {
+            writer
+                .write_all(format!("  {}  ->  (none)\n", short_ptr).as_bytes())
+                .expect("Unable to write type-info line");
+            continue;
+        }
+
+        let mut type_set: HashSet<String> = HashSet::new();
+        for obj_id in objs {
+            if let Some(obj) = class_pag.get_obj(obj_id) {
+                type_set.insert(obj.class_type.clone());
+            }
+        }
+
+        if type_set.is_empty() {
+            writer
+                .write_all(format!("  {}  ->  (none)\n", short_ptr).as_bytes())
+                .expect("Unable to write type-info line");
+        } else {
+            let mut type_list: Vec<_> = type_set.into_iter().collect();
+            type_list.sort();
+            let types_str = type_list.join(", ");
+            writer
+                .write_all(format!("  {}  ->  {}\n", short_ptr, types_str).as_bytes())
+                .expect("Unable to write type-info line");
+        }
+    }
+
+    writer.write_all(b"\n## Statistics\n\n").expect("Unable to write section header");
+    let total_ptrs = pts.len();
+    let ptrs_with_types = pts.values().filter(|s| !s.is_empty()).count();
+    writer
+        .write_all(format!("  ptrs: {}  ptrs_with_types: {}\n", total_ptrs, ptrs_with_types).as_bytes())
         .expect("Unable to write statistics");
 }
 

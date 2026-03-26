@@ -122,6 +122,18 @@ fn make_options_parser() -> Command<'static> {
             .long("dump-class-pts")
             .takes_value(true)
             .help("Dump rcpta class-level points-to sets (each ptr -> set of class heap objs after propagation) to the output file."))
+        .arg(Arg::new("type-info-output")
+            .long("dump-type-info")
+            .takes_value(true)
+            .help("Dump inferred type ranges per class pointer (each ptr -> set of class types) to the output file."))
+        .arg(Arg::new("inheritance-graph-output")
+            .long("dump-inheritance-graph")
+            .takes_value(true)
+            .help("Dump DSL type relation graph (extends/mixin/interface) with direct edges and transitive closure."))
+        .arg(Arg::new("cast-safety-log-output")
+            .long("dump-cast-safety-log")
+            .takes_value(true)
+            .help("Dump cast safety decisions as `file:line:col cast is safe/unsafe`."))
         .arg(Arg::new("INPUT")
             .multiple(true)
             .help("The input file to be analyzed.")
@@ -159,6 +171,12 @@ pub struct AnalysisOptions {
     pub class_pag_output: Option<String>,
     /// rcpta: dump class-level PTS (ptr -> set of objs after propagation on ClassPAG).
     pub class_pts_output: Option<String>,
+    /// rcpta: dump ptr -> set of class types inferred from ClassPTSResult (PTS then obj_id -> obj.class_type).
+    pub type_info_output: Option<String>,
+    /// Dump static DSL inheritance/conversion graph (direct + closure) filtered to entry-related types.
+    pub inheritance_graph_output: Option<String>,
+    /// Dump cast safety decisions (source loc + safe/unsafe).
+    pub cast_safety_log_output: Option<String>,
 }
 
 impl Default for AnalysisOptions {
@@ -185,6 +203,9 @@ impl Default for AnalysisOptions {
             class_ptr_system_output: None,
             class_pag_output: None,
             class_pts_output: None,
+            type_info_output: None,
+            inheritance_graph_output: None,
+            cast_safety_log_output: None,
         }
     }
 }
@@ -278,6 +299,9 @@ impl AnalysisOptions {
         self.class_ptr_system_output = matches.get_one::<String>("class-ptr-system-output").cloned();
         self.class_pag_output = matches.get_one::<String>("class-pag-output").cloned();
         self.class_pts_output = matches.get_one::<String>("class-pts-output").cloned();
+        self.type_info_output = matches.get_one::<String>("type-info-output").cloned();
+        self.inheritance_graph_output = matches.get_one::<String>("inheritance-graph-output").cloned();
+        self.cast_safety_log_output = matches.get_one::<String>("cast-safety-log-output").cloned();
 
         // If the user provide the input source code file path before the `--` token, 
         // add it to the rustc arguments.

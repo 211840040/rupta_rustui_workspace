@@ -14,6 +14,7 @@ use rustc_hir::def_id::DefId;
 use rustc_hir::lang_items::LangItem;
 use rustc_middle::mir;
 use rustc_middle::ty::{GenericArgsRef, List, Ty, TyCtxt, TyKind};
+use rustc_span::Pos;
 
 use crate::builder::fpag_builder::FuncPAGBuilder;
 use crate::mir::analysis_context::AnalysisContext;
@@ -639,7 +640,7 @@ pub fn handle_class_cast_call<'tcx>(
     gen_args: &GenericArgsRef<'tcx>,
     args: &[Rc<Path>],
     destination: &Rc<Path>,
-    _location: mir::Location,
+    location: mir::Location,
 ) {
     if args.is_empty() {
         return;
@@ -673,6 +674,11 @@ pub fn handle_class_cast_call<'tcx>(
         Some(s) => s,
         None => return,
     };
+
+    // rcpta graph feeding: ensure entry-related interface/mixin nodes are present in
+    // `class_type_system` so later dumps (e.g. inheritance graph) can filter by entry.
+    fpb.acx.class_type_system.register_class(&receiver_class);
+    fpb.acx.class_type_system.register_class(&dest_class);
 
     // Use canonical name so ptr ids match (no duplicate get_and_wrap::local_2/local_3 from impl vs data).
     let func_ref = fpb.acx.get_function_reference(fpb.fpag.func_id);
@@ -718,6 +724,19 @@ pub fn handle_class_cast_call<'tcx>(
         fpb.acx.class_pag.get_or_create_ptr(receiver_cptr);
         fpb.acx.class_pag.get_or_create_ptr(dest_cptr);
         fpb.acx.class_pag.add_cast(&canonical_receiver, &dest_ptr_id);
+
+        // Record cast site span so we can later output `line:col cast is safe/unsafe`.
+        let span = fpb.mir.source_info(location).span;
+        let sm = tcx.sess.source_map();
+        let lo = sm.lookup_char_pos(span.lo());
+        let file = lo.file.name.prefer_local().to_string();
+        // rustc line/col are 1-based line, 0-based column; normalize to 1-based col for readability.
+        let line = lo.line;
+        let col = lo.col.to_usize() + 1;
+        let src_loc = format!("{}:{}:{}", file, line, col);
+        fpb.acx
+            .class_pag
+            .add_cast_site(canonical_receiver, dest_ptr_id.clone(), src_loc);
     }
 
     debug!(

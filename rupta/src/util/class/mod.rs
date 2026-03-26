@@ -12,6 +12,8 @@ pub mod analysis;
 pub mod call_graph;
 pub mod ptr_system;
 pub mod type_system;
+pub mod dsl_inheritance_graph;
+pub mod cast_safety_log;
 
 // Re-export commonly used items for convenience
 pub use analysis::*;

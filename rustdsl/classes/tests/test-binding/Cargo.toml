@@ -1,0 +1,7 @@
+[package]
+name = "test-binding"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+classes = { path = "../classes" }

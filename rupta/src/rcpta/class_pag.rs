@@ -39,6 +39,17 @@ pub struct CastEdge {
     pub dst_ptr_id: String,
 }
 
+/// A source-level DSL class cast site, for post-analysis safety checking/logging.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct CastSite {
+    /// Source pointer id in ClassPAG (canonicalized when applicable).
+    pub src_ptr_id: String,
+    /// Destination pointer id in ClassPAG (may be Option::Some.0 inner path).
+    pub dst_ptr_id: String,
+    /// Source code location formatted as `path:line:col`.
+    pub src_loc: String,
+}
+
 /// Alloc edge: `ptr = ClassName::new(...)` — ptr points to obj.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct AllocEdge {
@@ -107,6 +118,9 @@ pub struct ClassPAG {
     /// Call return edges (formal_ret → actual_ret)
     call_ret: Vec<CallRetEdge>,
 
+    /// Source-level cast sites (location + (src,dst) ptr ids).
+    cast_sites: Vec<CastSite>,
+
     /// Next object id counter (obj_0, obj_1, ...)
     next_obj_counter: usize,
 }
@@ -129,6 +143,7 @@ impl ClassPAG {
             store: HashMap::new(),
             call_arg: Vec::new(),
             call_ret: Vec::new(),
+            cast_sites: Vec::new(),
             next_obj_counter: 0,
         }
     }
@@ -214,6 +229,24 @@ impl ClassPAG {
         let src = src_ptr_id.into();
         let dst = dst_ptr_id.into();
         self.assign.entry(src).or_default().insert(dst);
+    }
+
+    /// Record a cast site (source-level only).
+    pub fn add_cast_site(
+        &mut self,
+        src_ptr_id: impl Into<String>,
+        dst_ptr_id: impl Into<String>,
+        src_loc: impl Into<String>,
+    ) {
+        self.cast_sites.push(CastSite {
+            src_ptr_id: src_ptr_id.into(),
+            dst_ptr_id: dst_ptr_id.into(),
+            src_loc: src_loc.into(),
+        });
+    }
+
+    pub fn cast_sites(&self) -> &[CastSite] {
+        &self.cast_sites
     }
 
     /// Assign successors of a pointer (all dst such that dst = src).

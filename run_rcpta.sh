@@ -42,12 +42,20 @@ if [[ "${1:-}" == "compile" ]]; then
   exit 0
 fi
 
-# Analyze: path_to_file, entry_func, output_dir [, --analyze-only]
-FILE_PATH="${1:?Usage: $0 <path_to_file> <entry_func> <output_dir> [--analyze-only]}"
-ENTRY_FUNC="${2:?Usage: $0 <path_to_file> <entry_func> <output_dir> [--analyze-only]}"
-OUTPUT_DIR="${3:?Usage: $0 <path_to_file> <entry_func> <output_dir> [--analyze-only]}"
+# Analyze: path_to_file, entry_func, output_dir [, --analyze-only] [extra pta options...]
+FILE_PATH="${1:?Usage: $0 <path_to_file> <entry_func> <output_dir> [--analyze-only] [extra pta options...]}"
+ENTRY_FUNC="${2:?Usage: $0 <path_to_file> <entry_func> <output_dir> [--analyze-only] [extra pta options...]}"
+OUTPUT_DIR="${3:?Usage: $0 <path_to_file> <entry_func> <output_dir> [--analyze-only] [extra pta options...]}"
+
+shift 3
 ANALYZE_ONLY=
-[[ "${4:-}" == "--analyze-only" ]] && ANALYZE_ONLY=1
+if [[ "${1:-}" == "--analyze-only" ]]; then
+  ANALYZE_ONLY=1
+  shift 1
+fi
+
+# Any remaining args are extra PTA options (passed to `pta` after the `--` token).
+EXTRA_PTA_ARGS=("$@")
 
 # Resolve output dir to absolute path so pta (running from cargo's cwd, often manifest dir) writes to the right place
 ABS_OUTPUT_DIR="$(cd "$SCRIPT_DIR" && realpath -m "$OUTPUT_DIR")"
@@ -69,7 +77,25 @@ else
 fi
 
 # rcpta binary
-CARGO_PTA="${CARGO_PTA:-$SCRIPT_DIR/rupta/target/debug/cargo-pta}"
+# Note: in some environments `CARGO_TARGET_DIR` is set (e.g. by sandbox tooling),
+# so binaries are generated under that dir rather than `rupta/target/`.
+DEFAULT_TARGET_DIR="$SCRIPT_DIR/rupta/target"
+TARGET_DIR="${CARGO_TARGET_DIR:-$DEFAULT_TARGET_DIR}"
+
+if [[ -z "${CARGO_PTA:-}" ]]; then
+  # Prefer the binary under TARGET_DIR/debug if present.
+  CANDIDATE_1="$TARGET_DIR/debug/cargo-pta"
+  CANDIDATE_2="$SCRIPT_DIR/rupta/target/debug/cargo-pta"
+  if [[ -x "$CANDIDATE_1" ]]; then
+    CARGO_PTA="$CANDIDATE_1"
+  else
+    CARGO_PTA="$CANDIDATE_2"
+  fi
+else
+  # Respect user-provided override.
+  CARGO_PTA="${CARGO_PTA}"
+fi
+
 [[ -x "$CARGO_PTA" ]] || { echo "Error: rcpta not found at $CARGO_PTA (build with: cd rupta && cargo build)"; exit 1; }
 
 mkdir -p "$ABS_OUTPUT_DIR"
@@ -116,7 +142,11 @@ if [[ -n "$USE_LIB" ]]; then
     --dump-class-pag "$ABS_OUTPUT_DIR/class_pag.txt" \
     --dump-class-pts "$ABS_OUTPUT_DIR/class_pts.txt" \
     --dump-class-call-graph "$ABS_OUTPUT_DIR/class_cg.txt" \
+    --dump-type-info "$ABS_OUTPUT_DIR/type-info.txt" \
+    --dump-inheritance-graph "$ABS_OUTPUT_DIR/inheritance_graph.txt" \
+    --dump-cast-safety-log "$ABS_OUTPUT_DIR/cast_safety.log" \
     --dump-mir "$ABS_OUTPUT_DIR/mir.txt" \
+    "${EXTRA_PTA_ARGS[@]}" \
     2>&1 | tee "$ABS_OUTPUT_DIR/analysis.log"
 else
   "$CARGO_PTA" pta \
@@ -129,7 +159,11 @@ else
     --dump-class-pag "$ABS_OUTPUT_DIR/class_pag.txt" \
     --dump-class-pts "$ABS_OUTPUT_DIR/class_pts.txt" \
     --dump-class-call-graph "$ABS_OUTPUT_DIR/class_cg.txt" \
+    --dump-type-info "$ABS_OUTPUT_DIR/type-info.txt" \
+    --dump-inheritance-graph "$ABS_OUTPUT_DIR/inheritance_graph.txt" \
+    --dump-cast-safety-log "$ABS_OUTPUT_DIR/cast_safety.log" \
     --dump-mir "$ABS_OUTPUT_DIR/mir.txt" \
+    "${EXTRA_PTA_ARGS[@]}" \
     2>&1 | tee "$ABS_OUTPUT_DIR/analysis.log"
 fi
 echo "[2/2] Done."

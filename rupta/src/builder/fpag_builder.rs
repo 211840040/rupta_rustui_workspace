@@ -1477,17 +1477,34 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                             }
                         }
                         if let Some(field_name) = self.acx.class_type_system.get_field_name_by_index(&class_name, *field_index) {
-                            let base_ptr_id = path_to_ptr_id(&base_path, Some(&func_name), param_slots);
-                            let value_ptr_id = path_to_ptr_id(value_path, Some(&func_name), param_slots);
-                            let field_class = self.acx.class_type_system.get_field_class_type(&class_name, &field_name).unwrap_or_else(|| class_name.clone());
-                            self.acx.class_pag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(base_ptr_id.clone(), class_name.clone()));
-                            self.acx.class_pag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(value_ptr_id.clone(), field_class.clone()));
-                            // Store recorded as constraint (base, field, src); obj-level store edges materialized during PTS solve
-                            self.acx.class_pag.add_store(&base_ptr_id, &field_name, &value_ptr_id);
-                            info!(
-                                "rcpta ClassPAG: add_store (cell_option_set) func={} base={} field={}",
-                                func_name, base_ptr_id, field_name
-                            );
+                            // Only ClassPAG Store for class-reference values (same rule as handle_getter_setter).
+                            if let Some(value_class) = self
+                                .acx
+                                .class_type_system
+                                .get_path_class_type(value_path)
+                                .cloned()
+                                .or_else(|| {
+                                    self.acx
+                                        .class_type_system
+                                        .get_field_class_type(&class_name, &field_name)
+                                })
+                            {
+                                let base_ptr_id = path_to_ptr_id(&base_path, Some(&func_name), param_slots);
+                                let value_ptr_id = path_to_ptr_id(value_path, Some(&func_name), param_slots);
+                                self.acx.class_pag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(
+                                    base_ptr_id.clone(),
+                                    class_name.clone(),
+                                ));
+                                self.acx.class_pag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(
+                                    value_ptr_id.clone(),
+                                    value_class.clone(),
+                                ));
+                                self.acx.class_pag.add_store(&base_ptr_id, &field_name, &value_ptr_id);
+                                info!(
+                                    "rcpta ClassPAG: add_store (cell_option_set) func={} base={} field={}",
+                                    func_name, base_ptr_id, field_name
+                                );
+                            }
                         }
                     }
                 }
@@ -1517,18 +1534,29 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                             }
                         }
                         if let Some(field_name) = self.acx.class_type_system.get_field_name_by_index(&class_name, *field_index) {
-                            use crate::util::class::ptr_system::path_to_class_ptr_id;
-                            let base_ptr_id = path_to_class_ptr_id(&base_path, Some(&func_name), param_slots);
-                            let dst_ptr_id = path_to_class_ptr_id(&destination, Some(&func_name), param_slots);
-                            let dst_class = self.acx.class_type_system.get_field_class_type(&class_name, &field_name).unwrap_or_else(|| class_name.clone());
-                            self.acx.class_pag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(base_ptr_id.clone(), class_name.clone()));
-                            self.acx.class_pag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(dst_ptr_id.clone(), dst_class.clone()));
-                            // Load recorded as constraint (base, field, dst); obj-level load edges materialized during PTS solve
-                            self.acx.class_pag.add_load(&base_ptr_id, &field_name, &dst_ptr_id);
-                            info!(
-                                "rcpta ClassPAG: add_load (cell_option_get) func={} base={} field={}",
-                                func_name, base_ptr_id, field_name
-                            );
+                            if let Some(dst_class) = self
+                                .acx
+                                .class_type_system
+                                .get_field_class_type(&class_name, &field_name)
+                            {
+                                use crate::util::class::ptr_system::path_to_class_ptr_id;
+                                let base_ptr_id = path_to_class_ptr_id(&base_path, Some(&func_name), param_slots);
+                                let dst_ptr_id =
+                                    path_to_class_ptr_id(&destination, Some(&func_name), param_slots);
+                                self.acx.class_pag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(
+                                    base_ptr_id.clone(),
+                                    class_name.clone(),
+                                ));
+                                self.acx.class_pag.get_or_create_ptr(crate::rcpta::ClassPtr::new_local(
+                                    dst_ptr_id.clone(),
+                                    dst_class.clone(),
+                                ));
+                                self.acx.class_pag.add_load(&base_ptr_id, &field_name, &dst_ptr_id);
+                                info!(
+                                    "rcpta ClassPAG: add_load (cell_option_get) func={} base={} field={}",
+                                    func_name, base_ptr_id, field_name
+                                );
+                            }
                         }
                     }
                 }
@@ -1903,6 +1931,27 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                 &destination,
                 location,
             );
+        } else if matches!(
+            self.acx.get_known_name_for(*callee_def_id),
+            KnownNames::StdConvertInto
+        ) && !args.is_empty()
+        {
+            // e.g. vehicle_hierarchy: CRc<Car> -> CRc<Drivable> via `.into()` (impl Into in DSL shim).
+            // Callee is core::convert::Into::into, so [`identify_class_cast_method`] does not apply.
+            let receiver_ty = args[0].try_eval_path_type(self.acx);
+            let dest_ty = destination.try_eval_path_type(self.acx);
+            let from_dsl = analysis::extract_dsl_class_from_wrapper(self.tcx(), receiver_ty, None);
+            let to_dsl = analysis::extract_dsl_class_from_wrapper(self.tcx(), dest_ty, None);
+            if from_dsl.is_some() && to_dsl.is_some() {
+                special_function_handler::handle_class_cast_call(
+                    self,
+                    callee_def_id,
+                    &gen_args,
+                    &args,
+                    &destination,
+                    location,
+                );
+            }
         }
 
         // rcpta: Option::unwrap() on Option<CRc<T>> — build Assign(option_inner_ptr, lhs_ptr).
@@ -2992,25 +3041,37 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                 // ============================================
             }
 
-            // rcpta ClassPAG: Load edge base.field -> dst (see TAIE InstanceLoad) — only in source-level context
+            // rcpta ClassPAG: Load edge base.field -> dst only when the field holds a **class reference**
+            // (see ClassField.class_type). Primitives (f64, String, etc.) must not become ClassPtr / Load edges.
             let source_level = analysis::is_source_level_context(&func_name);
             if source_level {
-                let dst_ptr_id = crate::util::class::ptr_system::path_to_class_ptr_id(destination, Some(&func_name), param_slots);
-                let dst_class_type = self.acx.class_type_system
-                    .get_class(&gs.class_name)
-                    .and_then(|c| c.get_field_class_type(&gs.field_name))
-                    .cloned()
-                    .unwrap_or_else(|| gs.class_name.clone());
-                let base_cptr = crate::rcpta::ClassPtr::new_local(base_ptr_id.clone(), gs.class_name.clone());
-                let dst_cptr = crate::rcpta::ClassPtr::new_local(dst_ptr_id.clone(), dst_class_type.clone());
-                self.acx.class_pag.get_or_create_ptr(base_cptr);
-                self.acx.class_pag.get_or_create_ptr(dst_cptr);
-                // Load as constraint; obj-level edges materialized during PTS solve
-                self.acx.class_pag.add_load(&base_ptr_id, &gs.field_name, &dst_ptr_id);
-                info!(
-                    "rcpta ClassPAG: add_load in callee func={} base={} field={} dst={}",
-                    func_name, base_ptr_id, gs.field_name, dst_ptr_id
-                );
+                if let Some(dst_class_type) = self
+                    .acx
+                    .class_type_system
+                    .get_field_class_type(&gs.class_name, &gs.field_name)
+                {
+                    let dst_ptr_id = crate::util::class::ptr_system::path_to_class_ptr_id(
+                        destination,
+                        Some(&func_name),
+                        param_slots,
+                    );
+                    let base_cptr =
+                        crate::rcpta::ClassPtr::new_local(base_ptr_id.clone(), gs.class_name.clone());
+                    let dst_cptr =
+                        crate::rcpta::ClassPtr::new_local(dst_ptr_id.clone(), dst_class_type.clone());
+                    self.acx.class_pag.get_or_create_ptr(base_cptr);
+                    self.acx.class_pag.get_or_create_ptr(dst_cptr);
+                    self.acx.class_pag.add_load(&base_ptr_id, &gs.field_name, &dst_ptr_id);
+                    info!(
+                        "rcpta ClassPAG: add_load in callee func={} base={} field={} dst={}",
+                        func_name, base_ptr_id, gs.field_name, dst_ptr_id
+                    );
+                } else {
+                    debug!(
+                        "rcpta ClassPAG: skip Load (non-class-reference field) func={} field={}",
+                        func_name, gs.field_name
+                    );
+                }
             } else {
                 info!(
                     "rcpta ClassPAG: skip Load (not source-level) func={}",
@@ -3065,23 +3126,47 @@ impl<'pta, 'tcx, 'compilation> FuncPAGBuilder<'pta, 'tcx, 'compilation> {
                 // ============================================
             }
 
-            // rcpta ClassPAG: Store edge src -> base.field (see TAIE InstanceStore) — only in source-level context
+            // rcpta ClassPAG: Store only when the field is a **class-reference field** (inferred or registered).
             if analysis::is_source_level_context(&func_name) {
-                let value_ptr_id = crate::util::class::ptr_system::path_to_class_ptr_id(&value_path_canonical, Some(&func_name), param_slots);
-                let value_class_type = self.acx.class_type_system
-                    .get_path_class_type(&value_path)
-                    .cloned()
-                    .unwrap_or_else(|| gs.class_name.clone());
-                let base_cptr = crate::rcpta::ClassPtr::new_local(base_ptr_id.clone(), gs.class_name.clone());
-                let value_cptr = crate::rcpta::ClassPtr::new_local(value_ptr_id.clone(), value_class_type.clone());
-                self.acx.class_pag.get_or_create_ptr(base_cptr);
-                self.acx.class_pag.get_or_create_ptr(value_cptr);
-                // Store as constraint; obj-level edges materialized during PTS solve
-                self.acx.class_pag.add_store(&base_ptr_id, &gs.field_name, &value_ptr_id);
-                info!(
-                    "rcpta ClassPAG: add_store in callee func={} base={} field={} src={}",
-                    func_name, base_ptr_id, gs.field_name, value_ptr_id
-                );
+                if self
+                    .acx
+                    .class_type_system
+                    .get_field_class_type(&gs.class_name, &gs.field_name)
+                    .is_some()
+                {
+                    let value_ptr_id = crate::util::class::ptr_system::path_to_class_ptr_id(
+                        &value_path_canonical,
+                        Some(&func_name),
+                        param_slots,
+                    );
+                    let value_class_type = self
+                        .acx
+                        .class_type_system
+                        .get_path_class_type(&value_path)
+                        .cloned()
+                        .or_else(|| {
+                            self.acx
+                                .class_type_system
+                                .get_field_class_type(&gs.class_name, &gs.field_name)
+                        })
+                        .expect("class-reference field store must have value or field class type");
+                    let base_cptr =
+                        crate::rcpta::ClassPtr::new_local(base_ptr_id.clone(), gs.class_name.clone());
+                    let value_cptr =
+                        crate::rcpta::ClassPtr::new_local(value_ptr_id.clone(), value_class_type.clone());
+                    self.acx.class_pag.get_or_create_ptr(base_cptr);
+                    self.acx.class_pag.get_or_create_ptr(value_cptr);
+                    self.acx.class_pag.add_store(&base_ptr_id, &gs.field_name, &value_ptr_id);
+                    info!(
+                        "rcpta ClassPAG: add_store in callee func={} base={} field={} src={}",
+                        func_name, base_ptr_id, gs.field_name, value_ptr_id
+                    );
+                } else {
+                    debug!(
+                        "rcpta ClassPAG: skip Store (non-class-reference field) func={} field={}",
+                        func_name, gs.field_name
+                    );
+                }
             }
 
             debug!("Setter [{}.{}]: Store {:?} -> {:?}", 
