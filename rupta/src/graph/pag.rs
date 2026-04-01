@@ -488,6 +488,14 @@ impl<P: PAGPath> PAG<P> {
         }
         let def_id = acx.get_function_reference(func_id).def_id;
         let name = acx.get_function_reference(func_id).to_string();
+
+        // Mitigation for large test harnesses (e.g. proptest-heavy entries in vehicle_hierarchy):
+        // When enabled, only analyze MIR for the current crate. Skips non-local functions, which
+        // can otherwise explode reachable code and trigger rustc stack overflow during analysis.
+        if std::env::var_os("RCPTA_LOCAL_ONLY").is_some() && !def_id.is_local() {
+            info!("rcpta: build_func_pag skip (non-local): name={} def_id={:?}", name, def_id);
+            return false;
+        }
         if !acx.tcx.is_mir_available(def_id) {
             info!(
                 "rcpta: build_func_pag skip (no MIR): name={} def_id={:?}",
@@ -501,6 +509,10 @@ impl<P: PAGPath> PAG<P> {
         }
 
         let gen_args = &acx.get_function_reference(func_id).generic_args;
+        if std::env::var_os("RCPTA_TRACE_INIT").is_some() {
+            let name = acx.get_function_reference(func_id).to_string();
+            eprintln!("[rupta][trace] build_func_pag: begin func_id={:?} name={}", func_id, name);
+        }
         // Build function pags for promoted functions
         if let Some(promoted_funcs) = self.promote_constants(acx, def_id, gen_args) {
             self.promoted_funcs_map.insert(func_id, promoted_funcs);
@@ -516,6 +528,10 @@ impl<P: PAGPath> PAG<P> {
         );
         let mut builder = fpag_builder::FuncPAGBuilder::new(acx, func_id, mir, &mut fpag);
         builder.build();
+        if std::env::var_os("RCPTA_TRACE_INIT").is_some() {
+            let name = acx.get_function_reference(func_id).to_string();
+            eprintln!("[rupta][trace] build_func_pag: built ok func_id={:?} name={}", func_id, name);
+        }
 
         // Build function pags for static variables encountered in this function.
         let mut static_funcs = HashSet::new();

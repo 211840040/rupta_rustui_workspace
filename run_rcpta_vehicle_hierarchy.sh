@@ -56,7 +56,9 @@ FAILED=()
 for ENTRY in "${ENTRIES[@]}"; do
   OUT_DIR="$RESULTS_BASE/$ENTRY"
   echo "  [Analyze] entry=$ENTRY -> $OUT_DIR"
-  if "$SCRIPT_DIR/run_rcpta.sh" "$MAIN_RS" "$ENTRY" "$OUT_DIR" --analyze-only; then
+  # vehicle_hierarchy property tests pull in a large proptest harness.
+  # To avoid rustc stack overflow in the PTA wrapper, analyze only the local crate's MIR.
+  if RCPTA_LOCAL_ONLY=1 "$SCRIPT_DIR/run_rcpta.sh" "$MAIN_RS" "$ENTRY" "$OUT_DIR" --analyze-only; then
     OK+=("$ENTRY")
   else
     EXIT=$?

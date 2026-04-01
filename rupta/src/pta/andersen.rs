@@ -115,6 +115,10 @@ impl<'pta, 'tcx, 'compilation> AndersenPTA<'pta, 'tcx, 'compilation> {
         if self.processed_funcs.contains(&func_id) {
             return;
         }
+        // Mark as processed *before* recursing into promoted/static funcs.
+        // These maps may contain cycles (A depends on B and B depends on A). If we only insert
+        // at the end, the mutual recursion can overflow the stack on large crates (e.g. vehicle_hierarchy).
+        self.processed_funcs.insert(func_id);
 
         let fpag = unsafe { &*(self.pag.func_pags.get(&func_id).unwrap() as *const FuncPAG) };
         let edges_iter = fpag.internal_edges_iter();
@@ -140,8 +144,6 @@ impl<'pta, 'tcx, 'compilation> AndersenPTA<'pta, 'tcx, 'compilation> {
                 self.add_fpag_edges(*static_func);
             }
         }
-
-        self.processed_funcs.insert(func_id);
     }
 
     ///author:wy

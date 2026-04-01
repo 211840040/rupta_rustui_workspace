@@ -56,7 +56,9 @@ pub trait PointerAnalysis<'tcx, 'compilation> {
         // Main analysis phase
         let now = Instant::now();
 
+        eprintln!("[rupta] analyze: initialize()");
         self.initialize();
+        eprintln!("[rupta] analyze: propagate()");
         self.propagate();
 
         let elapsed = now.elapsed();
@@ -66,6 +68,7 @@ pub trait PointerAnalysis<'tcx, 'compilation> {
             humantime::format_duration(elapsed).to_string()
         );
 
+        eprintln!("[rupta] analyze: finalize()");
         self.finalize();
     }
 }
@@ -87,10 +90,16 @@ impl PTACallbacks {
     }
 
     fn run_pointer_analysis(&mut self, compiler: &interface::Compiler, tcx: TyCtxt<'_>) {
+        eprintln!("[rupta] run_pointer_analysis: begin");
         let mut mem_watcher = MemoryWatcher::new();
         mem_watcher.start();
 
+        eprintln!("[rupta] run_pointer_analysis: init AnalysisContext");
         if let Some(mut acx) = AnalysisContext::new(&compiler.sess, tcx, self.options.clone()) {
+            eprintln!(
+                "[rupta] run_pointer_analysis: AnalysisContext ok, pta_type={:?}",
+                self.options.pta_type
+            );
             let mut pta: Box<dyn PointerAnalysis> = match self.options.pta_type {
                 PTAType::CallSiteSensitive => Box::new(ContextSensitivePTA::new(
                     &mut acx,
@@ -98,13 +107,16 @@ impl PTACallbacks {
                 )),
                 PTAType::Andersen => Box::new(AndersenPTA::new(&mut acx)),
             };
+            eprintln!("[rupta] run_pointer_analysis: start analyze()");
             pta.analyze();
+            eprintln!("[rupta] run_pointer_analysis: analyze() done");
         } else {
             error!("AnalysisContext Initialization Failed");
             eprintln!("[rupta] AnalysisContext init failed (entry not found): no class_pag will be written");
         }
 
         mem_watcher.stop();
+        eprintln!("[rupta] run_pointer_analysis: end");
     }
 }
 

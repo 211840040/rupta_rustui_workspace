@@ -1,5 +1,7 @@
 use crate::rcpta::{ClassPAG, ClassPTSResult};
-use crate::util::class::dsl_inheritance_graph::dump_inheritance_graph_from_entry_types;
+use crate::util::class::dsl_inheritance_graph::{
+    build_graph_from_dsl_sources, dump_inheritance_graph_from_entry_types, EdgeKind, NodeKind,
+};
 use crate::util::class::ClassTypeSystem;
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -29,57 +31,6 @@ fn compute_reachable_nodes(adj: &HashMap<String, Vec<String>>, start: &str) -> H
     visited
 }
 
-/// A minimal static extends adjacency built by re-parsing DSL sources.
-/// (We keep this local so the safety log doesn't depend on reading a dumped graph file.)
-fn build_extends_adj_from_dsl_sources() -> HashMap<String, Vec<String>> {
-    // We reuse the existing inheritance graph dump machinery to ensure we follow the same parsing
-    // rules as `dump_inheritance_graph_from_entry_types`, but we still need an in-memory extends map.
-    //
-    // Implementation note: for now, we parse the same DSL sources again with a small regex.
-    // This keeps the cast-safety logic self-contained and stable.
-    let rupta_manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let workspace_root = rupta_manifest_dir
-        .parent()
-        .expect("rupta manifest must have a parent workspace root");
-    let tests_root = workspace_root.join("rustdsl/classes/tests");
-
-    let mut files = Vec::new();
-    let mut stack = vec![tests_root];
-    while let Some(dir) = stack.pop() {
-        let entries = match fs::read_dir(&dir) {
-            Ok(e) => e,
-            Err(_) => continue,
-        };
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                stack.push(path);
-            } else if path.extension().and_then(|s| s.to_str()) == Some("rs") {
-                files.push(path);
-            }
-        }
-    }
-
-    let re_extends = regex::Regex::new(
-        r"\bpub\s+(?:abstract\s+)?class\s+([A-Za-z_][A-Za-z0-9_]*)\s+extends\s+([A-Za-z_][A-Za-z0-9_]*)\b",
-    )
-    .expect("regex");
-
-    let mut adj: HashMap<String, Vec<String>> = HashMap::new();
-    for file in files {
-        let content = match fs::read_to_string(&file) {
-            Ok(c) => c,
-            Err(_) => continue,
-        };
-        for cap in re_extends.captures_iter(&content) {
-            let child = cap.get(1).unwrap().as_str().to_string();
-            let parent = cap.get(2).unwrap().as_str().to_string();
-            adj.entry(child).or_default().push(parent);
-        }
-    }
-    adj
-}
-
 fn type_range_for_ptr(class_pag: &ClassPAG, result: &ClassPTSResult, ptr_id: &str) -> HashSet<String> {
     let mut out: HashSet<String> = HashSet::new();
     let Some(objs) = result.pts.get(ptr_id) else {
@@ -93,12 +44,64 @@ fn type_range_for_ptr(class_pag: &ClassPAG, result: &ClassPTSResult, ptr_id: &st
     out
 }
 
-fn is_subtype_via_extends(adj: &HashMap<String, Vec<String>>, sub: &str, sup: &str) -> bool {
+fn is_subtype_via_extends(extends_adj: &HashMap<String, Vec<String>>, sub: &str, sup: &str) -> bool {
     if sub == sup {
         return true;
     }
-    let reach = compute_reachable_nodes(adj, sub);
-    reach.contains(sup)
+    compute_reachable_nodes(extends_adj, sub).contains(sup)
+}
+
+fn implements_interface(
+    extends_adj: &HashMap<String, Vec<String>>,
+    direct_impl: &HashMap<String, HashSet<String>>,
+    concrete: &str,
+    iface: &str,
+) -> bool {
+    // implements* rule mirrors `dsl_inheritance_graph`:
+    // - collect implements declared on concrete or any superclass (via extends*)
+    // - expand each implemented interface via interface-extends chain (also uses extends edges)
+    let anc = compute_reachable_nodes(extends_adj, concrete);
+    for a in &anc {
+        if let Some(ifs) = direct_impl.get(a) {
+            for i in ifs {
+                if i == iface {
+                    return true;
+                }
+                if compute_reachable_nodes(extends_adj, i).contains(iface) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+fn has_mixin_view(
+    extends_adj: &HashMap<String, Vec<String>>,
+    direct_with: &HashMap<String, HashSet<String>>,
+    concrete: &str,
+    mixin: &str,
+) -> bool {
+    // with* rule mirrors `dsl_inheritance_graph`:
+    // - collect mixins selected by concrete or any superclass (via extends*)
+    // - DO NOT use mixin_on for safety
+    let anc = compute_reachable_nodes(extends_adj, concrete);
+    for a in &anc {
+        if let Some(ms) = direct_with.get(a) {
+            for m in ms {
+                if m == mixin {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+fn format_type_set(types: &HashSet<String>) -> String {
+    let mut v: Vec<_> = types.iter().cloned().collect();
+    v.sort();
+    format!("{{{}}}", v.join(", "))
 }
 
 /// Dumps one line per source-level class cast site:
@@ -109,8 +112,25 @@ pub fn dump_cast_safety_log(
     pts_result: &ClassPTSResult,
     output_path: &str,
 ) {
-    // Build static extends map once. (Safety decisions here focus on class up/down-casts.)
-    let extends_adj = build_extends_adj_from_dsl_sources();
+    // Build DSL graph once, and compute relations in-memory (no dependency on reading dumped files).
+    let dsl_graph = build_graph_from_dsl_sources();
+    let mut extends_adj: HashMap<String, Vec<String>> = HashMap::new();
+    let mut direct_impl: HashMap<String, HashSet<String>> = HashMap::new();
+    let mut direct_with: HashMap<String, HashSet<String>> = HashMap::new();
+    for e in &dsl_graph.edges {
+        match e.kind {
+            EdgeKind::Extends => {
+                extends_adj.entry(e.src.clone()).or_default().push(e.dst.clone());
+            }
+            EdgeKind::Implements => {
+                direct_impl.entry(e.src.clone()).or_default().insert(e.dst.clone());
+            }
+            EdgeKind::With => {
+                direct_with.entry(e.src.clone()).or_default().insert(e.dst.clone());
+            }
+            EdgeKind::MixinOn => {}
+        }
+    }
 
     // Also keep a side-effect dump of inheritance graph if user requested it separately.
     // (This is a no-op unless the caller enabled that option; included only to keep behavior stable.)
@@ -132,19 +152,74 @@ pub fn dump_cast_safety_log(
             .get_ptr(&site.dst_ptr_id)
             .map(|p| p.class_type.clone());
 
-        let safe = if src_types.is_empty() || dst_ty.is_none() {
-            false
+        let (safe, diag): (bool, Option<String>) = if src_types.is_empty() {
+            (
+                false,
+                Some("reason: src pointer has empty points-to set (no inferred dynamic types)".to_string()),
+            )
+        } else if dst_ty.is_none() {
+            (
+                false,
+                Some("reason: dst pointer has no static class_type recorded in ClassPAG".to_string()),
+            )
         } else {
             let dst_ty = dst_ty.unwrap();
-            src_types
-                .iter()
-                .all(|s| is_subtype_via_extends(&extends_adj, s, &dst_ty))
+            let dst_kind = dsl_graph.nodes.get(&dst_ty).copied().unwrap_or(NodeKind::Unknown);
+            let mut bad: Vec<String> = Vec::new();
+            for s in &src_types {
+                let ok = match dst_kind {
+                    NodeKind::Class | NodeKind::Unknown => is_subtype_via_extends(&extends_adj, s, &dst_ty),
+                    NodeKind::Interface => implements_interface(&extends_adj, &direct_impl, s, &dst_ty),
+                    NodeKind::Mixin => has_mixin_view(&extends_adj, &direct_with, s, &dst_ty),
+                };
+                if !ok {
+                    bad.push(s.clone());
+                }
+            }
+            bad.sort();
+
+            if bad.is_empty() {
+                (true, None)
+            } else {
+                let rule = match dst_kind {
+                    NodeKind::Class | NodeKind::Unknown => "extends* (class subtype)",
+                    NodeKind::Interface => "implements* (class implements interface via extends chain)",
+                    NodeKind::Mixin => "with* (class has mixin view via extends chain; mixin_on is not used)",
+                };
+                let dst_kind_str = match dst_kind {
+                    NodeKind::Class => "class",
+                    NodeKind::Interface => "interface",
+                    NodeKind::Mixin => "mixin",
+                    NodeKind::Unknown => "unknown",
+                };
+                let mut diag = String::new();
+                diag.push_str(&format!(
+                    "types: src_dynamic_types={} dst_static_type={} dst_kind={}\n",
+                    format_type_set(&src_types),
+                    dst_ty,
+                    dst_kind_str
+                ));
+                diag.push_str(&format!(
+                    "reason: the following src types do not satisfy {} to dst: {{{}}}",
+                    rule,
+                    bad.join(", ")
+                ));
+                (false, Some(diag))
+            }
         };
 
         let verdict = if safe { "safe" } else { "unsafe" };
         writer
             .write_all(format!("{} cast is {}\n", site.src_loc, verdict).as_bytes())
             .expect("write cast safety line");
+        if let Some(diag) = diag {
+            // Keep diagnostics on separate lines for readability and easy grepping.
+            for line in diag.lines() {
+                writer
+                    .write_all(format!("  {}\n", line).as_bytes())
+                    .expect("write cast safety diag line");
+            }
+        }
     }
 
     writer.flush().expect("flush cast safety log");

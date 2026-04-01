@@ -142,6 +142,10 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
         if self.processed_funcs.contains(&func) {
             return;
         }
+        // Mark as processed *before* recursing into promoted/static funcs.
+        // These maps may contain cycles; inserting only at the end can cause mutual recursion
+        // and stack overflow on large crates (e.g. vehicle_hierarchy).
+        self.processed_funcs.insert(func);
 
         let fpag = unsafe { &*(self.pag.func_pags.get(&func.func_id).unwrap() as *const FuncPAG) };
         let edges_iter = fpag.internal_edges_iter();
@@ -173,8 +177,6 @@ impl<'pta, 'tcx, 'compilation, S: ContextStrategy> ContextSensitivePTA<'pta, 'tc
                 self.add_fpag_edges(cs_static_func);
             }
         }
-
-        self.processed_funcs.insert(func);
     }
 
     fn process_calls_in_fpag(&mut self, func: CSFuncId) {

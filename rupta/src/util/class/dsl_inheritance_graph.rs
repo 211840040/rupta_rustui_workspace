@@ -72,7 +72,7 @@ fn collect_rs_files_recursively(root: &Path, out: &mut Vec<PathBuf>) {
     }
 }
 
-fn build_graph_from_dsl_sources() -> DslTypeGraph {
+pub fn build_graph_from_dsl_sources() -> DslTypeGraph {
     // We intentionally parse from the DSL *source definitions* in tests, not from
     // rcpta's pointer/type-info outputs.
     let rupta_manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -118,6 +118,13 @@ fn build_graph_from_dsl_sources() -> DslTypeGraph {
     let mut graph = DslTypeGraph::default();
 
     // Seed nodes from class/abstract class/mixin declarations.
+    //
+    // NOTE on DSL semantics (as used in our tests):
+    // - `pub abstract class X { struct { ... } ... }` is an abstract *class* (has storage/fields).
+    // - `pub abstract class I { fn ... }` is used as an *interface* (no struct block).
+    //
+    // We approximate this by checking whether a `struct {` block appears soon after the
+    // `abstract class` header in the same source file.
     for file in files {
         let content = match fs::read_to_string(&file) {
             Ok(c) => c,
@@ -126,7 +133,15 @@ fn build_graph_from_dsl_sources() -> DslTypeGraph {
 
         for cap in re_abstract_class.captures_iter(&content) {
             let name = cap.get(1).unwrap().as_str().to_string();
-            graph.nodes.entry(name).or_insert(NodeKind::Interface);
+            let header_end = cap.get(0).map(|m| m.end()).unwrap_or(0);
+            let lookahead_end = std::cmp::min(content.len(), header_end + 800);
+            let lookahead = &content[header_end..lookahead_end];
+            let kind = if lookahead.contains("struct {") || lookahead.contains("struct{") {
+                NodeKind::Class
+            } else {
+                NodeKind::Interface
+            };
+            graph.nodes.entry(name).or_insert(kind);
         }
         for cap in re_class.captures_iter(&content) {
             let name = cap.get(1).unwrap().as_str().to_string();

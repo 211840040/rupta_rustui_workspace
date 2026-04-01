@@ -122,6 +122,35 @@ fi
 echo "[2/2] Analyzing (entry: $ENTRY_FUNC)..."
 touch "$ABS_FILE"
 
+# If user passed explicit PTA knobs in EXTRA_PTA_ARGS, do not add defaults twice.
+has_extra_pta_arg() {
+  local needle="$1"
+  shift
+  local a
+  for a in "${EXTRA_PTA_ARGS[@]}"; do
+    if [[ "$a" == "$needle" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Default PTA knobs (can be overridden by EXTRA_PTA_ARGS)
+PTA_TYPE_ARGS=(--pta-type cs)
+CTX_DEPTH_ARGS=(--context-depth 1)
+if has_extra_pta_arg "--pta-type"; then
+  PTA_TYPE_ARGS=()
+fi
+if has_extra_pta_arg "--context-depth"; then
+  CTX_DEPTH_ARGS=()
+fi
+
+# Optional: skip MIR dump (can reduce rustc load for large entries)
+MIR_DUMP_ARGS=(--dump-mir "$ABS_OUTPUT_DIR/mir.txt")
+if [[ -n "${RCPTA_SKIP_MIR_DUMP:-}" ]]; then
+  MIR_DUMP_ARGS=()
+fi
+
 # Avoid stack overflow when analyzing large crates (e.g. vehicle_hierarchy with deep type/call graphs).
 # ulimit -s is in KiB; 1048576 = 1 GiB. All child processes (cargo, cargo-pta, pta) inherit this.
 # Skip by setting RCPTA_SKIP_STACK_LIMIT=1 if you need the default limit.
@@ -137,15 +166,15 @@ if [[ -n "$USE_LIB" ]]; then
     --lib \
     -- \
     --entry-func "$ENTRY_FUNC" \
-    --pta-type cs \
-    --context-depth 1 \
+    "${PTA_TYPE_ARGS[@]}" \
+    "${CTX_DEPTH_ARGS[@]}" \
     --dump-class-pag "$ABS_OUTPUT_DIR/class_pag.txt" \
     --dump-class-pts "$ABS_OUTPUT_DIR/class_pts.txt" \
     --dump-class-call-graph "$ABS_OUTPUT_DIR/class_cg.txt" \
     --dump-type-info "$ABS_OUTPUT_DIR/type-info.txt" \
     --dump-inheritance-graph "$ABS_OUTPUT_DIR/inheritance_graph.txt" \
     --dump-cast-safety-log "$ABS_OUTPUT_DIR/cast_safety.log" \
-    --dump-mir "$ABS_OUTPUT_DIR/mir.txt" \
+    "${MIR_DUMP_ARGS[@]}" \
     "${EXTRA_PTA_ARGS[@]}" \
     2>&1 | tee "$ABS_OUTPUT_DIR/analysis.log"
 else
@@ -154,15 +183,15 @@ else
     --test "$TEST_BINARY" \
     -- \
     --entry-func "$ENTRY_FUNC" \
-    --pta-type cs \
-    --context-depth 1 \
+    "${PTA_TYPE_ARGS[@]}" \
+    "${CTX_DEPTH_ARGS[@]}" \
     --dump-class-pag "$ABS_OUTPUT_DIR/class_pag.txt" \
     --dump-class-pts "$ABS_OUTPUT_DIR/class_pts.txt" \
     --dump-class-call-graph "$ABS_OUTPUT_DIR/class_cg.txt" \
     --dump-type-info "$ABS_OUTPUT_DIR/type-info.txt" \
     --dump-inheritance-graph "$ABS_OUTPUT_DIR/inheritance_graph.txt" \
     --dump-cast-safety-log "$ABS_OUTPUT_DIR/cast_safety.log" \
-    --dump-mir "$ABS_OUTPUT_DIR/mir.txt" \
+    "${MIR_DUMP_ARGS[@]}" \
     "${EXTRA_PTA_ARGS[@]}" \
     2>&1 | tee "$ABS_OUTPUT_DIR/analysis.log"
 fi

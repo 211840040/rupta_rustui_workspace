@@ -121,7 +121,8 @@ fn main() {
         }
 
         let always_encode_mir: String = "always-encode-mir".into();
-        if !rustc_command_line_arguments.iter().any(|arg| arg.ends_with(&always_encode_mir))
+        if std::env::var_os("RCPTA_NO_ALWAYS_ENCODE_MIR").is_none()
+            && !rustc_command_line_arguments.iter().any(|arg| arg.ends_with(&always_encode_mir))
         {
             // Tell compiler to emit MIR into crate for every function with a body.
             rustc_command_line_arguments.push("-Z".into());
